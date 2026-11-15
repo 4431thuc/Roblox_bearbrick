@@ -155,8 +155,8 @@
                         <div id="menu-total-targets" class="text-sm font-black text-cyan-400">0</div>
                     </div>
                     <div class="bg-slate-900/65 rounded-xl px-2 py-1.5 border border-emerald-400/20">
-                        <div class="text-[9px] sm:text-[10px] leading-tight text-slate-400">🗺️ Hoàn Thành</div>
-                        <div id="menu-maps-cleared" class="text-sm font-black text-emerald-400">0/3</div>
+                        <div class="text-[9px] sm:text-[10px] leading-tight text-slate-400">⭐ Tổng độ khó</div>
+                        <div id="menu-maps-cleared" class="text-sm font-black text-emerald-400">4⭐</div>
                     </div>
                 </div>
             </div>
@@ -271,17 +271,15 @@
                             <button id="btn-start-climb-1" type="button" class="group bg-gradient-to-r from-amber-500/25 to-orange-600/25 hover:from-amber-500/40 hover:to-orange-600/40 border border-amber-400/50 rounded-xl p-2.5 text-left transition active:scale-95 flex items-center justify-between">
                                 <div>
                                     <div class="font-extrabold text-xs text-white group-hover:text-amber-200">🌈 Map 1: Tháp Không Gian</div>
-                                    <div class="text-[10px] text-slate-300 mt-0.5">18 Tầng • Hồ Hồi Phục &amp; Vòng 4 thanh</div>
+                                    <div id="climb-map1-progress" class="text-[10px] text-slate-300 mt-0.5">18 Tầng • Độ khó 1⭐</div>
                                 </div>
-                                <span id="badge-climb-map1" class="text-[10px] font-bold px-2 py-0.5 rounded bg-slate-950/60 text-slate-300">Chưa xong</span>
                             </button>
 
                             <button id="btn-start-climb-2" type="button" class="group bg-gradient-to-r from-indigo-500/25 to-purple-600/25 hover:from-indigo-500/40 hover:to-purple-600/40 border border-purple-400/50 rounded-xl p-2.5 text-left transition active:scale-95 flex items-center justify-between">
                                 <div>
                                     <div class="font-extrabold text-xs text-white group-hover:text-purple-200">🏰 Map 2: Pháo Đài Không Gian</div>
-                                    <div class="text-[10px] text-slate-300 mt-0.5">20 Tầng • Hồ Năng Lượng &amp; Xoáy kép</div>
+                                    <div id="climb-map2-progress" class="text-[10px] text-slate-300 mt-0.5">20 Tầng • Độ khó 1⭐</div>
                                 </div>
-                                <span id="badge-climb-map2" class="text-[10px] font-bold px-2 py-0.5 rounded bg-slate-950/60 text-slate-300">Chưa xong</span>
                             </button>
                         </div>
                     </div>
@@ -294,15 +292,20 @@
                                     <span>🎯</span><span>Chế Độ 2: Săn Bia Mê Cung (Bắn Súng &amp; Ném Bom)</span>
                                 </div>
                                 <p class="text-[11px] text-slate-300 mt-0.5 leading-snug">
-                                    Mê cung tường kín + Radar xoay theo góc nhìn camera. Bia nhấp nháy vàng <strong>10s</strong> cảnh báo rồi vào <strong>3s nguy hiểm</strong> (hiển thị X-Ray xuyên tường) trước khi nổ!
+                                    Chọn một trong hai mê cung. Bia nhấp nháy vàng <strong>10s</strong>, sau đó có <strong>3s nguy hiểm</strong> kèm X-Ray xuyên tường. Mỗi lần thắng, map tăng <strong>1⭐</strong> và thêm <strong>5 bia</strong>.
                                 </p>
                             </div>
-                            <span id="badge-hunt-mode" class="shrink-0 text-[10px] font-bold px-2 py-0.5 rounded bg-slate-950/60 text-slate-300">Chưa xong</span>
                         </div>
-                        <button id="btn-start-hunt" type="button" class="w-full bg-gradient-to-r from-rose-600 to-amber-500 hover:from-rose-500 hover:to-amber-400 text-white font-black text-xs sm:text-sm py-2.5 px-4 rounded-xl shadow-lg border border-white/25 transition active:scale-95 flex items-center justify-center gap-2">
-                            <span>🔫</span>
-                            <span>CHƠI SĂN BIA MÊ CUNG (HẠ 15 BIA)</span>
-                        </button>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                            <button id="btn-start-hunt-map1" type="button" class="group bg-gradient-to-r from-rose-600/25 to-orange-500/25 hover:from-rose-600/40 hover:to-orange-500/40 border border-rose-400/40 rounded-xl p-2.5 text-left transition active:scale-95">
+                                <span class="block font-extrabold text-xs text-white group-hover:text-rose-200">🎯 Map 1: Mê Cung Cổ Điển</span>
+                                <span id="hunt-map1-progress" class="block text-[10px] text-slate-300 mt-1">Độ khó 1⭐ • Hạ 15 bia</span>
+                            </button>
+                            <button id="btn-start-hunt-map2" type="button" class="group bg-gradient-to-r from-cyan-600/25 to-indigo-500/25 hover:from-cyan-600/40 hover:to-indigo-500/40 border border-cyan-400/40 rounded-xl p-2.5 text-left transition active:scale-95">
+                                <span class="block font-extrabold text-xs text-white group-hover:text-cyan-200">⚡ Map 2: Mê Cung Chuyển Động</span>
+                                <span id="hunt-map2-progress" class="block text-[10px] text-slate-300 mt-1">Độ khó 1⭐ • Hạ 15 bia • Bia di chuyển chậm</span>
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -353,6 +356,9 @@
             <!-- Live Regen Badge (Mobile & Desktop visibility when regenerating HP in Climb Mode) -->
             <div id="hud-regen-pill" class="hidden glass-panel rounded-full px-3 py-1 text-[11px] font-extrabold text-cyan-200 border border-cyan-400/40 shadow-md">
                 💧 Đang ngâm hồ hồi +5 HP/s
+            </div>
+            <div id="developer-mode-pill" class="hidden glass-panel rounded-full px-3 py-1 text-[11px] font-extrabold text-fuchsia-200 border border-fuchsia-400/50 shadow-md">
+                🛠 DEV MODE • Không mất máu
             </div>
 
             <!-- Expandable Drawer: 12-Skin Shop & Weapon Switcher -->
@@ -2737,9 +2743,11 @@
         }
 
         // Obstacle A: Moving / Rolling Rail Track Platform (Đường ray lăn)
-        function addRollingRailPlatform(x, y, z, w, h, d, axis, range, speed, phase = 0, stepNumber = 0) {
+        function addRollingRailPlatform(x, y, z, w, h, d, axis, range, speed, phase = 0, stepNumber = 0, slopeAngle = 0) {
             const group = new THREE.Group();
             group.position.set(x, y, z);
+            if (axis === 'x') group.rotation.z = slopeAngle;
+            else group.rotation.x = slopeAngle;
 
             const railLength = range * 2 + (axis === 'x' ? w : d);
             const trackGeo = axis === 'x'
@@ -2789,7 +2797,12 @@
                 maxZ: z + d / 2,
                 stepNumber,
                 deltaX: 0,
-                deltaZ: 0
+                deltaZ: 0,
+                slopeAngle,
+                slopeAxis: axis,
+                slideDirX: slopeAngle === 0 ? 0 : axis === 'x' ? (slopeAngle > 0 ? -1 : 1) : 0,
+                slideDirZ: slopeAngle === 0 ? 0 : axis === 'z' ? (slopeAngle > 0 ? 1 : -1) : 0,
+                slideSpeed: slopeAngle === 0 ? 0 : 0.35
             };
             colliders.push(box);
 
@@ -2806,12 +2819,13 @@
                 axis,
                 range,
                 speed,
-                phase
+                phase,
+                slopeAngle
             });
         }
 
         // Obstacle B: 4-Blade Rotating Sweeper Spinner (Vòng quay có 4 thanh đẩy)
-        function addFourBladeSweeper(x, y, z, bladeLength = 4.6, rotSpeed = 1.65) {
+        function addFourBladeSweeper(x, y, z, bladeLength = 4.6, rotSpeed = 1.65, bladeCount = 4) {
             const pivot = new THREE.Group();
             pivot.position.set(x, y, z);
 
@@ -2837,9 +2851,9 @@
             });
             const stripeMat = new THREE.MeshBasicMaterial({ color: 0xfacc15 });
 
-            for (let b = 0; b < 4; b++) {
+            for (let b = 0; b < bladeCount; b++) {
                 const armHolder = new THREE.Group();
-                armHolder.rotation.y = (b * Math.PI) / 2;
+                armHolder.rotation.y = (b * Math.PI * 2) / bladeCount;
 
                 const blade = new THREE.Mesh(
                     new RoundedBoxGeometry(bladeLength, 0.44, 0.44, 2, 0.08),
@@ -2862,6 +2876,7 @@
                 pos: new THREE.Vector3(x, y, z),
                 bladeLength: bladeLength + 0.35,
                 rotSpeed,
+                bladeCount,
                 angle: Math.random() * Math.PI * 2,
                 hitCooldown: 0
             });
@@ -2988,6 +3003,39 @@
                     phase: index * Math.PI
                 });
             });
+        }
+
+        function addClimbDifficultyExtension(mapId, baseStep, topY) {
+            const extraSteps = (Math.max(1, state.climbLevel) - 1) * 4;
+            const colors = mapId === 'map1'
+                ? [0x06b6d4, 0x3b82f6, 0x8b5cf6, 0x10b981]
+                : [0x6366f1, 0xec4899, 0x06b6d4, 0xf59e0b];
+            const phase = mapId === 'map2' ? Math.PI / 6 : 0;
+            const platformSpacingRadius = 9.5;
+            const platformSize = 5.2;
+
+            for (let i = 0; i < extraSteps; i++) {
+                const angle = phase + i * Math.PI / 3;
+                const x = Math.cos(angle) * platformSpacingRadius;
+                const z = Math.sin(angle) * platformSpacingRadius;
+                const y = topY + (i + 1) * 1.85;
+                const step = baseStep + i + 1;
+                if (i % 2 === 0) {
+                    const axis = i % 4 === 0 ? 'x' : 'z';
+                    addRollingRailPlatform(
+                        x, y, z, platformSize, 1.1, platformSize, axis, 2.5,
+                        mapId === 'map2' ? 1.5 : 1.2,
+                        i * 0.8,
+                        step,
+                        mapId === 'map2' ? Math.PI / 12 : 0
+                    );
+                } else {
+                    const sweeperPadSize = 7.5;
+                    addPlatformBlock(x, y, z, sweeperPadSize, 1.2, sweeperPadSize, colors[i % colors.length], true, step);
+                    addFourBladeSweeper(x, y + 0.6, z, 3.4, mapId === 'map2' ? 1.25 : 0.9, 3);
+                }
+                spawnCollectibleGem(x, y + 1.85, z);
+            }
         }
 
         function createLobbySaucer() {
@@ -3267,6 +3315,7 @@
                 { x: 0, y: 35.0, z: 0, w: 10, d: 10, step: 18, gem: true }
             ];
 
+            let sweeperIndex = 0;
             steps.forEach((s, idx) => {
                 const col = palette[idx % palette.length];
                 if (s.rail) {
@@ -3275,12 +3324,16 @@
                     addPlatformBlock(s.x, s.y, s.z, s.w, 1.2, s.d, col, true, s.step);
                 }
                 if (s.sweeper) {
-                    addFourBladeSweeper(s.x, s.y + 0.6, s.z, s.sweeper, 1.7 + (idx % 3) * 0.25);
+                    const bladeCount = sweeperIndex < 2 ? 2 : sweeperIndex < 4 ? 3 : 4;
+                    const rotSpeed = (1.7 + (idx % 3) * 0.25) * 0.2;
+                    addFourBladeSweeper(s.x, s.y + 0.6, s.z, s.sweeper, rotSpeed, bladeCount);
+                    sweeperIndex++;
                 }
                 if (s.gem) {
                     spawnCollectibleGem(s.x, s.y + 1.85, s.z);
                 }
             });
+            addClimbDifficultyExtension('map1', 18, 35.0);
             if (state.backgroundTheme === 'noel') buildChristmasMapDecorations('map1');
         }
 
@@ -3327,25 +3380,29 @@
             ];
 
             const colors = [0x6366f1, 0x8b5cf6, 0xec4899, 0x06b6d4, 0x10b981, 0xf59e0b];
+            let map2SweeperIndex = 0;
             steps.forEach((s, idx) => {
                 const col = colors[idx % colors.length];
                 if (s.rail) {
-                    addRollingRailPlatform(s.x, s.y, s.z, s.w, 1.1, s.d, s.rail.axis, s.rail.range, s.rail.speed, idx * 0.9, s.step);
+                    addRollingRailPlatform(s.x, s.y, s.z, s.w, 1.1, s.d, s.rail.axis, s.rail.range, s.rail.speed, idx * 0.9, s.step, Math.PI / 12);
                 } else {
                     addPlatformBlock(s.x, s.y, s.z, s.w, 1.2, s.d, col, true, s.step);
                 }
                 if (s.sweeper) {
-                    addFourBladeSweeper(s.x, s.y + 0.6, s.z, s.sweeper, -1.9 - (idx % 3) * 0.25);
+                    const bladeCount = map2SweeperIndex < 2 ? 2 : map2SweeperIndex < 4 ? 3 : 4;
+                    addFourBladeSweeper(s.x, s.y + 0.6, s.z, s.sweeper, -1.9 - (idx % 3) * 0.25, bladeCount);
+                    map2SweeperIndex++;
                 }
                 if (s.gem) {
                     spawnCollectibleGem(s.x, s.y + 1.85, s.z);
                 }
             });
+            addClimbDifficultyExtension('map2', 20, 40.5);
             if (state.backgroundTheme === 'noel') buildChristmasMapDecorations('map2');
         }
 
         // Mode 2: Full Multi-Zone Walled Maze Arena for Target Hunt
-        function buildHuntArenaMap() {
+        function buildHuntArenaMap(mapId = 'map1') {
             clearWorld();
             MAP_BOUNDS.halfSize = 50;
 
@@ -3365,7 +3422,7 @@
             addPlatformBlock(-49, wallH / 2, 0, 2, wallH, 100, 0x334155, true, 0, true);
             addPlatformBlock(49, wallH / 2, 0, 2, wallH, 100, 0x334155, true, 0, true);
 
-            const mazeWalls = [
+            const map1Walls = [
                 { x: -24, z: -28, w: 22, d: 2.2, c: 0x0284c7 },
                 { x: -34, z: -16, w: 2.2, d: 20, c: 0x0284c7 },
                 { x: -14, z: -14, w: 16, d: 2.2, c: 0x0369a1 },
@@ -3383,6 +3440,25 @@
                 { x: -26, z: 0, w: 16, d: 2.2, c: 0x475569 },
                 { x: 26, z: 0, w: 16, d: 2.2, c: 0x475569 }
             ];
+            const map2Walls = [
+                { x: -28, z: -34, w: 30, d: 2.2, c: 0x0891b2 },
+                { x: -39, z: -17, w: 2.2, d: 34, c: 0x0e7490 },
+                { x: -18, z: -8, w: 28, d: 2.2, c: 0x155e75 },
+                { x: -8, z: -24, w: 2.2, d: 21, c: 0x0e7490 },
+                { x: 20, z: -33, w: 34, d: 2.2, c: 0x4338ca },
+                { x: 39, z: -17, w: 2.2, d: 34, c: 0x3730a3 },
+                { x: 13, z: 0, w: 20, d: 2.2, c: 0x4f46e5 },
+                { x: 7, z: 18, w: 2.2, d: 31, c: 0x4338ca },
+                { x: -23, z: 33, w: 32, d: 2.2, c: 0x0f766e },
+                { x: -40, z: 19, w: 2.2, d: 28, c: 0x115e59 },
+                { x: -22, z: 11, w: 30, d: 2.2, c: 0x0f766e },
+                { x: 24, z: 18, w: 29, d: 2.2, c: 0x0e7490 },
+                { x: 0, z: -8, w: 2.2, d: 8, c: 0x475569 },
+                { x: 14, z: -17, w: 20, d: 2.2, c: 0x475569 },
+                { x: -28, z: -19, w: 2.2, d: 20, c: 0x475569 },
+                { x: 28, z: 11, w: 2.2, d: 18, c: 0x475569 }
+            ];
+            const mazeWalls = mapId === 'map2' ? map2Walls : map1Walls;
 
             mazeWalls.forEach(w => {
                 addPlatformBlock(w.x, 2.7, w.z, w.w, 5.4, w.d, w.c, true, 0, true);
@@ -3393,13 +3469,20 @@
             addPlatformBlock(-22, 1.1, 20, 6, 2.2, 6, 0x10b981, true, 1);
             addPlatformBlock(22, 1.1, 20, 6, 2.2, 6, 0xf59e0b, true, 1);
 
-            const rawSpawns = [
+            const map1Spawns = [
                 [-40, 1.5, -40], [-22, 3.7, -20], [-8, 1.5, -38], [-40, 1.5, -8],
                 [40, 1.5, -40], [22, 3.7, -20], [8, 1.5, -38], [40, 1.5, -8],
                 [-40, 1.5, 40], [-22, 3.7, 20], [-8, 1.5, 38], [-40, 1.5, 8],
                 [40, 1.5, 40], [22, 3.7, 20], [8, 1.5, 38], [40, 1.5, 8],
                 [0, 1.5, -16], [0, 1.5, 16]
             ];
+            const map2Spawns = [
+                [-44, 1.5, -42], [-28, 1.5, -42], [-15, 1.5, -42], [12, 1.5, -42], [31, 1.5, -42], [44, 1.5, -40],
+                [-44, 1.5, 2], [-30, 1.5, 2], [-15, 1.5, -20], [0, 1.5, -20], [18, 1.5, -24], [31, 1.5, -20], [44, 1.5, 3],
+                [-44, 1.5, 31], [-22, 1.5, 25], [-12, 1.5, 42], [10, 1.5, 42], [30, 1.5, 41], [44, 1.5, 28],
+                [15, 1.5, 12], [-15, 1.5, 18]
+            ];
+            const rawSpawns = mapId === 'map2' ? map2Spawns : map1Spawns;
             rawSpawns.forEach(([sx, sy, sz]) => {
                 huntSpawnPoints.push(new THREE.Vector3(sx, sy, sz));
             });
@@ -3425,6 +3508,14 @@
             const pool = candidates.length > 0 ? candidates : huntSpawnPoints;
             const chosen = pool[Math.floor(Math.random() * pool.length)];
             const isNoelTheme = state.backgroundTheme === 'noel';
+            const movement = state.huntMapId === 'map2'
+                ? {
+                    rangeX: 1.4 + Math.random() * 0.8,
+                    rangeZ: 1.4 + Math.random() * 0.8,
+                    speed: (0.28 + Math.random() * 0.16) * 1.2,
+                    phase: Math.random() * Math.PI * 2
+                }
+                : null;
 
             const group = new THREE.Group();
             group.position.copy(chosen);
@@ -3531,6 +3622,7 @@
                 xrayCubeMat,
                 xrayBeamMat,
                 basePos: chosen.clone(),
+                movement,
                 hp: 2,
                 hitFlash: 0,
                 lifeRemaining: TARGET_TOTAL_LIFETIME,
@@ -4027,6 +4119,16 @@
 
             for (let i = targets.length - 1; i >= 0; i--) {
                 const t = targets[i];
+                if (t.movement) {
+                    const movementAngle = elapsedTime * t.movement.speed + t.movement.phase;
+                    t.group.position.set(
+                        t.basePos.x + Math.cos(movementAngle) * t.movement.rangeX,
+                        t.basePos.y + Math.sin(movementAngle * 1.4) * 0.18,
+                        t.basePos.z + Math.sin(movementAngle) * t.movement.rangeZ
+                    );
+                } else {
+                    t.group.position.copy(t.basePos);
+                }
                 t.group.rotation.y += dt * 1.6;
                 t.lifeRemaining -= dt;
 
@@ -4036,9 +4138,8 @@
                 if (t.hitFlash > 0) {
                     t.hitFlash -= dt;
                     t.body.material.color.setHex(0xffffff);
-                    t.group.position.x = t.basePos.x + (Math.random() - 0.5) * 0.25;
+                    t.group.position.x += (Math.random() - 0.5) * 0.25;
                 } else {
-                    t.group.position.x = t.basePos.x;
 
                     if (isCritical3s) {
                         anyTargetCritical = true;
@@ -4127,7 +4228,13 @@
             screen: 'menu', // 'menu' | 'playing'
             gameMode: 'climb', // 'climb' | 'hunt'
             climbMapId: 'map1',
+            climbLevel: 1,
+            climbMapLevels: { map1: 1, map2: 1 },
+            huntMapId: 'map1',
+            huntLevel: 1,
+            huntMapLevels: { map1: 1, map2: 1 },
             backgroundTheme: 'galaxy',
+            isDevMode: false,
             matchEnded: false,
             isPaused: false,
             matchStartTime: 0,
@@ -4221,6 +4328,57 @@
             toastTimeout = setTimeout(() => toastEl.classList.add('opacity-0'), 2400);
         }
 
+        function updateDeveloperModeBadge() {
+            const badge = document.getElementById('developer-mode-pill');
+            if (badge) badge.classList.toggle('hidden', !state.isDevMode);
+        }
+
+        function setDeveloperMode(enabled) {
+            state.isDevMode = enabled;
+            updateDeveloperModeBadge();
+            showToast(enabled
+                ? '🛠 DEV MODE bật: không mất máu, không bị vòng xoay gạt văng'
+                : '🛠 DEV MODE đã tắt');
+        }
+
+        function developerAdvanceClimbStep() {
+            const nextStep = colliders
+                .filter(box => typeof box.stepNumber === 'number' && box.stepNumber > state.currentStep)
+                .sort((a, b) => a.stepNumber - b.stepNumber)[0];
+            if (!nextStep) {
+                showToast('🛠 Không còn bậc tiếp theo trong map này');
+                return;
+            }
+
+            const x = (nextStep.minX + nextStep.maxX) / 2;
+            const z = (nextStep.minZ + nextStep.maxZ) / 2;
+            const y = getColliderTopY(nextStep, x, z);
+            state.pos.set(x, y, z);
+            state.vel.set(0, 0, 0);
+            state.isGrounded = true;
+            state.standingOnBox = nextStep;
+            state.currentStep = nextStep.stepNumber;
+            state.highestStep = Math.max(state.highestStep, nextStep.stepNumber);
+            state.highestGroundedY = y;
+            player.root.position.copy(state.pos);
+            updateObjectiveHUD();
+            showToast(`🛠 Đã chuyển tới bậc ${nextStep.stepNumber}`);
+        }
+
+        function developerDestroySoonestTarget() {
+            if (targets.length === 0) {
+                showToast('🛠 Chưa có bia mục tiêu');
+                return;
+            }
+
+            let soonestIndex = 0;
+            for (let i = 1; i < targets.length; i++) {
+                if (targets[i].lifeRemaining < targets[soonestIndex].lifeRemaining) soonestIndex = i;
+            }
+            const target = targets[soonestIndex];
+            handleTargetDestroyed(soonestIndex, target.group.position.clone(), state.weaponMode === 'lightning');
+        }
+
         function updateHealthHUD() {
             const pct = Math.max(0, Math.min(100, (state.hp / state.maxHp) * 100));
             const bar = document.getElementById('hud-hp-bar');
@@ -4263,32 +4421,27 @@
         function updateMenuStatsUI() {
             document.getElementById('menu-total-stars').textContent = state.totalStarsAllTime;
             document.getElementById('menu-total-targets').textContent = state.totalTargetsAllTime;
-            const clearedCount = [
-                state.completedMaps.climb_map1,
-                state.completedMaps.climb_map2,
-                state.completedMaps.hunt_mode
-            ].filter(Boolean).length;
-            document.getElementById('menu-maps-cleared').textContent = `${clearedCount}/3`;
+            const totalDifficultyStars = state.climbMapLevels.map1 + state.climbMapLevels.map2 +
+                state.huntMapLevels.map1 + state.huntMapLevels.map2;
+            document.getElementById('menu-maps-cleared').textContent = `${totalDifficultyStars}⭐`;
 
-            const setBadge = (elId, done) => {
-                const el = document.getElementById(elId);
-                if (!el) return;
-                if (done) {
-                    el.textContent = '✅ Đã xong';
-                    el.className = 'text-[10px] font-extrabold px-2 py-0.5 rounded bg-emerald-500/30 text-emerald-200 border border-emerald-400/40';
-                } else {
-                    el.textContent = 'Chưa xong';
-                    el.className = 'text-[10px] font-bold px-2 py-0.5 rounded bg-slate-950/60 text-slate-300';
-                }
-            };
-            setBadge('badge-climb-map1', state.completedMaps.climb_map1);
-            setBadge('badge-climb-map2', state.completedMaps.climb_map2);
-            setBadge('badge-hunt-mode', state.completedMaps.hunt_mode);
+            const climbMap1Level = Math.max(1, state.climbMapLevels.map1);
+            const climbMap2Level = Math.max(1, state.climbMapLevels.map2);
+            const huntMap1Level = Math.max(1, state.huntMapLevels.map1);
+            const huntMap2Level = Math.max(1, state.huntMapLevels.map2);
+            document.getElementById('climb-map1-progress').textContent =
+                `${18 + (climbMap1Level - 1) * 4} Tầng • Độ khó ${climbMap1Level}⭐`;
+            document.getElementById('climb-map2-progress').textContent =
+                `${20 + (climbMap2Level - 1) * 4} Tầng • Độ khó ${climbMap2Level}⭐`;
+            document.getElementById('hunt-map1-progress').textContent =
+                `Độ khó ${huntMap1Level}⭐ • Hạ ${15 + (huntMap1Level - 1) * 5} bia`;
+            document.getElementById('hunt-map2-progress').textContent =
+                `Độ khó ${huntMap2Level}⭐ • Hạ ${15 + (huntMap2Level - 1) * 5} bia • Bia di chuyển chậm`;
             renderSkinShopUI();
         }
 
         function applyPlayerDamage(amount, reasonMsg) {
-            if (state.matchEnded) return;
+            if (state.matchEnded || state.isDevMode) return;
             state.hp = Math.max(0, state.hp - amount);
             sound.playDamage();
             updateHealthHUD();
@@ -4330,10 +4483,13 @@
             if (state.gameMode === 'climb') {
                 if (state.climbMapId === 'map1') state.completedMaps.climb_map1 = true;
                 else state.completedMaps.climb_map2 = true;
+                state.climbMapLevels[state.climbMapId] = state.climbLevel + 1;
             } else {
                 state.completedMaps.hunt_mode = true;
+                state.huntMapLevels[state.huntMapId] = state.huntLevel + 1;
             }
             saveManager.saveNow(true);
+            updateMenuStatsUI();
 
             const elapsedSec = Math.floor((performance.now() - state.matchStartTime) / 1000);
             const mins = String(Math.floor(elapsedSec / 60)).padStart(2, '0');
@@ -4343,8 +4499,8 @@
             document.getElementById('result-title').textContent = 'HOÀN THÀNH MAP!';
             document.getElementById('result-title').className = 'text-2xl font-black text-amber-300 tracking-tight';
             document.getElementById('result-desc').textContent = state.gameMode === 'climb'
-                ? `Chúc mừng! Bạn đã chinh phục đỉnh cao và thu thập đủ ${stars.length} Gem (💎)!`
-                : `Xuất sắc! Bạn đã tiêu diệt đủ ${state.huntGoal} bia mục tiêu trong mê cung!`;
+                ? `Chúc mừng! Bạn đã hoàn thành Map ${state.climbMapId === 'map1' ? '1' : '2'} độ khó ${state.climbLevel}⭐ với ${stars.length} Gem. Lần sau map này lên độ khó ${state.climbMapLevels[state.climbMapId]}⭐ và thêm 4 tầng!`
+                : `Xuất sắc! Bạn đã hoàn thành Map ${state.huntMapId === 'map1' ? '1' : '2'} độ khó ${state.huntLevel}⭐ với ${state.huntGoal} bia. Lần sau map này lên độ khó ${state.huntMapLevels[state.huntMapId]}⭐ và tăng thêm 5 bia!`;
             document.getElementById('result-stats').textContent = `Thời gian hoàn thành: ${mins}:${secs} • Kho: ${state.totalStarsAllTime} 💎 | ${state.totalTargetsAllTime} 🎯`;
             document.getElementById('result-modal').classList.remove('hidden');
         }
@@ -4612,10 +4768,12 @@
 
             buildPayload() {
                 return {
-                    version: 6,
+                    version: 8,
                     game: 'Roblox Bearbrick 3D World',
                     savedAt: new Date().toISOString(),
                     backgroundTheme: state.backgroundTheme,
+                    climbMapLevels: { ...state.climbMapLevels },
+                    huntMapLevels: { ...state.huntMapLevels },
                     skin: state.skin || 'chrome',
                     unlockedSkins: Array.isArray(state.unlockedSkins) ? [...state.unlockedSkins] : [...DEFAULT_UNLOCKED_SKINS],
                     weaponMode: state.weaponMode || 'plasma',
@@ -4661,6 +4819,32 @@
                 if (!data || typeof data !== 'object') return false;
 
                 setBackgroundTheme(data.backgroundTheme, false);
+                const legacyClimbMap1Cleared = Boolean(data.completedMaps && data.completedMaps.climb_map1);
+                const legacyClimbMap2Cleared = Boolean(data.completedMaps && data.completedMaps.climb_map2);
+                const legacyHuntCleared = Boolean(data.completedMaps && data.completedMaps.hunt_mode);
+                const normalizeLevel = value => {
+                    const level = Number(value);
+                    return Number.isFinite(level) && level >= 1 ? Math.floor(level) : 1;
+                };
+                if (data.climbMapLevels && typeof data.climbMapLevels === 'object') {
+                    state.climbMapLevels = {
+                        map1: normalizeLevel(data.climbMapLevels.map1),
+                        map2: normalizeLevel(data.climbMapLevels.map2)
+                    };
+                } else {
+                    state.climbMapLevels = {
+                        map1: legacyClimbMap1Cleared ? 2 : 1,
+                        map2: legacyClimbMap2Cleared ? 2 : 1
+                    };
+                }
+                if (data.huntMapLevels && typeof data.huntMapLevels === 'object') {
+                    state.huntMapLevels = {
+                        map1: normalizeLevel(data.huntMapLevels.map1),
+                        map2: normalizeLevel(data.huntMapLevels.map2)
+                    };
+                } else {
+                    state.huntMapLevels = { map1: legacyHuntCleared ? 2 : 1, map2: 1 };
+                }
 
                 const hasPaidVipUnlocks = Number(data.version) >= 5;
                 const savedUnlockedSkins = Array.isArray(data.unlockedSkins)
@@ -4682,9 +4866,14 @@
                 state.totalStarsAllTime = Math.max(0, Number(data.totalStarsAllTime) || 0);
                 state.totalTargetsAllTime = Math.max(0, Number(data.totalTargetsAllTime) || 0);
                 if (data.completedMaps && typeof data.completedMaps === 'object') {
-                    state.completedMaps.climb_map1 = Boolean(data.completedMaps.climb_map1);
-                    state.completedMaps.climb_map2 = Boolean(data.completedMaps.climb_map2);
-                    state.completedMaps.hunt_mode = Boolean(data.completedMaps.hunt_mode);
+                    state.completedMaps.climb_map1 = Boolean(data.completedMaps.climb_map1) || state.climbMapLevels.map1 > 1;
+                    state.completedMaps.climb_map2 = Boolean(data.completedMaps.climb_map2) || state.climbMapLevels.map2 > 1;
+                    state.completedMaps.hunt_mode = Boolean(data.completedMaps.hunt_mode) ||
+                        state.huntMapLevels.map1 > 1 || state.huntMapLevels.map2 > 1;
+                } else {
+                    state.completedMaps.climb_map1 = state.climbMapLevels.map1 > 1;
+                    state.completedMaps.climb_map2 = state.climbMapLevels.map2 > 1;
+                    state.completedMaps.hunt_mode = state.huntMapLevels.map1 > 1 || state.huntMapLevels.map2 > 1;
                 }
                 if (this.menuSaveTimeEl) this.menuSaveTimeEl.textContent = this.formatTimeLabel(data.savedAt);
                 updateMenuStatsUI();
@@ -4744,6 +4933,12 @@
                 setBackgroundTheme('galaxy', false, true);
                 state.totalStarsAllTime = 0;
                 state.totalTargetsAllTime = 0;
+                state.climbMapLevels = { map1: 1, map2: 1 };
+                state.climbLevel = 1;
+                state.huntMapLevels = { map1: 1, map2: 1 };
+                state.huntMapId = 'map1';
+                state.huntLevel = 1;
+                state.huntGoal = 15;
                 state.unlockedSkins = [...DEFAULT_UNLOCKED_SKINS];
                 state.completedMaps = { climb_map1: false, climb_map2: false, hunt_mode: false };
                 applySkinSelection('chrome', true);
@@ -4767,6 +4962,8 @@
             sound.syncBackgroundMusic(state.backgroundTheme, 'menu');
             state.matchEnded = false;
             state.isPaused = false;
+            state.isDevMode = false;
+            updateDeveloperModeBadge();
             state.isAimingBomb = false;
             trajectoryGroup.visible = false;
             const xrayLayer = document.getElementById('xray-markers-layer');
@@ -4802,7 +4999,15 @@
             domElem.requestPointerLock?.();
             state.screen = 'playing';
             state.gameMode = mode;
-            state.climbMapId = mapId;
+            state.isDevMode = false;
+            updateDeveloperModeBadge();
+            if (mode === 'climb') {
+                state.climbMapId = mapId;
+                state.climbLevel = state.climbMapLevels[mapId] || 1;
+            } else {
+                state.huntMapId = mapId === 'map2' ? 'map2' : 'map1';
+                state.huntLevel = state.huntMapLevels[state.huntMapId] || 1;
+            }
             state.matchEnded = false;
             state.isPaused = false;
             state.isAimingBomb = false;
@@ -4832,30 +5037,31 @@
                 setCombatUIVisible(false);
 
                 if (mapId === 'map1') {
-                    titleEl.textContent = 'THÁP KHÔNG GIAN';
+                    titleEl.textContent = `THÁP KHÔNG GIAN • ĐỘ KHÓ ${state.climbLevel}⭐`;
                     buildClimbMap1();
                     state.pos.set(0, 0.5, 34);
                 } else {
-                    titleEl.textContent = 'PHÁO ĐÀI KHÔNG GIAN';
+                    titleEl.textContent = `PHÁO ĐÀI KHÔNG GIAN • ĐỘ KHÓ ${state.climbLevel}⭐`;
                     buildClimbMap2();
                     state.pos.set(0, 0.5, 36);
                 }
                 state.camYaw = 0;
                 state.rotationY = 0;
-                showToast('🏔️ Nhặt đủ 12 💎! Đứng im hồi +2HP/s, ngâm Hồ Nước hồi +5HP/s!');
+                showToast(`🏔️ Độ khó ${state.climbLevel}⭐ • Nhặt đủ ${stars.length} 💎!`);
             } else {
                 player.setWeaponsEquipped(true);
                 setCombatUIVisible(true);
 
-                titleEl.textContent = 'SĂN BIA MÊ CUNG';
-                buildHuntArenaMap();
+                state.huntGoal = 15 + (state.huntLevel - 1) * 5;
+                titleEl.textContent = `SĂN BIA MAP ${state.huntMapId === 'map1' ? '1' : '2'} • ĐỘ KHÓ ${state.huntLevel}⭐`;
+                buildHuntArenaMap(state.huntMapId);
                 state.pos.set(0, 0.5, 0);
                 state.camYaw = 0;
                 state.rotationY = 0;
                 spawnRandomHuntTarget();
                 spawnRandomHuntTarget();
                 spawnRandomHuntTarget();
-                showToast('🎯 Tìm bắn 15 bia! Bia nhấp nháy 10s rồi hiện xuyên tường 3s cuối!');
+                showToast(`🎯 Map ${state.huntMapId === 'map1' ? '1' : '2'} • Độ khó ${state.huntLevel}⭐: hạ ${state.huntGoal} bia!`);
             }
 
             state.vel.set(0, 0, 0);
@@ -4892,9 +5098,32 @@
         // ==========================================
         // INPUT & UI EVENT HANDLERS (INCLUDING FULL-SCREEN MENU TURNTABLE DRAG)
         // ==========================================
+        let pendingDeveloperHotkey = null;
+        let developerHotkeyTimeout = null;
+        const clearDeveloperHotkey = () => {
+            pendingDeveloperHotkey = null;
+            clearTimeout(developerHotkeyTimeout);
+            developerHotkeyTimeout = null;
+        };
+
         window.addEventListener('keydown', (e) => {
             if (state.screen !== 'playing' || state.matchEnded || state.isPaused) return;
             const code = e.code;
+            if (e.ctrlKey && e.shiftKey && (code === 'KeyH' || code === 'KeyP')) {
+                e.preventDefault();
+                if (!e.repeat) {
+                    if (pendingDeveloperHotkey && pendingDeveloperHotkey !== code) {
+                        clearDeveloperHotkey();
+                        setDeveloperMode(!state.isDevMode);
+                    } else {
+                        pendingDeveloperHotkey = code;
+                        clearTimeout(developerHotkeyTimeout);
+                        developerHotkeyTimeout = setTimeout(clearDeveloperHotkey, 1200);
+                    }
+                }
+                return;
+            }
+            if (pendingDeveloperHotkey) clearDeveloperHotkey();
             if (code === 'Space' || code === 'Enter') {
                 e.preventDefault();
                 const activeElement = document.activeElement;
@@ -4903,6 +5132,14 @@
                 }
             }
             sound.init();
+            if (state.isDevMode && code === 'ArrowUp') {
+                e.preventDefault();
+                if (!e.repeat) {
+                    if (state.gameMode === 'climb') developerAdvanceClimbStep();
+                    else if (state.gameMode === 'hunt') developerDestroySoonestTarget();
+                }
+                return;
+            }
             if (code === 'KeyW' || code === 'ArrowUp') state.keys.w = true;
             if (code === 'KeyS' || code === 'ArrowDown') state.keys.s = true;
             if (code === 'KeyA' || code === 'ArrowLeft') state.keys.a = true;
@@ -4925,6 +5162,9 @@
 
         window.addEventListener('keyup', (e) => {
             const code = e.code;
+            if (code === 'ControlLeft' || code === 'ControlRight' || code === 'ShiftLeft' || code === 'ShiftRight') {
+                clearDeveloperHotkey();
+            }
             if (code === 'KeyW' || code === 'ArrowUp') state.keys.w = false;
             if (code === 'KeyS' || code === 'ArrowDown') state.keys.s = false;
             if (code === 'KeyA' || code === 'ArrowLeft') state.keys.a = false;
@@ -5142,12 +5382,16 @@
         // Menu & HUD Button Bindings
         document.getElementById('btn-start-climb-1').addEventListener('click', () => startGameMode('climb', 'map1'));
         document.getElementById('btn-start-climb-2').addEventListener('click', () => startGameMode('climb', 'map2'));
-        document.getElementById('btn-start-hunt').addEventListener('click', () => startGameMode('hunt'));
+        document.getElementById('btn-start-hunt-map1').addEventListener('click', () => startGameMode('hunt', 'map1'));
+        document.getElementById('btn-start-hunt-map2').addEventListener('click', () => startGameMode('hunt', 'map2'));
         document.getElementById('btn-back-menu').addEventListener('click', pauseForExitConfirmation);
         document.getElementById('btn-exit-cancel').addEventListener('click', resumeFromExitConfirmation);
         document.getElementById('btn-exit-confirm').addEventListener('click', enterMainMenu);
         document.getElementById('btn-result-menu').addEventListener('click', enterMainMenu);
-        document.getElementById('btn-result-replay').addEventListener('click', () => startGameMode(state.gameMode, state.climbMapId));
+        document.getElementById('btn-result-replay').addEventListener('click', () => {
+            const mapId = state.gameMode === 'hunt' ? state.huntMapId : state.climbMapId;
+            startGameMode(state.gameMode, mapId);
+        });
 
         function syncAudioLabels() {
             const muted = sound.muted;
@@ -5309,6 +5553,16 @@
         // ==========================================
         // 8. OBSTACLE UPDATES, WATER POOL ANIMATION, AABB PHYSICS & HP REGEN
         // ==========================================
+        function getColliderTopY(box, x, z) {
+            if (!box.slopeAngle) return box.maxY;
+            if (box.slopeAxis === 'x') {
+                const centerX = (box.minX + box.maxX) / 2;
+                return box.maxY + (x - centerX) * Math.tan(box.slopeAngle);
+            }
+            const centerZ = (box.minZ + box.maxZ) / 2;
+            return box.maxY - (z - centerZ) * Math.tan(box.slopeAngle);
+        }
+
         function updateDynamicObstacles(dt, elapsedTime) {
             if (state.screen === 'menu' && state.backgroundTheme === 'galaxy') {
                 for (const saucer of lobbyFlyingSaucers) {
@@ -5381,13 +5635,14 @@
                         const dist = Math.hypot(relX, relZ);
                         if (dist > 0.4 && dist < sw.bladeLength) {
                             const pointAngle = Math.atan2(-relZ, relX);
-                            for (let b = 0; b < 4; b++) {
-                                const bladeAngle = sw.angle + (b * Math.PI) / 2;
+                            for (let b = 0; b < sw.bladeCount; b++) {
+                                const bladeAngle = sw.angle + (b * Math.PI * 2) / sw.bladeCount;
                                 let diff = pointAngle - bladeAngle;
                                 while (diff < -Math.PI) diff += Math.PI * 2;
                                 while (diff > Math.PI) diff -= Math.PI * 2;
                                 if (Math.abs(diff) < 0.16) {
                                     sw.hitCooldown = 0.75;
+                                    if (state.isDevMode) break;
                                     const pushDir = new THREE.Vector3(-Math.sin(bladeAngle), 0, -Math.cos(bladeAngle)).normalize();
                                     if (sw.rotSpeed < 0) pushDir.negate();
                                     state.vel.x = pushDir.x * 22;
@@ -5432,8 +5687,11 @@
                 if (moveDir.lengthSq() > 1) moveDir.normalize();
             }
 
-            const targetVx = moveDir.x * MOVE_SPEED;
-            const targetVz = moveDir.z * MOVE_SPEED;
+            const slopeBox = state.isGrounded && state.standingOnBox && state.standingOnBox.slopeAngle
+                ? state.standingOnBox
+                : null;
+            const targetVx = moveDir.x * MOVE_SPEED + (slopeBox ? slopeBox.slideDirX * slopeBox.slideSpeed : 0);
+            const targetVz = moveDir.z * MOVE_SPEED + (slopeBox ? slopeBox.slideDirZ * slopeBox.slideSpeed : 0);
             const accel = state.isGrounded ? 16 : 7;
             state.vel.x = THREE.MathUtils.lerp(state.vel.x, targetVx, dt * accel);
             state.vel.z = THREE.MathUtils.lerp(state.vel.z, targetVz, dt * accel);
@@ -5443,9 +5701,11 @@
             // X Collision
             state.pos.x += state.vel.x * dt;
             for (const box of colliders) {
+                if (box.slopeAngle && state.isGrounded && state.standingOnBox === box) continue;
+                const boxTopY = getColliderTopY(box, state.pos.x, state.pos.z);
                 if (
                     state.pos.y + PLAYER_HEIGHT > box.minY + 0.05 &&
-                    state.pos.y < box.maxY - 0.05 &&
+                    state.pos.y < boxTopY - 0.05 &&
                     state.pos.z + PLAYER_RADIUS > box.minZ &&
                     state.pos.z - PLAYER_RADIUS < box.maxZ
                 ) {
@@ -5460,9 +5720,11 @@
             // Z Collision
             state.pos.z += state.vel.z * dt;
             for (const box of colliders) {
+                if (box.slopeAngle && state.isGrounded && state.standingOnBox === box) continue;
+                const boxTopY = getColliderTopY(box, state.pos.x, state.pos.z);
                 if (
                     state.pos.y + PLAYER_HEIGHT > box.minY + 0.05 &&
-                    state.pos.y < box.maxY - 0.05 &&
+                    state.pos.y < boxTopY - 0.05 &&
                     state.pos.x + PLAYER_RADIUS > box.minX &&
                     state.pos.x - PLAYER_RADIUS < box.maxX
                 ) {
@@ -5487,8 +5749,10 @@
                     state.pos.z + PLAYER_RADIUS > box.minZ &&
                     state.pos.z - PLAYER_RADIUS < box.maxZ
                 ) {
-                    if (state.vel.y <= 0 && state.pos.y <= box.maxY && state.pos.y >= box.minY - 0.25) {
-                        state.pos.y = box.maxY;
+                    const surfaceY = getColliderTopY(box, state.pos.x, state.pos.z);
+
+                    if (state.vel.y <= 0 && state.pos.y <= surfaceY && state.pos.y >= box.minY - 0.25) {
+                        state.pos.y = surfaceY;
                         state.vel.y = 0;
                         state.isGrounded = true;
                         state.standingOnBox = box;

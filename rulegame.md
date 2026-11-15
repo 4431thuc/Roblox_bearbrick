@@ -58,11 +58,23 @@ Chuyển màn hình qua hàm:
 
 ### 3.2 Che do choi (Game Mode)
 
-Hiện tại có **1 chế độ chính**:
-- **`climb`** (Leo thang): Người chơi điều khiển Bearbrick leo lên tháp các nền Platform, tránh chướng ngại vật, thu thập gem, erreichen mục tiêu cao nhất
+Hiện có **2 chế độ chính**:
+- **`climb`** (Leo thang): Leo platform, tránh chướng ngại vật và thu thập gem trên hai map.
+- **`hunt`** (Săn bia): Bắn và ném bom vào bia trong mê cung.
 
-Bản đồ mẫu:
-- **Map 1: Rainbow Sky Tower** - 18 bậc thang, có hồ chữa cháy (+5 HP/s khi đứng trong), đường ray lăn (rolling rails), vòng quay 4 cánh (4-blade sweepers), 12 gem rải rác
+Bản đồ:
+- **Climb Map 1:** Tháp Không Gian, 18 tầng.
+- **Climb Map 2:** Pháo Đài Không Gian, 20 tầng.
+- **Hunt Map 1:** Mê Cung Cổ Điển; bia đứng yên.
+- **Hunt Map 2:** Mê Cung Chuyển Động; bố cục tường khác Map 1, có lối đi vào các khu vực và bia di chuyển chậm quanh vị trí spawn.
+
+Mỗi climb map bắt đầu ở **độ khó 1⭐**. Thắng map sẽ lưu độ khó kế tiếp riêng cho map đó và thêm **4 tầng** vào đường leo, xen kẽ ray trượt và vòng xoay. Các tầng mở rộng được bố trí theo quy tắc vòng lục giác bán kính 9.5 đơn vị, mỗi bước lệch 60° (không random); ô vòng xoay rộng 7.5 đơn vị để có thêm chỗ đứng. Không có giới hạn level được đặt trong code. Ở Map 2, vòng xoay 1–2 có 2 cánh, vòng 3–4 có 3 cánh; ray trượt nghiêng 15° và đẩy Bearbrick trượt chậm xuống dốc.
+
+Mỗi hunt map có level riêng, lưu trong `state.huntMapLevels`. Map bắt đầu ở cấp 1 với 15 bia; mỗi lần thắng, cấp của map đó tăng 1 và mục tiêu tăng thêm 5 bia (`15 + 5 × (level - 1)`).
+
+Để dễ tiếp cận hơn, Climb Map 1 giảm tốc độ các vòng xoay còn 20% mức cũ; vòng 1–2 có 2 cánh, vòng 3–4 có 3 cánh (vòng 5 giữ 4 cánh). Tốc độ bia tuần tra ở Hunt Map 2 tăng 20% so với cấu hình ban đầu.
+
+Kho thành tích ở sảnh hiển thị tổng độ khó ⭐ của cả bốn map; các map không còn badge hoàn thành vì có thể nâng độ khó vô hạn.
 
 ### 3.3 Nhan vat & State
 
@@ -234,8 +246,10 @@ Mở khóa skin: Hàm `applySkinSelection(skinKey)` thay đổi `state.skin`, re
 | Xuất JSON | `menu-btn-export` | Tải dữ liệu lưu về tệp JSON |
 | Nhập JSON | `menu-btn-import` | Chọn tệp JSON để nhập dữ liệu |
 | Đặt lại dữ liệu | `menu-btn-reset` | Xóa toàn bộ tiến trình lưu (gem, skin, điểm) |
-| Bắt đầu Chế độ Leo (Map 1) | `btn-start-climb-1` | Bắt đầu chơi map "Rainbow Sky Tower" |
-| (Các nút chế độ khác) | `btn-start-*` | Các chế độ bản đồ khác nếu có |
+| Bắt đầu Climb Map 1 | `btn-start-climb-1` | Chơi Tháp Không Gian |
+| Bắt đầu Climb Map 2 | `btn-start-climb-2` | Chơi Pháo Đài Không Gian |
+| Bắt đầu Hunt Map 1 | `btn-start-hunt-map1` | Săn bia đứng yên ở mê cung cổ điển |
+| Bắt đầu Hunt Map 2 | `btn-start-hunt-map2` | Săn bia di chuyển chậm ở mê cung mới |
 
 ### 5.2 Man choi / HUD (In-Game)
 
@@ -247,6 +261,7 @@ Mở khóa skin: Hàm `applySkinSelection(skinKey)` thay đổi `state.skin`, re
 | Nhảy (di động) | `touch-jump` | Lệnh nhảy trên thiết bị cảm ứng |
 | Reset nhân vật | `btn-reset` | `respawnPlayer()` - hồi sinh tại điểm xuất phát |
 | Khóa chuột (Pointer Lock) | `btn-pointer-lock` | Bật/tắt khóa con trỏ chuột (Shift-Lock) |
+| Developer Mode | Giữ `Ctrl` + `Shift`, nhấn `H` rồi `P` trong vòng 1,2 giây | Bật/tắt không mất máu và không bị vòng xoay đánh văng; trong climb, `ArrowUp` tới bậc kế tiếp; trong hunt, `ArrowUp` hạ bia sắp nổ nhất |
 | MởDrawer Avatar | `btn-avatar-toggle` | Mở/đóng bảng thông tin nhân vật và skin |
 | Lưu game (trong chơi) | `btn-save-local` | Lưu tiến trình ngay lập tức |
 | Xuất JSON (trong chơi) | `btn-export-json` | Tải file JSON |
@@ -319,8 +334,13 @@ Dưới đây là danh sách các hàm quan trọng trong `index.html` (theo th�
 ```javascript
 state = {
     screen: 'menu' | 'playing',
-    gameMode: 'climb',
+    gameMode: 'climb' | 'hunt',
     climbMapId: 'map1',
+    climbLevel: 1,
+    climbMapLevels: { map1: 1, map2: 1 },
+    huntMapId: 'map1' | 'map2',
+    huntLevel: 1,
+    huntMapLevels: { map1: 1, map2: 1 },
     matchEnded: false,
     pos: {x, y, z},           // Vị trí người chơi
     hp: 100,                  // Máu tối đa 100
