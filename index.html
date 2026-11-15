@@ -170,7 +170,7 @@
         </div>
 
         <!-- Middle Drag Hint Badge -->
-        <div class="self-center mt-auto mb-2 pointer-events-none">
+        <div id="menu-drag-hint" class="self-center mt-auto mb-2 pointer-events-none">
             <div class="glass-panel px-3.5 py-1.5 rounded-full text-[11px] font-bold text-cyan-200 border border-cyan-400/30 flex items-center gap-2 shadow-lg">
                 <span>🔄</span>
                 <span>Vuốt / Kéo chuột ngang để xoay 360° Bearbrick &amp; Trang phục VIP</span>
@@ -181,11 +181,32 @@
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-3 max-w-6xl w-full mx-auto pointer-events-none max-h-[60vh] overflow-y-auto pr-0.5">
             <!-- Left Column (5 cols): Skin Shop (collapsed by default, expand on button click) -->
             <div class="lg:col-span-5 flex flex-col-reverse gap-2">
-                <!-- Toggle button: Mở Cửa Hàng Skin -->
-                <button id="btn-toggle-skin-shop" type="button" class="w-full glass-panel hover:bg-amber-500/20 border border-amber-400/30 text-amber-200 text-xs font-bold px-3 py-2.5 rounded-xl flex items-center justify-between gap-2 transition active:scale-95 pointer-events-auto">
-                    <span class="flex items-center gap-1.5 pointer-events-none">🎨 Mở Cửa Hàng Skin &amp; VIP</span>
-                    <span id="skin-shop-toggle-icon" class="text-[10px] font-bold pointer-events-none">▼</span>
-                </button>
+                <div class="grid grid-cols-2 gap-2">
+                    <button id="btn-toggle-background" type="button" aria-expanded="false" class="w-full glass-panel hover:bg-indigo-500/20 border border-indigo-400/30 text-indigo-200 text-xs font-bold px-3 py-2.5 rounded-xl flex items-center justify-between gap-2 transition active:scale-95 pointer-events-auto">
+                        <span class="flex items-center gap-1.5 pointer-events-none">🌌 Background</span>
+                        <span id="background-toggle-icon" class="text-[10px] font-bold pointer-events-none">▼</span>
+                    </button>
+                    <button id="btn-toggle-skin-shop" type="button" aria-expanded="false" class="w-full glass-panel hover:bg-amber-500/20 border border-amber-400/30 text-amber-200 text-xs font-bold px-3 py-2.5 rounded-xl flex items-center justify-between gap-2 transition active:scale-95 pointer-events-auto">
+                        <span class="flex items-center gap-1.5 pointer-events-none">🎨 Skin &amp; VIP</span>
+                        <span id="skin-shop-toggle-icon" class="text-[10px] font-bold pointer-events-none">▼</span>
+                    </button>
+                </div>
+
+                <div id="background-theme-panel" class="hidden glass-panel rounded-2xl p-3.5 border border-indigo-400/25 pointer-events-auto">
+                    <div class="text-xs font-extrabold uppercase tracking-wider text-indigo-200 mb-2">Chủ đề background</div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button id="btn-background-galaxy" type="button" aria-pressed="true" class="background-theme-option rounded-xl border border-indigo-300/50 bg-gradient-to-r from-indigo-500/25 to-cyan-500/20 px-3 py-2.5 flex items-center gap-2 text-left text-white">
+                            <span class="text-xl" aria-hidden="true">🌌</span>
+                            <span class="text-xs font-bold">Galaxy</span>
+                            <span class="background-theme-selected ml-auto text-[10px] font-extrabold text-emerald-300">✓</span>
+                        </button>
+                        <button id="btn-background-noel" type="button" aria-pressed="false" class="background-theme-option rounded-xl border border-white/10 bg-slate-950/35 px-3 py-2.5 flex items-center gap-2 text-left text-white">
+                            <span class="text-xl" aria-hidden="true">🎅</span>
+                            <span class="text-xs font-bold">Noel</span>
+                            <span class="background-theme-selected hidden ml-auto text-[10px] font-extrabold text-emerald-300">✓</span>
+                        </button>
+                    </div>
+                </div>
 
                 <!-- Skin Shop Panel (hidden by default) -->
                 <div id="menu-skin-shop-panel" class="hidden glass-panel rounded-2xl p-3.5 sm:p-4 flex flex-col justify-between border border-white/15 pointer-events-auto">
@@ -228,7 +249,7 @@
             <!-- Right Column (7 cols): Game Modes (collapsed by default, expand on button click) -->
             <div class="lg:col-span-7 flex flex-col-reverse gap-2">
                 <!-- Toggle button: Chọn Game / Chế Độ Chơi -->
-                <button id="btn-toggle-game-modes" type="button" class="w-full glass-panel hover:bg-cyan-500/20 border border-cyan-400/30 text-cyan-200 text-xs font-bold px-3 py-2.5 rounded-xl flex items-center justify-between gap-2 transition active:scale-95 pointer-events-auto">
+                <button id="btn-toggle-game-modes" type="button" aria-expanded="false" class="w-full glass-panel hover:bg-cyan-500/20 border border-cyan-400/30 text-cyan-200 text-xs font-bold px-3 py-2.5 rounded-xl flex items-center justify-between gap-2 transition active:scale-95 pointer-events-auto">
                     <span class="flex items-center gap-1.5 pointer-events-none">🎮 Chọn Game / Chế Độ Chơi</span>
                     <span id="game-modes-toggle-icon" class="text-[10px] font-bold pointer-events-none">▼</span>
                 </button>
@@ -249,7 +270,7 @@
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
                             <button id="btn-start-climb-1" type="button" class="group bg-gradient-to-r from-amber-500/25 to-orange-600/25 hover:from-amber-500/40 hover:to-orange-600/40 border border-amber-400/50 rounded-xl p-2.5 text-left transition active:scale-95 flex items-center justify-between">
                                 <div>
-                                    <div class="font-extrabold text-xs text-white group-hover:text-amber-200">🌈 Map 1: Tháp Cầu Vồng</div>
+                                    <div class="font-extrabold text-xs text-white group-hover:text-amber-200">🌈 Map 1: Tháp Không Gian</div>
                                     <div class="text-[10px] text-slate-300 mt-0.5">18 Tầng • Hồ Hồi Phục &amp; Vòng 4 thanh</div>
                                 </div>
                                 <span id="badge-climb-map1" class="text-[10px] font-bold px-2 py-0.5 rounded bg-slate-950/60 text-slate-300">Chưa xong</span>
@@ -858,7 +879,168 @@
         renderer.toneMappingExposure = 1.12;
         container.appendChild(renderer.domElement);
 
+        function addHolidayBranch(parent, start, end, radius, material) {
+            const direction = new THREE.Vector3().subVectors(end, start);
+            const branch = new THREE.Mesh(
+                new THREE.CylinderGeometry(radius * 0.72, radius, direction.length(), 7),
+                material
+            );
+            branch.position.copy(start).add(end).multiplyScalar(0.5);
+            branch.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), direction.normalize());
+            parent.add(branch);
+            return branch;
+        }
+
+        function createReindeerModel() {
+            const reindeer = new THREE.Group();
+            const furMat = new THREE.MeshStandardMaterial({ color: 0x8b5a36, roughness: 0.86 });
+            const lightFurMat = new THREE.MeshStandardMaterial({ color: 0xd6b18a, roughness: 0.9 });
+            const antlerMat = new THREE.MeshStandardMaterial({ color: 0xd6b47a, roughness: 0.72 });
+            const noseMat = new THREE.MeshStandardMaterial({ color: 0xef4444, emissive: 0x991b1b, emissiveIntensity: 0.35 });
+            const eyeMat = new THREE.MeshBasicMaterial({ color: 0x111827 });
+
+            const body = new THREE.Mesh(new RoundedBoxGeometry(1.8, 0.82, 0.8, 4, 0.18), furMat);
+            body.position.y = 1.08;
+            reindeer.add(body);
+
+            const neck = new THREE.Mesh(new RoundedBoxGeometry(0.48, 1.05, 0.52, 4, 0.14), furMat);
+            neck.position.set(0.62, 1.62, 0);
+            neck.rotation.z = -0.42;
+            reindeer.add(neck);
+
+            const head = new THREE.Mesh(new THREE.SphereGeometry(0.48, 14, 10), furMat);
+            head.scale.set(1.1, 0.88, 0.84);
+            head.position.set(0.98, 2.1, 0);
+            reindeer.add(head);
+
+            const muzzle = new THREE.Mesh(new THREE.SphereGeometry(0.28, 12, 8), lightFurMat);
+            muzzle.scale.set(1.2, 0.75, 0.8);
+            muzzle.position.set(1.34, 1.98, 0);
+            reindeer.add(muzzle);
+
+            const nose = new THREE.Mesh(new THREE.SphereGeometry(0.15, 10, 8), noseMat);
+            nose.position.set(1.58, 2.02, 0);
+            reindeer.add(nose);
+
+            [-1, 1].forEach(side => {
+                const eye = new THREE.Mesh(new THREE.SphereGeometry(0.055, 8, 6), eyeMat);
+                eye.position.set(1.12, 2.2, side * 0.32);
+                reindeer.add(eye);
+
+                const ear = new THREE.Mesh(new THREE.ConeGeometry(0.18, 0.52, 5), furMat);
+                ear.position.set(0.64, 2.35, side * 0.4);
+                ear.rotation.z = -0.5;
+                ear.rotation.x = side * 0.3;
+                reindeer.add(ear);
+
+                const antlerBase = new THREE.Vector3(0.72, 2.45, side * 0.2);
+                const antlerTop = new THREE.Vector3(0.65, 3.02, side * 0.34);
+                addHolidayBranch(reindeer, antlerBase, antlerTop, 0.085, antlerMat);
+                addHolidayBranch(reindeer, antlerTop, new THREE.Vector3(0.36, 3.28, side * 0.4), 0.06, antlerMat);
+                addHolidayBranch(reindeer, antlerTop, new THREE.Vector3(0.94, 3.26, side * 0.55), 0.06, antlerMat);
+            });
+
+            const legPivots = [];
+            [-0.55, 0.55].forEach(x => {
+                [-0.25, 0.25].forEach(z => {
+                    const pivot = new THREE.Group();
+                    pivot.position.set(x, 0.78, z);
+                    const leg = new THREE.Mesh(new RoundedBoxGeometry(0.22, 0.72, 0.22, 3, 0.05), furMat);
+                    leg.position.y = -0.34;
+                    pivot.add(leg);
+                    reindeer.add(pivot);
+                    legPivots.push(pivot);
+                });
+            });
+            reindeer.userData.legPivots = legPivots;
+            return reindeer;
+        }
+
+        function createSantaSleigh() {
+            const sleigh = new THREE.Group();
+            const reindeer = [];
+            const redMat = new THREE.MeshStandardMaterial({ color: 0xb91c1c, metalness: 0.25, roughness: 0.38 });
+            const goldMat = new THREE.MeshStandardMaterial({ color: 0xfacc15, metalness: 0.65, roughness: 0.28 });
+            const whiteMat = new THREE.MeshStandardMaterial({ color: 0xf8fafc, roughness: 0.82 });
+            const skinMat = new THREE.MeshStandardMaterial({ color: 0xfed7aa, roughness: 0.8 });
+
+            const sleighBody = new THREE.Mesh(new RoundedBoxGeometry(3.2, 0.65, 1.8, 4, 0.24), redMat);
+            sleighBody.position.y = 1.3;
+            sleigh.add(sleighBody);
+
+            const backrest = new THREE.Mesh(new RoundedBoxGeometry(0.48, 1.35, 1.72, 4, 0.2), redMat);
+            backrest.position.set(-1.25, 2.15, 0);
+            sleigh.add(backrest);
+
+            [-0.68, 0.68].forEach(z => {
+                const curve = new THREE.CatmullRomCurve3([
+                    new THREE.Vector3(-1.8, 0.72, z),
+                    new THREE.Vector3(-2.2, 0.25, z),
+                    new THREE.Vector3(-1.4, 0.12, z),
+                    new THREE.Vector3(1.55, 0.12, z),
+                    new THREE.Vector3(2.0, 0.72, z)
+                ]);
+                sleigh.add(new THREE.Mesh(new THREE.TubeGeometry(curve, 24, 0.09, 8, false), goldMat));
+            });
+
+            const santaBody = new THREE.Mesh(new RoundedBoxGeometry(0.96, 1.2, 0.9, 4, 0.2), redMat);
+            santaBody.position.set(-0.15, 2.2, 0);
+            sleigh.add(santaBody);
+            const belt = new THREE.Mesh(new RoundedBoxGeometry(1.0, 0.16, 0.94, 3, 0.04), goldMat);
+            belt.position.set(-0.15, 2.0, 0);
+            sleigh.add(belt);
+
+            const santaHead = new THREE.Mesh(new THREE.SphereGeometry(0.52, 14, 10), skinMat);
+            santaHead.position.set(0.02, 3.1, 0);
+            sleigh.add(santaHead);
+            const beard = new THREE.Mesh(new THREE.SphereGeometry(0.42, 12, 8), whiteMat);
+            beard.scale.set(0.9, 0.75, 0.9);
+            beard.position.set(0.22, 2.86, 0);
+            sleigh.add(beard);
+            const hat = new THREE.Mesh(new THREE.ConeGeometry(0.46, 0.85, 10), redMat);
+            hat.position.set(-0.02, 3.68, 0);
+            hat.rotation.z = -0.22;
+            sleigh.add(hat);
+            const hatTrim = new THREE.Mesh(new THREE.TorusGeometry(0.42, 0.1, 8, 16), whiteMat);
+            hatTrim.rotation.x = Math.PI / 2;
+            hatTrim.position.set(-0.02, 3.35, 0);
+            sleigh.add(hatTrim);
+            const pom = new THREE.Mesh(new THREE.SphereGeometry(0.15, 8, 6), whiteMat);
+            pom.position.set(-0.2, 4.1, 0);
+            sleigh.add(pom);
+
+            const sack = new THREE.Mesh(
+                new THREE.SphereGeometry(0.82, 14, 10),
+                new THREE.MeshStandardMaterial({ color: 0x166534, roughness: 0.9 })
+            );
+            sack.scale.set(1.2, 1.0, 0.9);
+            sack.position.set(-2.05, 2.05, 0);
+            sleigh.add(sack);
+
+            [
+                { x: 4.0, z: -0.85 },
+                { x: 4.0, z: 0.85 },
+                { x: 7.2, z: 0 }
+            ].forEach(({ x, z }) => {
+                const deer = createReindeerModel();
+                deer.scale.setScalar(0.62);
+                deer.position.set(x, 0, z);
+                sleigh.add(deer);
+                reindeer.push(deer);
+            });
+
+            return { group: sleigh, reindeer };
+        }
+
         function createSpaceBackdrop() {
+            const backdropGroup = new THREE.Group();
+            scene.add(backdropGroup);
+            const galaxyGroup = new THREE.Group();
+            backdropGroup.add(galaxyGroup);
+            const noelGroup = new THREE.Group();
+            noelGroup.visible = false;
+            backdropGroup.add(noelGroup);
+
             const starCount = 1400;
             const positions = new Float32Array(starCount * 3);
             for (let i = 0; i < starCount; i++) {
@@ -872,7 +1054,7 @@
             const starGeo = new THREE.BufferGeometry();
             starGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
             const starMat = new THREE.PointsMaterial({ color: 0xe0f2fe, size: 1.2, transparent: true, opacity: 0.85 });
-            scene.add(new THREE.Points(starGeo, starMat));
+            backdropGroup.add(new THREE.Points(starGeo, starMat));
 
             const planetGroup = new THREE.Group();
             const planet = new THREE.Mesh(
@@ -890,10 +1072,317 @@
             planetGroup.add(ring);
 
             planetGroup.position.set(-75, 85, -135);
-            scene.add(planetGroup);
-            return planetGroup;
+            galaxyGroup.add(planetGroup);
+
+            const moonGroup = new THREE.Group();
+            const moonRadius = 9;
+            moonGroup.add(new THREE.Mesh(
+                new THREE.SphereGeometry(moonRadius, 28, 20),
+                new THREE.MeshStandardMaterial({ color: 0xa8b4c6, roughness: 0.92, metalness: 0.02 })
+            ));
+
+            const craterGeo = new THREE.SphereGeometry(1, 12, 8);
+            const craterMat = new THREE.MeshStandardMaterial({ color: 0x64748b, roughness: 1 });
+            [
+                { dir: [0.2, 0.75, 0.62], size: [1.8, 1.3, 0.16] },
+                { dir: [-0.62, 0.35, 0.7], size: [1.25, 0.9, 0.14] },
+                { dir: [0.68, 0.05, 0.72], size: [1.1, 0.85, 0.13] },
+                { dir: [-0.2, -0.55, 0.8], size: [1.55, 1.1, 0.15] },
+                { dir: [0.55, -0.68, 0.48], size: [0.85, 0.7, 0.12] }
+            ].forEach(({ dir, size }) => {
+                const normal = new THREE.Vector3(...dir).normalize();
+                const crater = new THREE.Mesh(craterGeo, craterMat);
+                crater.position.copy(normal.clone().multiplyScalar(moonRadius - 0.08));
+                crater.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), normal);
+                crater.scale.set(...size);
+                moonGroup.add(crater);
+            });
+            moonGroup.position.set(78, 58, -175);
+            galaxyGroup.add(moonGroup);
+
+            const spacecraft = new THREE.Group();
+            const hullMat = new THREE.MeshStandardMaterial({
+                color: 0xcbd5e1,
+                metalness: 0.72,
+                roughness: 0.26,
+                emissive: 0x0f172a,
+                emissiveIntensity: 0.35
+            });
+            const wingMat = new THREE.MeshStandardMaterial({
+                color: 0x475569,
+                metalness: 0.65,
+                roughness: 0.32
+            });
+            const glassMat = new THREE.MeshStandardMaterial({
+                color: 0x38bdf8,
+                emissive: 0x0284c7,
+                emissiveIntensity: 0.75,
+                metalness: 0.3,
+                roughness: 0.16
+            });
+            const engineMat = new THREE.MeshBasicMaterial({ color: 0x67e8f9 });
+
+            const fuselage = new THREE.Mesh(new RoundedBoxGeometry(11, 1.35, 2.4, 4, 0.3), hullMat);
+            spacecraft.add(fuselage);
+
+            const nose = new THREE.Mesh(new THREE.ConeGeometry(1.15, 4.2, 10), hullMat);
+            nose.rotation.z = -Math.PI / 2;
+            nose.position.x = 7.1;
+            spacecraft.add(nose);
+
+            const wings = new THREE.Mesh(new RoundedBoxGeometry(5.5, 0.28, 8, 3, 0.16), wingMat);
+            wings.position.set(-1.3, -0.35, 0);
+            spacecraft.add(wings);
+
+            const cockpit = new THREE.Mesh(new THREE.SphereGeometry(1, 18, 12), glassMat);
+            cockpit.scale.set(1.6, 0.65, 0.78);
+            cockpit.position.set(1.4, 0.83, 0);
+            spacecraft.add(cockpit);
+
+            const engineNozzleMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, metalness: 0.8, roughness: 0.28 });
+            [-0.72, 0.72].forEach(z => {
+                const nozzle = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.58, 1.5, 12), engineNozzleMat);
+                nozzle.rotation.z = Math.PI / 2;
+                nozzle.position.set(-6.05, 0, z);
+                spacecraft.add(nozzle);
+
+                const engineGlow = new THREE.Mesh(new THREE.SphereGeometry(0.38, 12, 8), engineMat);
+                engineGlow.position.set(-6.85, 0, z);
+                spacecraft.add(engineGlow);
+            });
+
+            const wingLightsMat = new THREE.MeshBasicMaterial({ color: 0xf472b6 });
+            [-3.35, 3.35].forEach(z => {
+                const wingLight = new THREE.Mesh(new THREE.SphereGeometry(0.22, 8, 6), wingLightsMat);
+                wingLight.position.set(-1.7, 0.08, z);
+                spacecraft.add(wingLight);
+            });
+            spacecraft.scale.setScalar(1.25);
+            spacecraft.position.set(45, 55, -110);
+            galaxyGroup.add(spacecraft);
+
+            const cloudMaterial = new THREE.MeshStandardMaterial({
+                color: 0x334155,
+                emissive: 0x101827,
+                emissiveIntensity: 0.3,
+                roughness: 1,
+                transparent: true,
+                opacity: 0.82,
+                depthWrite: false
+            });
+            const cloudGeometry = new THREE.SphereGeometry(1, 14, 10);
+            const clouds = [];
+            [
+                { x: -110, y: 54, z: -130, scale: 1.0, speed: 0.035 },
+                { x: -25, y: 66, z: -205, scale: 1.35, speed: 0.025 },
+                { x: 90, y: 50, z: -160, scale: 1.1, speed: 0.03 },
+                { x: 150, y: 70, z: -230, scale: 1.5, speed: 0.02 }
+            ].forEach((cloud, cloudIndex) => {
+                const cloudGroup = new THREE.Group();
+                const puffs = [
+                    { x: -8, y: 0, z: 0, s: [12, 4.5, 6] },
+                    { x: -2, y: 2, z: 0, s: [15, 6, 8] },
+                    { x: 6, y: 0.5, z: 1, s: [13, 5, 7] },
+                    { x: 12, y: -1, z: 0, s: [9, 3.8, 6] }
+                ];
+                puffs.forEach(puff => {
+                    const mesh = new THREE.Mesh(cloudGeometry, cloudMaterial);
+                    mesh.position.set(puff.x, puff.y, puff.z);
+                    mesh.scale.set(puff.s[0] * cloud.scale, puff.s[1] * cloud.scale, puff.s[2] * cloud.scale);
+                    cloudGroup.add(mesh);
+                });
+                cloudGroup.position.set(cloud.x, cloud.y, cloud.z);
+                noelGroup.add(cloudGroup);
+                clouds.push({
+                    group: cloudGroup,
+                    baseX: cloud.x,
+                    baseZ: cloud.z,
+                    speed: cloud.speed,
+                    phase: cloudIndex * 1.7,
+                    range: 14 + cloudIndex * 2
+                });
+            });
+
+            const santaSleigh = createSantaSleigh();
+            santaSleigh.group.scale.setScalar(1.35);
+            noelGroup.add(santaSleigh.group);
+
+            const snowCount = 720;
+            const snowPositions = new Float32Array(snowCount * 3);
+            const snowFallSpeeds = new Float32Array(snowCount);
+            const snowDrifts = new Float32Array(snowCount);
+            for (let i = 0; i < snowCount; i++) {
+                snowPositions[i * 3] = (Math.random() - 0.5) * 150;
+                snowPositions[i * 3 + 1] = Math.random() * 78 - 18;
+                snowPositions[i * 3 + 2] = (Math.random() - 0.5) * 150;
+                snowFallSpeeds[i] = 8 + Math.random() * 15;
+                snowDrifts[i] = (Math.random() - 0.5) * 3;
+            }
+            const snowGeometry = new THREE.BufferGeometry();
+            snowGeometry.setAttribute('position', new THREE.BufferAttribute(snowPositions, 3));
+            const snowflakes = new THREE.Points(
+                snowGeometry,
+                new THREE.PointsMaterial({
+                    color: 0xe0f2fe,
+                    size: 2.2,
+                    sizeAttenuation: false,
+                    transparent: true,
+                    opacity: 0.88,
+                    depthWrite: false
+                })
+            );
+            snowflakes.frustumCulled = false;
+            noelGroup.add(snowflakes);
+
+            return {
+                group: backdropGroup,
+                galaxyGroup,
+                noelGroup,
+                planet: planetGroup,
+                moon: moonGroup,
+                spacecraft,
+                santaSleigh,
+                clouds,
+                snowflakes,
+                snowPositions,
+                snowFallSpeeds,
+                snowDrifts,
+                meteors: [],
+                nextMeteorAt: 6 + Math.random() * 5,
+                nextShowerAt: 28 + Math.random() * 14
+            };
         }
-        const spacePlanet = createSpaceBackdrop();
+        const spaceBackdrop = createSpaceBackdrop();
+
+        function spawnSpaceMeteor(laneOffset = 0, inShower = false) {
+            const forward = camera.getWorldDirection(new THREE.Vector3());
+            const right = new THREE.Vector3().crossVectors(forward, camera.up).normalize();
+            if (right.lengthSq() < 0.1) right.set(1, 0, 0);
+            const up = new THREE.Vector3().crossVectors(right, forward).normalize();
+
+            const start = camera.position.clone()
+                .addScaledVector(forward, 150 + Math.random() * 45)
+                .addScaledVector(right, laneOffset + (Math.random() - 0.5) * (inShower ? 14 : 110))
+                .addScaledVector(up, 55 + Math.random() * 65);
+            const direction = forward.clone()
+                .addScaledVector(right, (Math.random() - 0.5) * (inShower ? 0.28 : 0.85))
+                .addScaledVector(up, -0.45 - Math.random() * 0.25)
+                .normalize();
+            const color = Math.random() > 0.5 ? 0xfef3c7 : 0x7dd3fc;
+            const meteor = new THREE.Group();
+
+            const glow = new THREE.Mesh(
+                new THREE.SphereGeometry(1.05, 8, 6),
+                new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.35 })
+            );
+            const core = new THREE.Mesh(
+                new THREE.SphereGeometry(0.48, 8, 6),
+                new THREE.MeshBasicMaterial({ color: 0xffffff })
+            );
+            meteor.add(glow, core);
+
+            const tailPoints = [
+                new THREE.Vector3(0, 0, 0),
+                direction.clone().multiplyScalar(-12 - Math.random() * 9)
+            ];
+            const tailGeometry = new THREE.BufferGeometry().setFromPoints(tailPoints);
+            const tailGlow = new THREE.Line(tailGeometry, new THREE.LineBasicMaterial({ color, transparent: true, opacity: 0.38 }));
+            const tailCore = new THREE.Line(tailGeometry.clone(), new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.9 }));
+            meteor.add(tailGlow, tailCore);
+
+            meteor.position.copy(start);
+            spaceBackdrop.galaxyGroup.add(meteor);
+            const life = 1.8 + Math.random() * 1.2;
+            spaceBackdrop.meteors.push({
+                group: meteor,
+                velocity: direction.multiplyScalar(95 + Math.random() * 65),
+                life,
+                maxLife: life,
+                materials: [glow.material, tailGlow.material, tailCore.material]
+            });
+        }
+
+        function updateSpaceBackdrop(dt, elapsedTime) {
+            if (state.backgroundTheme === 'noel') {
+                spaceBackdrop.clouds.forEach(cloud => {
+                    const drift = elapsedTime * cloud.speed + cloud.phase;
+                    cloud.group.position.x = cloud.baseX + Math.sin(drift) * cloud.range;
+                    cloud.group.position.z = cloud.baseZ + Math.cos(drift * 0.7) * 8;
+                });
+
+                const sleighPhase = elapsedTime * 0.075;
+                spaceBackdrop.santaSleigh.group.position.set(
+                    Math.sin(sleighPhase) * 100,
+                    61 + Math.sin(elapsedTime * 0.35) * 2.5,
+                    -145
+                );
+                spaceBackdrop.santaSleigh.group.rotation.y = Math.cos(sleighPhase) >= 0 ? 0 : Math.PI;
+                spaceBackdrop.santaSleigh.reindeer.forEach((deer, deerIndex) => {
+                    deer.userData.legPivots.forEach((leg, legIndex) => {
+                        leg.rotation.z = Math.sin(elapsedTime * 5 + deerIndex + legIndex * Math.PI) * 0.22;
+                    });
+                });
+
+                spaceBackdrop.snowflakes.position.copy(camera.position);
+                const snowPositions = spaceBackdrop.snowPositions;
+                for (let i = 0; i < spaceBackdrop.snowFallSpeeds.length; i++) {
+                    const offset = i * 3;
+                    snowPositions[offset] += spaceBackdrop.snowDrifts[i] * dt;
+                    snowPositions[offset + 1] -= spaceBackdrop.snowFallSpeeds[i] * dt;
+                    snowPositions[offset + 2] += spaceBackdrop.snowDrifts[i] * dt * 0.35;
+                    if (snowPositions[offset + 1] < -18) {
+                        snowPositions[offset] = (Math.random() - 0.5) * 150;
+                        snowPositions[offset + 1] = 55 + Math.random() * 30;
+                        snowPositions[offset + 2] = (Math.random() - 0.5) * 150;
+                    }
+                }
+                spaceBackdrop.snowflakes.geometry.attributes.position.needsUpdate = true;
+            } else {
+                spaceBackdrop.planet.rotation.y = elapsedTime * 0.08;
+                spaceBackdrop.moon.rotation.y += dt * 0.012;
+
+                const orbit = elapsedTime * 0.045;
+                const shipX = 45 + Math.sin(orbit) * 32;
+                const shipZ = -112 + Math.cos(orbit) * 22;
+                spaceBackdrop.spacecraft.position.set(shipX, 55 + Math.sin(orbit * 1.7) * 7, shipZ);
+                spaceBackdrop.spacecraft.rotation.y = Math.atan2(Math.sin(orbit) * 22, Math.cos(orbit) * 32);
+                spaceBackdrop.spacecraft.rotation.z = Math.sin(orbit * 1.7) * 0.035;
+
+                if (elapsedTime >= spaceBackdrop.nextMeteorAt) {
+                    spawnSpaceMeteor();
+                    spaceBackdrop.nextMeteorAt = elapsedTime + 7 + Math.random() * 11;
+                }
+                if (elapsedTime >= spaceBackdrop.nextShowerAt) {
+                    const count = 3 + Math.floor(Math.random() * 3);
+                    for (let i = 0; i < count; i++) {
+                        spawnSpaceMeteor((i - (count - 1) / 2) * 16, true);
+                    }
+                    spaceBackdrop.nextShowerAt = elapsedTime + 34 + Math.random() * 24;
+                }
+            }
+
+            for (let i = spaceBackdrop.meteors.length - 1; i >= 0; i--) {
+                const meteor = spaceBackdrop.meteors[i];
+                meteor.life -= dt;
+                meteor.group.position.addScaledVector(meteor.velocity, dt);
+                const opacity = Math.max(0, Math.min(1, meteor.life / meteor.maxLife));
+                meteor.materials.forEach((material, index) => {
+                    if (index > 0) material.opacity = opacity * (index === 1 ? 0.38 : 0.9);
+                    else material.opacity = opacity * 0.35;
+                });
+                if (meteor.life <= 0) {
+                    spaceBackdrop.galaxyGroup.remove(meteor.group);
+                    meteor.group.traverse(object => {
+                        if (object.geometry) object.geometry.dispose();
+                        if (object.material) {
+                            if (Array.isArray(object.material)) object.material.forEach(material => material.dispose());
+                            else object.material.dispose();
+                        }
+                    });
+                    spaceBackdrop.meteors.splice(i, 1);
+                }
+            }
+        }
 
         const hemiLight = new THREE.HemisphereLight(0xe0f2fe, 0x1e3a2f, 0.95);
         hemiLight.position.set(0, 80, 0);
@@ -1910,6 +2399,7 @@
         const cameraOcclusionRaycaster = new THREE.Raycaster();
         const huntSpawnPoints = [];
         const healingPools = [];
+        const christmasReindeers = [];
 
         const MAP_BOUNDS = { halfSize: 50 };
 
@@ -1927,6 +2417,7 @@
             cameraOccluders.length = 0;
             huntSpawnPoints.length = 0;
             healingPools.length = 0;
+            christmasReindeers.length = 0;
 
             bullets.forEach(b => scene.remove(b.mesh));
             bullets.length = 0;
@@ -2266,6 +2757,105 @@
             stars.push({ mesh, baseY: y, collected: false });
         }
 
+        function addChristmasTree(x, z, scale = 1) {
+            const tree = new THREE.Group();
+            const trunk = new THREE.Mesh(
+                new THREE.CylinderGeometry(0.35, 0.55, 2.2, 8),
+                new THREE.MeshStandardMaterial({ color: 0x713f12, roughness: 0.95 })
+            );
+            trunk.position.y = 1.1;
+            tree.add(trunk);
+
+            const pineMat = new THREE.MeshStandardMaterial({ color: 0x14532d, roughness: 0.9 });
+            [
+                { radius: 2.6, height: 3.8, y: 2.8 },
+                { radius: 2.0, height: 3.5, y: 4.7 },
+                { radius: 1.35, height: 3.0, y: 6.4 }
+            ].forEach(layer => {
+                const foliage = new THREE.Mesh(new THREE.ConeGeometry(layer.radius, layer.height, 9), pineMat);
+                foliage.position.y = layer.y;
+                tree.add(foliage);
+            });
+
+            const lightColors = [0xef4444, 0xfacc15, 0x38bdf8, 0xf472b6];
+            for (let i = 0; i < 10; i++) {
+                const angle = i * 2.4;
+                const y = 2.2 + i * 0.48;
+                const radius = Math.max(0.35, 2.25 - i * 0.18);
+                const light = new THREE.Mesh(
+                    new THREE.SphereGeometry(0.16, 8, 6),
+                    new THREE.MeshBasicMaterial({ color: lightColors[i % lightColors.length] })
+                );
+                light.position.set(Math.cos(angle) * radius, y, Math.sin(angle) * radius);
+                tree.add(light);
+            }
+
+            const star = new THREE.Mesh(
+                new THREE.OctahedronGeometry(0.55, 0),
+                new THREE.MeshStandardMaterial({ color: 0xfacc15, emissive: 0xf59e0b, emissiveIntensity: 0.55 })
+            );
+            star.position.y = 8.15;
+            tree.add(star);
+            tree.scale.setScalar(scale);
+            tree.position.set(x, 0, z);
+            worldGroup.add(tree);
+        }
+
+        function addSnowPatch(x, z, radius, aspect = 0.72) {
+            const patch = new THREE.Mesh(
+                new THREE.CircleGeometry(1, 24),
+                new THREE.MeshStandardMaterial({
+                    color: 0xe0f2fe,
+                    emissive: 0x7dd3fc,
+                    emissiveIntensity: 0.08,
+                    roughness: 1,
+                    transparent: true,
+                    opacity: 0.88,
+                    depthWrite: false
+                })
+            );
+            patch.rotation.x = -Math.PI / 2;
+            patch.position.set(x, 0.035, z);
+            patch.scale.set(radius, radius * aspect, 1);
+            worldGroup.add(patch);
+        }
+
+        function buildChristmasMapDecorations(mapId) {
+            const map1Trees = [
+                [-40, -40, 1.05], [-25, -43, 0.9], [40, -40, 1.1], [43, -5, 1.0],
+                [40, 39, 1.1], [-40, 39, 1.05], [-43, 2, 0.95], [-26, 42, 0.9]
+            ];
+            const map2Trees = [
+                [-43, -44, 1.05], [-25, -45, 0.9], [44, -42, 1.1], [45, 0, 0.95],
+                [42, 43, 1.05], [-42, 42, 1.05], [-45, 0, 0.95], [-26, 45, 0.9]
+            ];
+            const map1Snow = [[-32, -31, 7], [31, -30, 8], [35, 22, 7], [-36, 20, 8], [24, 40, 6]];
+            const map2Snow = [[-34, -34, 8], [34, -34, 7], [35, 30, 8], [-35, 32, 7], [0, -43, 6]];
+            const trees = mapId === 'map1' ? map1Trees : map2Trees;
+            const patches = mapId === 'map1' ? map1Snow : map2Snow;
+
+            trees.forEach(([x, z, scale]) => addChristmasTree(x, z, scale));
+            patches.forEach(([x, z, radius]) => addSnowPatch(x, z, radius));
+
+            const reindeerSpawns = mapId === 'map1'
+                ? [[-31, -28, 4], [32, 30, 5]]
+                : [[-34, -31, 5], [35, 31, 4]];
+            reindeerSpawns.forEach(([x, z, patrolRadius], index) => {
+                const reindeer = createReindeerModel();
+                reindeer.scale.setScalar(2.15);
+                reindeer.position.set(x, 0, z);
+                worldGroup.add(reindeer);
+                christmasReindeers.push({
+                    group: reindeer,
+                    originX: x,
+                    originZ: z,
+                    patrolRadius,
+                    speed: 0.18,
+                    phase: index * Math.PI
+                });
+            });
+        }
+
         // Main Menu 3D Showcase Podium
         function buildMenuShowcaseWorld() {
             clearWorld();
@@ -2358,6 +2948,7 @@
                     spawnCollectibleGem(s.x, s.y + 1.85, s.z);
                 }
             });
+            if (state.backgroundTheme === 'noel') buildChristmasMapDecorations('map1');
         }
 
         // Mode 1 - Map 2: Space Fortress Citadel (20 Steps, Water Pool +5 HP/s, Dual Sweepers, Fast Rails, 12 Gems)
@@ -2417,6 +3008,7 @@
                     spawnCollectibleGem(s.x, s.y + 1.85, s.z);
                 }
             });
+            if (state.backgroundTheme === 'noel') buildChristmasMapDecorations('map2');
         }
 
         // Mode 2: Full Multi-Zone Walled Maze Arena for Target Hunt
@@ -2499,31 +3091,60 @@
 
             const pool = candidates.length > 0 ? candidates : huntSpawnPoints;
             const chosen = pool[Math.floor(Math.random() * pool.length)];
+            const isNoelTheme = state.backgroundTheme === 'noel';
 
             const group = new THREE.Group();
             group.position.copy(chosen);
 
             const base = new THREE.Mesh(
                 new THREE.CylinderGeometry(0.75, 0.9, 0.4, 16),
-                new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.5 })
+                new THREE.MeshStandardMaterial({ color: isNoelTheme ? 0x166534 : 0x334155, roughness: 0.5 })
             );
             base.position.y = -1.2;
             group.add(base);
 
             const bodyMat = new THREE.MeshStandardMaterial({
-                color: 0xf43f5e,
-                emissive: 0xbe123c,
-                emissiveIntensity: 0.35,
+                color: isNoelTheme ? 0xfff1f2 : 0xf43f5e,
+                emissive: isNoelTheme ? 0xbe123c : 0xbe123c,
+                emissiveIntensity: isNoelTheme ? 0.18 : 0.35,
                 roughness: 0.28
             });
-            const body = new THREE.Mesh(new RoundedBoxGeometry(1.6, 1.6, 1.6, 3, 0.16), bodyMat);
+            const body = new THREE.Mesh(
+                isNoelTheme
+                    ? new RoundedBoxGeometry(1.45, 1.3, 1.3, 4, 0.42)
+                    : new RoundedBoxGeometry(1.6, 1.6, 1.6, 3, 0.16),
+                bodyMat
+            );
             body.castShadow = true;
             body.receiveShadow = true;
             group.add(body);
 
+            if (isNoelTheme) {
+                const wrapperMaterial = new THREE.MeshStandardMaterial({
+                    color: 0xdc2626,
+                    emissive: 0x7f1d1d,
+                    emissiveIntensity: 0.16,
+                    roughness: 0.36
+                });
+                [-1, 1].forEach(side => {
+                    const wrapper = new THREE.Mesh(new THREE.ConeGeometry(0.55, 0.95, 6), wrapperMaterial);
+                    wrapper.rotation.z = side < 0 ? Math.PI / 2 : -Math.PI / 2;
+                    wrapper.position.x = side * 0.98;
+                    group.add(wrapper);
+                });
+
+                const stripeMaterial = new THREE.MeshStandardMaterial({ color: 0xef4444, roughness: 0.42 });
+                [-0.38, 0.38].forEach(x => {
+                    const stripe = new THREE.Mesh(new THREE.TorusGeometry(0.57, 0.075, 8, 18), stripeMaterial);
+                    stripe.rotation.y = Math.PI / 2;
+                    stripe.position.x = x;
+                    group.add(stripe);
+                });
+            }
+
             const ring = new THREE.Mesh(
                 new THREE.TorusGeometry(0.48, 0.09, 10, 24),
-                new THREE.MeshBasicMaterial({ color: 0xffffff })
+                new THREE.MeshBasicMaterial({ color: isNoelTheme ? 0xfacc15 : 0xffffff })
             );
             ring.position.z = 0.82;
             group.add(ring);
@@ -2580,7 +3201,8 @@
                 hp: 2,
                 hitFlash: 0,
                 lifeRemaining: TARGET_TOTAL_LIFETIME,
-                lastBeepSec: 4
+                lastBeepSec: 4,
+                isCandy: isNoelTheme
             });
         }
 
@@ -3172,6 +3794,7 @@
             screen: 'menu', // 'menu' | 'playing'
             gameMode: 'climb', // 'climb' | 'hunt'
             climbMapId: 'map1',
+            backgroundTheme: 'galaxy',
             matchEnded: false,
             isPaused: false,
             matchStartTime: 0,
@@ -3216,6 +3839,36 @@
             isDragging: false,
             prevMouse: { x: 0, y: 0 }
         };
+
+        function updateBackgroundThemeButtons() {
+            [
+                { id: 'btn-background-galaxy', theme: 'galaxy' },
+                { id: 'btn-background-noel', theme: 'noel' }
+            ].forEach(({ id, theme }) => {
+                const button = document.getElementById(id);
+                if (!button) return;
+                const selected = state.backgroundTheme === theme;
+                button.setAttribute('aria-pressed', String(selected));
+                button.className = selected
+                    ? 'background-theme-option rounded-xl border border-indigo-300/50 bg-gradient-to-r from-indigo-500/25 to-cyan-500/20 px-3 py-2.5 flex items-center gap-2 text-left text-white'
+                    : 'background-theme-option rounded-xl border border-white/10 bg-slate-950/35 px-3 py-2.5 flex items-center gap-2 text-left text-white';
+                const badge = button.querySelector('.background-theme-selected');
+                if (badge) badge.classList.toggle('hidden', !selected);
+            });
+        }
+
+        function setBackgroundTheme(theme, saveSelection = true) {
+            state.backgroundTheme = theme === 'noel' ? 'noel' : 'galaxy';
+            const isNoelTheme = state.backgroundTheme === 'noel';
+            spaceBackdrop.galaxyGroup.visible = !isNoelTheme;
+            spaceBackdrop.noelGroup.visible = isNoelTheme;
+            updateBackgroundThemeButtons();
+
+            if (saveSelection) {
+                saveManager.scheduleSave();
+                showToast(isNoelTheme ? '🎅 Đã bật chủ đề Noel!' : '🌌 Đã bật chủ đề Galaxy!');
+            }
+        }
 
         const PLAYER_RADIUS = 0.55;
         const PLAYER_HEIGHT = 3.1;
@@ -3624,9 +4277,10 @@
 
             buildPayload() {
                 return {
-                    version: 5,
+                    version: 6,
                     game: 'Roblox Bearbrick 3D World',
                     savedAt: new Date().toISOString(),
+                    backgroundTheme: state.backgroundTheme,
                     skin: state.skin || 'chrome',
                     unlockedSkins: Array.isArray(state.unlockedSkins) ? [...state.unlockedSkins] : [...DEFAULT_UNLOCKED_SKINS],
                     weaponMode: state.weaponMode || 'plasma',
@@ -3670,6 +4324,8 @@
 
             applyLoadedData(data) {
                 if (!data || typeof data !== 'object') return false;
+
+                setBackgroundTheme(data.backgroundTheme, false);
 
                 const hasPaidVipUnlocks = Number(data.version) >= 5;
                 const savedUnlockedSkins = Array.isArray(data.unlockedSkins)
@@ -3750,6 +4406,7 @@
 
             resetAllData() {
                 try { localStorage.removeItem(this.STORAGE_KEY); } catch {}
+                setBackgroundTheme('galaxy', false);
                 state.totalStarsAllTime = 0;
                 state.totalTargetsAllTime = 0;
                 state.unlockedSkins = [...DEFAULT_UNLOCKED_SKINS];
@@ -3805,6 +4462,7 @@
 
         function startGameMode(mode, mapId = 'map1') {
             sound.init();
+            domElem.requestPointerLock?.();
             state.screen = 'playing';
             state.gameMode = mode;
             state.climbMapId = mapId;
@@ -3837,7 +4495,7 @@
                 setCombatUIVisible(false);
 
                 if (mapId === 'map1') {
-                    titleEl.textContent = 'THÁP CẦU VỒNG';
+                    titleEl.textContent = 'THÁP KHÔNG GIAN';
                     buildClimbMap1();
                     state.pos.set(0, 0.5, 34);
                 } else {
@@ -4322,6 +4980,18 @@
                 pool.rippleRing.scale.set(pulse, pulse, 1);
             }
 
+            if (state.backgroundTheme === 'noel') {
+                for (const deer of christmasReindeers) {
+                    const angle = elapsedTime * deer.speed + deer.phase;
+                    deer.group.position.x = deer.originX + Math.cos(angle) * deer.patrolRadius;
+                    deer.group.position.z = deer.originZ + Math.sin(angle) * deer.patrolRadius;
+                    deer.group.rotation.y = Math.atan2(-Math.cos(angle), -Math.sin(angle));
+                    deer.group.userData.legPivots.forEach((leg, index) => {
+                        leg.rotation.z = Math.sin(elapsedTime * 4 + deer.phase + index * Math.PI) * 0.28;
+                    });
+                }
+            }
+
             // 1. Update Rolling Rail Platforms
             for (const rail of rollingRails) {
                 const offset = Math.sin(elapsedTime * rail.speed + rail.phase) * rail.range;
@@ -4785,33 +5455,56 @@
             }
 
             // Mode 2: Active Targets on Rotating Radar (10s Amber Warning + 3s Critical Pulse)
+            const edgeRadius = Math.min(cx, cy) - 9;
             targets.forEach(t => {
                 const pt = worldToRadar(t.group.position.x, t.group.position.z);
                 const isCritical3s = t.lifeRemaining <= TARGET_CRITICAL_PHASE;
                 const isBlink10s = !isCritical3s && t.lifeRemaining <= (TARGET_CRITICAL_PHASE + TARGET_BLINK_PHASE);
+                const targetColor = isCritical3s
+                    ? Math.sin(elapsedTime * 28) > 0 ? '#facc15' : '#ff1e42'
+                    : isBlink10s
+                        ? Math.sin(elapsedTime * 10) > 0 ? '#fbbf24' : '#f43f5e'
+                        : '#f43f5e';
+                const dx = pt.x - cx;
+                const dy = pt.y - cy;
+                const distance = Math.hypot(dx, dy);
+
+                if (distance > edgeRadius) {
+                    const angle = Math.atan2(dy, dx);
+                    const edgeX = cx + Math.cos(angle) * edgeRadius;
+                    const edgeY = cy + Math.sin(angle) * edgeRadius;
+
+                    mmCtx.save();
+                    mmCtx.translate(edgeX, edgeY);
+                    mmCtx.rotate(angle);
+                    mmCtx.fillStyle = targetColor;
+                    mmCtx.shadowColor = targetColor;
+                    mmCtx.shadowBlur = 7;
+                    mmCtx.beginPath();
+                    mmCtx.moveTo(8, 0);
+                    mmCtx.lineTo(-5, -5);
+                    mmCtx.lineTo(-5, 5);
+                    mmCtx.closePath();
+                    mmCtx.fill();
+                    mmCtx.restore();
+                    return;
+                }
 
                 if (isCritical3s) {
-                    const blink = Math.sin(elapsedTime * 28) > 0;
-                    mmCtx.strokeStyle = blink ? '#facc15' : '#ff1e42';
+                    mmCtx.strokeStyle = targetColor;
                     mmCtx.lineWidth = 2.5;
                     mmCtx.beginPath();
                     mmCtx.arc(pt.x, pt.y, 7.5 + Math.sin(elapsedTime * 18) * 2.5, 0, Math.PI * 2);
                     mmCtx.stroke();
 
-                    mmCtx.fillStyle = blink ? '#facc15' : '#ff1e42';
+                    mmCtx.fillStyle = targetColor;
                     mmCtx.beginPath();
                     mmCtx.arc(pt.x, pt.y, 4.5, 0, Math.PI * 2);
                     mmCtx.fill();
-                } else if (isBlink10s) {
-                    const warnBlink = Math.sin(elapsedTime * 10) > 0;
-                    mmCtx.fillStyle = warnBlink ? '#fbbf24' : '#f43f5e';
-                    mmCtx.beginPath();
-                    mmCtx.arc(pt.x, pt.y, 4.2, 0, Math.PI * 2);
-                    mmCtx.fill();
                 } else {
-                    mmCtx.fillStyle = '#f43f5e';
+                    mmCtx.fillStyle = targetColor;
                     mmCtx.beginPath();
-                    mmCtx.arc(pt.x, pt.y, 3.8, 0, Math.PI * 2);
+                    mmCtx.arc(pt.x, pt.y, isBlink10s ? 4.2 : 3.8, 0, Math.PI * 2);
                     mmCtx.fill();
                 }
             });
@@ -4850,6 +5543,7 @@
         });
 
         saveManager.loadFromStorage();
+        setBackgroundTheme(state.backgroundTheme, false);
         enterMainMenu();
 
         const clock = new THREE.Clock();
@@ -4858,11 +5552,8 @@
             const dt = Math.min(clock.getDelta(), 0.05);
             const elapsedTime = clock.getElapsedTime();
 
-            if (spacePlanet && !state.isPaused) {
-                spacePlanet.rotation.y = elapsedTime * 0.08;
-            }
-
             if (!state.isPaused) {
+                updateSpaceBackdrop(dt, elapsedTime);
                 if (state.screen === 'menu' && !state.isDragging) {
                     state.menuTurntableYaw += dt * 0.18;
                 }
@@ -4891,32 +5582,42 @@
         window.onload = function () {
             animate();
 
-            // ==========================================
-            // Toggle Collapsible Menu Panels (Skin Shop & Game Modes)
-            // ==========================================
-            const btnToggleSkinShop = document.getElementById('btn-toggle-skin-shop');
-            const panelSkinShop = document.getElementById('menu-skin-shop-panel');
-            const iconSkinShop = document.getElementById('skin-shop-toggle-icon');
-            if (btnToggleSkinShop && panelSkinShop && iconSkinShop) {
-                btnToggleSkinShop.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    e.preventDefault();
-                    const isHidden = panelSkinShop.classList.toggle('hidden');
-                    iconSkinShop.textContent = isHidden ? '▼' : '▲';
-                });
-            }
+            [
+                { id: 'btn-background-galaxy', theme: 'galaxy' },
+                { id: 'btn-background-noel', theme: 'noel' }
+            ].forEach(({ id, theme }) => {
+                document.getElementById(id).addEventListener('click', () => setBackgroundTheme(theme));
+            });
 
-            const btnToggleGameModes = document.getElementById('btn-toggle-game-modes');
-            const panelGameModes = document.getElementById('menu-game-modes-panel');
-            const iconGameModes = document.getElementById('game-modes-toggle-icon');
-            if (btnToggleGameModes && panelGameModes && iconGameModes) {
-                btnToggleGameModes.addEventListener('click', (e) => {
+            const menuPanels = [
+                { buttonId: 'btn-toggle-background', panelId: 'background-theme-panel', iconId: 'background-toggle-icon' },
+                { buttonId: 'btn-toggle-skin-shop', panelId: 'menu-skin-shop-panel', iconId: 'skin-shop-toggle-icon' },
+                { buttonId: 'btn-toggle-game-modes', panelId: 'menu-game-modes-panel', iconId: 'game-modes-toggle-icon' }
+            ];
+            const dragHint = document.getElementById('menu-drag-hint');
+            const updateDragHintVisibility = () => {
+                const anyPanelOpen = menuPanels.some(({ panelId }) =>
+                    !document.getElementById(panelId).classList.contains('hidden')
+                );
+                dragHint.classList.toggle('hidden', anyPanelOpen);
+            };
+
+            menuPanels.forEach(menuPanel => {
+                const button = document.getElementById(menuPanel.buttonId);
+                button.addEventListener('click', (e) => {
                     e.stopPropagation();
                     e.preventDefault();
-                    const isHidden = panelGameModes.classList.toggle('hidden');
-                    iconGameModes.textContent = isHidden ? '▼' : '▲';
+                    const shouldOpen = document.getElementById(menuPanel.panelId).classList.contains('hidden');
+                    menuPanels.forEach(item => {
+                        const isOpen = shouldOpen && item.panelId === menuPanel.panelId;
+                        document.getElementById(item.panelId).classList.toggle('hidden', !isOpen);
+                        document.getElementById(item.buttonId).setAttribute('aria-expanded', String(isOpen));
+                        document.getElementById(item.iconId).textContent = isOpen ? '▲' : '▼';
+                    });
+                    updateDragHintVisibility();
                 });
-            }
+            });
+            updateDragHintVisibility();
 
             const skinShopTabs = [
                 { id: 'skins', button: 'skin-shop-tab-skins', panel: 'skin-shop-panel-skins' },
