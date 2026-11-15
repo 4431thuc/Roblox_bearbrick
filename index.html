@@ -40,6 +40,26 @@
             border: 1px solid rgba(255, 255, 255, 0.16);
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45);
         }
+        * {
+            scrollbar-width: thin;
+            scrollbar-color: rgba(34, 211, 238, 0.65) rgba(15, 23, 42, 0.45);
+        }
+        *::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        *::-webkit-scrollbar-track {
+            background: rgba(15, 23, 42, 0.45);
+            border-radius: 9999px;
+        }
+        *::-webkit-scrollbar-thumb {
+            background: linear-gradient(180deg, rgba(34, 211, 238, 0.8), rgba(99, 102, 241, 0.8));
+            border: 2px solid rgba(15, 23, 42, 0.8);
+            border-radius: 9999px;
+        }
+        *::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(180deg, rgba(103, 232, 249, 0.95), rgba(129, 140, 248, 0.95));
+        }
         .kbd {
             background: rgba(255, 255, 255, 0.14);
             border: 1px solid rgba(255, 255, 255, 0.25);
@@ -109,17 +129,34 @@
     <!-- ===================================================================== -->
     <div id="main-menu-overlay" class="fixed inset-0 z-30 flex flex-col justify-between p-3 sm:p-6 pointer-events-none">
         <!-- Top Bar: Game Title & Audio Toggle -->
-        <div class="flex items-start justify-between gap-3 pointer-events-none">
-            <div class="glass-panel rounded-2xl px-4 py-2.5 sm:px-5 sm:py-3 border border-cyan-400/30 pointer-events-auto">
-                <div class="flex items-center gap-2">
-                    <span class="text-xl sm:text-2xl">🐻</span>
-                    <div>
-                        <h1 class="font-black text-base sm:text-xl tracking-tight bg-gradient-to-r from-cyan-300 via-white to-amber-300 bg-clip-text text-transparent">
-                            ROBLOX BEARBRICK 3D
-                        </h1>
-                        <p class="text-[10px] sm:text-xs text-slate-300 font-medium">
-                            Kéo ngang bất kỳ đâu trên màn hình để xoay 360° ngắm nhân vật
-                        </p>
+        <div class="flex items-start justify-between gap-2 sm:gap-3 pointer-events-none">
+            <div class="flex min-w-0 flex-1 flex-wrap items-start gap-2 pointer-events-none">
+                <div class="glass-panel max-w-full rounded-2xl px-4 py-2.5 sm:px-5 sm:py-3 border border-cyan-400/30 pointer-events-auto">
+                    <div class="flex items-center gap-2">
+                        <span class="text-xl sm:text-2xl">🐻</span>
+                        <div>
+                            <h1 class="font-black text-base sm:text-xl tracking-tight bg-gradient-to-r from-cyan-300 via-white to-amber-300 bg-clip-text text-transparent">
+                                ROBLOX BEARBRICK 3D
+                            </h1>
+                            <p class="text-[10px] sm:text-xs text-slate-300 font-medium">
+                                Kéo ngang bất kỳ đâu trên màn hình để xoay 360° ngắm nhân vật
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div aria-label="Kho điểm và thành tích" class="glass-panel rounded-2xl p-2 border border-emerald-400/20 grid grid-cols-3 gap-1.5 sm:gap-2 text-center pointer-events-auto">
+                    <div class="bg-slate-900/65 rounded-xl px-2 py-1.5 border border-amber-400/20">
+                        <div class="text-[9px] sm:text-[10px] leading-tight text-slate-400">💎 Gem Tích Lũy</div>
+                        <div id="menu-total-stars" class="text-sm font-black text-amber-400">0</div>
+                    </div>
+                    <div class="bg-slate-900/65 rounded-xl px-2 py-1.5 border border-cyan-400/20">
+                        <div class="text-[9px] sm:text-[10px] leading-tight text-slate-400">🎯 Bia Đã Hạ</div>
+                        <div id="menu-total-targets" class="text-sm font-black text-cyan-400">0</div>
+                    </div>
+                    <div class="bg-slate-900/65 rounded-xl px-2 py-1.5 border border-emerald-400/20">
+                        <div class="text-[9px] sm:text-[10px] leading-tight text-slate-400">🗺️ Hoàn Thành</div>
+                        <div id="menu-maps-cleared" class="text-sm font-black text-emerald-400">0/3</div>
                     </div>
                 </div>
             </div>
@@ -142,95 +179,110 @@
 
         <!-- Bottom Control Dock: Skin Shop + Game Modes + Save Manager -->
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-3 max-w-6xl w-full mx-auto pointer-events-none max-h-[60vh] overflow-y-auto pr-0.5">
-            <!-- Left Column (5 cols): 12-Skin Shop (7 Standard + 5 VIP 3D Custom) + Wallet Stats -->
-            <div class="lg:col-span-5 glass-panel rounded-2xl p-3.5 sm:p-4 flex flex-col justify-between border border-white/15 pointer-events-auto">
-                <div>
-                    <div class="flex items-center justify-between mb-2">
-                        <span class="text-xs font-extrabold uppercase tracking-wider text-amber-300">🎨 Cửa Hàng Skin &amp; 👑 VIP 3D</span>
-                        <span id="menu-skin-name" class="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-white/10 text-cyan-200">Classic Chrome</span>
-                    </div>
-                    <div id="menu-skin-selector" class="grid grid-cols-4 gap-1.5 max-h-36 overflow-y-auto pr-0.5"></div>
-                </div>
+            <!-- Left Column (5 cols): Skin Shop (collapsed by default, expand on button click) -->
+            <div class="lg:col-span-5 flex flex-col-reverse gap-2">
+                <!-- Toggle button: Mở Cửa Hàng Skin -->
+                <button id="btn-toggle-skin-shop" type="button" class="w-full glass-panel hover:bg-amber-500/20 border border-amber-400/30 text-amber-200 text-xs font-bold px-3 py-2.5 rounded-xl flex items-center justify-between gap-2 transition active:scale-95 pointer-events-auto">
+                    <span class="flex items-center gap-1.5 pointer-events-none">🎨 Mở Cửa Hàng Skin &amp; VIP</span>
+                    <span id="skin-shop-toggle-icon" class="text-[10px] font-bold pointer-events-none">▼</span>
+                </button>
 
-                <!-- Overall Progress Summary -->
-                <div class="mt-2.5 pt-2.5 border-t border-white/10">
-                    <div class="text-xs font-extrabold uppercase tracking-wider text-emerald-300 mb-1.5">🏆 Kho Điểm &amp; Thành Tích</div>
-                    <div class="grid grid-cols-3 gap-2 text-center">
-                        <div class="bg-slate-900/65 rounded-xl p-2 border border-amber-400/20">
-                            <div class="text-[10px] text-slate-400">💎 Gem Tích Lũy</div>
-                            <div id="menu-total-stars" class="text-sm font-black text-amber-400">0</div>
-                        </div>
-                        <div class="bg-slate-900/65 rounded-xl p-2 border border-cyan-400/20">
-                            <div class="text-[10px] text-slate-400">🎯 Bia Đã Hạ</div>
-                            <div id="menu-total-targets" class="text-sm font-black text-cyan-400">0</div>
-                        </div>
-                        <div class="bg-slate-900/65 rounded-xl p-2 border border-emerald-400/20">
-                            <div class="text-[10px] text-slate-400">🗺️ Hoàn Thành</div>
-                            <div id="menu-maps-cleared" class="text-sm font-black text-emerald-400">0/3</div>
-                        </div>
+                <!-- Skin Shop Panel (hidden by default) -->
+                <div id="menu-skin-shop-panel" class="hidden glass-panel rounded-2xl p-3.5 sm:p-4 flex flex-col justify-between border border-white/15 pointer-events-auto">
+                    <div role="tablist" aria-label="Danh mục cửa hàng" class="grid grid-cols-3 gap-1.5 mb-2">
+                        <button id="skin-shop-tab-skins" type="button" role="tab" aria-selected="true" aria-controls="skin-shop-panel-skins" class="rounded-lg border border-amber-400/50 bg-amber-500/20 text-amber-200 px-2 py-1.5 text-[10px] sm:text-xs font-bold transition">👕 Skin</button>
+                        <button id="skin-shop-tab-accessories" type="button" role="tab" aria-selected="false" aria-controls="skin-shop-panel-accessories" class="rounded-lg border border-white/10 bg-slate-950/40 text-slate-300 px-2 py-1.5 text-[10px] sm:text-xs font-bold transition">🎒 Phụ kiện</button>
+                        <button id="skin-shop-tab-weapons" type="button" role="tab" aria-selected="false" aria-controls="skin-shop-panel-weapons" class="rounded-lg border border-white/10 bg-slate-950/40 text-slate-300 px-2 py-1.5 text-[10px] sm:text-xs font-bold transition">🔫 Vũ khí</button>
                     </div>
-                </div>
 
-                <!-- Save / Load Bar -->
-                <div class="mt-2.5 pt-2 border-t border-white/10 flex flex-wrap items-center justify-between gap-1.5">
-                    <span id="menu-save-time" class="text-[10px] text-slate-400">Tự động lưu Local</span>
-                    <div class="flex items-center gap-1.5">
-                        <button id="menu-btn-export" type="button" class="bg-sky-600/35 hover:bg-sky-500/45 border border-sky-400/40 text-sky-100 px-2.5 py-1 rounded-lg text-[11px] font-bold transition active:scale-95">⬇️ Tải JSON</button>
-                        <button id="menu-btn-import" type="button" class="bg-amber-600/35 hover:bg-amber-500/45 border border-amber-400/40 text-amber-100 px-2.5 py-1 rounded-lg text-[11px] font-bold transition active:scale-95">⬆️ Nạp JSON</button>
-                        <button id="menu-btn-reset" type="button" class="bg-rose-600/30 hover:bg-rose-500/45 border border-rose-400/40 text-rose-200 px-2.5 py-1 rounded-lg text-[11px] font-bold transition active:scale-95">🗑️ Xóa</button>
+                    <div id="skin-shop-panel-skins" role="tabpanel" aria-labelledby="skin-shop-tab-skins">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-xs font-extrabold uppercase tracking-wider text-amber-300">Chọn trang phục</span>
+                            <canvas id="menu-skin-preview" width="80" height="80" class="w-9 h-9 rounded-lg border border-white/15" aria-label="Trang phục đang chọn"></canvas>
+                        </div>
+                        <div id="menu-skin-selector" class="grid grid-cols-4 gap-1.5 max-h-36 overflow-y-auto pr-0.5"></div>
+                    </div>
+
+                    <div id="skin-shop-panel-accessories" role="tabpanel" aria-labelledby="skin-shop-tab-accessories" class="hidden min-h-28 rounded-xl border border-white/10 bg-slate-950/35 flex flex-col items-center justify-center gap-1.5 text-center">
+                        <span class="text-3xl" aria-hidden="true">🎒</span>
+                        <span class="text-xs font-bold text-slate-200">Phụ kiện sẽ ra mắt sau</span>
+                    </div>
+
+                    <div id="skin-shop-panel-weapons" role="tabpanel" aria-labelledby="skin-shop-tab-weapons" class="hidden min-h-28 rounded-xl border border-white/10 bg-slate-950/35 flex flex-col items-center justify-center gap-1.5 text-center">
+                        <span class="text-3xl" aria-hidden="true">🔫</span>
+                        <span class="text-xs font-bold text-slate-200">Skin vũ khí sẽ ra mắt sau</span>
+                    </div>
+
+                    <!-- Save / Load Bar -->
+                    <div class="mt-2.5 pt-2 border-t border-white/10 flex flex-wrap items-center justify-between gap-1.5">
+                        <span id="menu-save-time" class="text-[10px] text-slate-400">Tự động lưu Local</span>
+                        <div class="flex items-center gap-1.5">
+                            <button id="menu-btn-export" type="button" class="bg-sky-600/35 hover:bg-sky-500/45 border border-sky-400/40 text-sky-100 px-2.5 py-1 rounded-lg text-[11px] font-bold transition active:scale-95">⬇️ Tải JSON</button>
+                            <button id="menu-btn-import" type="button" class="bg-amber-600/35 hover:bg-amber-500/45 border border-amber-400/40 text-amber-100 px-2.5 py-1 rounded-lg text-[11px] font-bold transition active:scale-95">⬆️ Nạp JSON</button>
+                            <button id="menu-btn-reset" type="button" class="bg-rose-600/30 hover:bg-rose-500/45 border border-rose-400/40 text-rose-200 px-2.5 py-1 rounded-lg text-[11px] font-bold transition active:scale-95">🗑️ Xóa</button>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Right Column (7 cols): 2 Main Game Modes -->
-            <div class="lg:col-span-7 glass-panel rounded-2xl p-3.5 sm:p-4 flex flex-col justify-between gap-3 border border-white/15 pointer-events-auto">
-                <!-- Mode 1: Parkour Climb (2 Complete Maps) -->
-                <div class="bg-slate-900/60 rounded-xl p-3 border border-amber-400/25">
-                    <div class="flex items-center justify-between mb-1.5">
-                        <div class="font-black text-sm text-amber-300 flex items-center gap-1.5">
-                            <span>🏔️</span><span>Chế Độ 1: Leo Map Nhặt Điểm (Tay Không)</span>
-                        </div>
-                        <span class="text-[10px] font-bold text-cyan-200 bg-cyan-500/15 border border-cyan-400/30 px-2 py-0.5 rounded-full">Đứng im hồi +2HP/s • Hồ nước +5HP/s</span>
-                    </div>
-                    <p class="text-[11px] text-slate-300 mb-2.5 leading-snug">
-                        Vượt đường ray lăn &amp; vòng xoay 4 thanh đẩy (-2 HP khi trúng) lên đỉnh nhặt đủ <strong>12 Gem (💎)</strong>. Đứng im hồi <strong>2 HP/s</strong> hoặc ngâm <strong>Hồ Nước</strong> hồi <strong>5 HP/s</strong>!
-                    </p>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                        <button id="btn-start-climb-1" type="button" class="group bg-gradient-to-r from-amber-500/25 to-orange-600/25 hover:from-amber-500/40 hover:to-orange-600/40 border border-amber-400/50 rounded-xl p-2.5 text-left transition active:scale-95 flex items-center justify-between">
-                            <div>
-                                <div class="font-extrabold text-xs text-white group-hover:text-amber-200">🌈 Map 1: Tháp Cầu Vồng</div>
-                                <div class="text-[10px] text-slate-300 mt-0.5">18 Tầng • Hồ Hồi Phục &amp; Vòng 4 thanh</div>
-                            </div>
-                            <span id="badge-climb-map1" class="text-[10px] font-bold px-2 py-0.5 rounded bg-slate-950/60 text-slate-300">Chưa xong</span>
-                        </button>
+            <!-- Right Column (7 cols): Game Modes (collapsed by default, expand on button click) -->
+            <div class="lg:col-span-7 flex flex-col-reverse gap-2">
+                <!-- Toggle button: Chọn Game / Chế Độ Chơi -->
+                <button id="btn-toggle-game-modes" type="button" class="w-full glass-panel hover:bg-cyan-500/20 border border-cyan-400/30 text-cyan-200 text-xs font-bold px-3 py-2.5 rounded-xl flex items-center justify-between gap-2 transition active:scale-95 pointer-events-auto">
+                    <span class="flex items-center gap-1.5 pointer-events-none">🎮 Chọn Game / Chế Độ Chơi</span>
+                    <span id="game-modes-toggle-icon" class="text-[10px] font-bold pointer-events-none">▼</span>
+                </button>
 
-                        <button id="btn-start-climb-2" type="button" class="group bg-gradient-to-r from-indigo-500/25 to-purple-600/25 hover:from-indigo-500/40 hover:to-purple-600/40 border border-purple-400/50 rounded-xl p-2.5 text-left transition active:scale-95 flex items-center justify-between">
-                            <div>
-                                <div class="font-extrabold text-xs text-white group-hover:text-purple-200">🏰 Map 2: Pháo Đài Không Gian</div>
-                                <div class="text-[10px] text-slate-300 mt-0.5">20 Tầng • Hồ Năng Lượng &amp; Xoáy kép</div>
+                <!-- Game Modes Panel (hidden by default) -->
+                <div id="menu-game-modes-panel" class="hidden glass-panel rounded-2xl p-3.5 sm:p-4 flex flex-col justify-between gap-3 border border-white/15 pointer-events-auto">
+                    <!-- Mode 1: Parkour Climb (2 Complete Maps) -->
+                    <div class="bg-slate-900/60 rounded-xl p-3 border border-amber-400/25">
+                        <div class="flex items-center justify-between mb-1.5">
+                            <div class="font-black text-sm text-amber-300 flex items-center gap-1.5">
+                                <span>🏔️</span><span>Chế Độ 1: Leo Map Nhặt Điểm (Tay Không)</span>
                             </div>
-                            <span id="badge-climb-map2" class="text-[10px] font-bold px-2 py-0.5 rounded bg-slate-950/60 text-slate-300">Chưa xong</span>
+                            <span class="text-[10px] font-bold text-cyan-200 bg-cyan-500/15 border border-cyan-400/30 px-2 py-0.5 rounded-full">Đứng im hồi +2HP/s • Hồ nước +5HP/s</span>
+                        </div>
+                        <p class="text-[11px] text-slate-300 mb-2.5 leading-snug">
+                            Vượt đường ray lăn &amp; vòng xoay 4 thanh đẩy (-2 HP khi trúng) lên đỉnh nhặt đủ <strong>12 Gem (💎)</strong>. Đứng im hồi <strong>2 HP/s</strong> hoặc ngâm <strong>Hồ Nước</strong> hồi <strong>5 HP/s</strong>!
+                        </p>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                            <button id="btn-start-climb-1" type="button" class="group bg-gradient-to-r from-amber-500/25 to-orange-600/25 hover:from-amber-500/40 hover:to-orange-600/40 border border-amber-400/50 rounded-xl p-2.5 text-left transition active:scale-95 flex items-center justify-between">
+                                <div>
+                                    <div class="font-extrabold text-xs text-white group-hover:text-amber-200">🌈 Map 1: Tháp Cầu Vồng</div>
+                                    <div class="text-[10px] text-slate-300 mt-0.5">18 Tầng • Hồ Hồi Phục &amp; Vòng 4 thanh</div>
+                                </div>
+                                <span id="badge-climb-map1" class="text-[10px] font-bold px-2 py-0.5 rounded bg-slate-950/60 text-slate-300">Chưa xong</span>
+                            </button>
+
+                            <button id="btn-start-climb-2" type="button" class="group bg-gradient-to-r from-indigo-500/25 to-purple-600/25 hover:from-indigo-500/40 hover:to-purple-600/40 border border-purple-400/50 rounded-xl p-2.5 text-left transition active:scale-95 flex items-center justify-between">
+                                <div>
+                                    <div class="font-extrabold text-xs text-white group-hover:text-purple-200">🏰 Map 2: Pháo Đài Không Gian</div>
+                                    <div class="text-[10px] text-slate-300 mt-0.5">20 Tầng • Hồ Năng Lượng &amp; Xoáy kép</div>
+                                </div>
+                                <span id="badge-climb-map2" class="text-[10px] font-bold px-2 py-0.5 rounded bg-slate-950/60 text-slate-300">Chưa xong</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Mode 2: Target Hunt Maze Arena -->
+                    <div class="bg-slate-900/60 rounded-xl p-3 border border-rose-400/30">
+                        <div class="flex items-start justify-between gap-2 mb-2">
+                            <div>
+                                <div class="font-black text-sm text-rose-400 flex items-center gap-1.5">
+                                    <span>🎯</span><span>Chế Độ 2: Săn Bia Mê Cung (Bắn Súng &amp; Ném Bom)</span>
+                                </div>
+                                <p class="text-[11px] text-slate-300 mt-0.5 leading-snug">
+                                    Mê cung tường kín + Radar xoay theo góc nhìn camera. Bia nhấp nháy vàng <strong>10s</strong> cảnh báo rồi vào <strong>3s nguy hiểm</strong> (hiển thị X-Ray xuyên tường) trước khi nổ!
+                                </p>
+                            </div>
+                            <span id="badge-hunt-mode" class="shrink-0 text-[10px] font-bold px-2 py-0.5 rounded bg-slate-950/60 text-slate-300">Chưa xong</span>
+                        </div>
+                        <button id="btn-start-hunt" type="button" class="w-full bg-gradient-to-r from-rose-600 to-amber-500 hover:from-rose-500 hover:to-amber-400 text-white font-black text-xs sm:text-sm py-2.5 px-4 rounded-xl shadow-lg border border-white/25 transition active:scale-95 flex items-center justify-center gap-2">
+                            <span>🔫</span>
+                            <span>CHƠI SĂN BIA MÊ CUNG (HẠ 15 BIA)</span>
                         </button>
                     </div>
-                </div>
-
-                <!-- Mode 2: Target Hunt Maze Arena -->
-                <div class="bg-slate-900/60 rounded-xl p-3 border border-rose-400/30">
-                    <div class="flex items-start justify-between gap-2 mb-2">
-                        <div>
-                            <div class="font-black text-sm text-rose-400 flex items-center gap-1.5">
-                                <span>🎯</span><span>Chế Độ 2: Săn Bia Mê Cung (Bắn Súng &amp; Ném Bom)</span>
-                            </div>
-                            <p class="text-[11px] text-slate-300 mt-0.5 leading-snug">
-                                Mê cung tường kín + Radar xoay theo góc nhìn camera. Bia nhấp nháy vàng <strong>10s</strong> cảnh báo rồi vào <strong>3s nguy hiểm</strong> (hiển thị X-Ray xuyên tường) trước khi nổ!
-                            </p>
-                        </div>
-                        <span id="badge-hunt-mode" class="shrink-0 text-[10px] font-bold px-2 py-0.5 rounded bg-slate-950/60 text-slate-300">Chưa xong</span>
-                    </div>
-                    <button id="btn-start-hunt" type="button" class="w-full bg-gradient-to-r from-rose-600 to-amber-500 hover:from-rose-500 hover:to-amber-400 text-white font-black text-xs sm:text-sm py-2.5 px-4 rounded-xl shadow-lg border border-white/25 transition active:scale-95 flex items-center justify-center gap-2">
-                        <span>🔫</span>
-                        <span>CHƠI SĂN BIA MÊ CUNG (HẠ 15 BIA)</span>
-                    </button>
                 </div>
             </div>
         </div>
@@ -334,8 +386,8 @@
                     <span class="hidden sm:inline">Hồi sinh (R)</span>
                 </button>
                 <button id="btn-back-menu" type="button" class="glass-panel hover:bg-rose-500/35 border border-rose-400/35 text-rose-100 text-xs font-bold px-2.5 py-2 rounded-xl flex items-center gap-1 transition active:scale-95">
-                    <span>🏠</span>
-                    <span>Menu</span>
+                    <span>🚪</span>
+                    <span>Thoát</span>
                 </button>
             </div>
 
@@ -365,8 +417,8 @@
                 <div><span class="kbd">WASD</span> Di chuyển</div>
                 <div><span class="kbd">Space</span> Nhảy</div>
                 <div class="combat-control-hint"><span class="kbd">F</span> / <span class="kbd">Chuột</span> Bắn súng</div>
-                <div class="combat-control-hint"><span class="kbd">G</span> Ném bom dầu gội</div>
-                <div class="combat-control-hint"><span class="kbd">Q</span> Đổi loại súng</div>
+                <div class="combat-control-hint"><span class="kbd">Chuột phải</span> Ném bom dầu gội</div>
+                <div class="combat-control-hint"><span class="kbd">G / Q</span> Đổi loại súng</div>
                 <div><span class="kbd">R</span> Hồi sinh</div>
             </div>
         </div>
@@ -390,7 +442,7 @@
             <div id="action-buttons-row" class="flex items-end gap-2.5 sm:gap-3">
                 <button id="btn-bomb" type="button" class="touch-btn bg-gradient-to-tr from-teal-600 to-emerald-400 hover:from-teal-500 hover:to-emerald-300 text-white w-16 h-16 sm:w-20 sm:h-20 rounded-full flex flex-col items-center justify-center font-extrabold tracking-wide border-2 border-white/45 shadow-[0_0_22px_rgba(20,184,166,0.7)]">
                     <span class="text-base sm:text-xl leading-none">🧴</span>
-                    <span class="text-[9px] sm:text-[11px] mt-0.5 sm:mt-1 leading-tight text-center">NÉM BOM<span class="hidden sm:inline"><br>(G)</span></span>
+                    <span class="text-[9px] sm:text-[11px] mt-0.5 sm:mt-1 leading-tight text-center">NÉM BOM<span class="hidden sm:inline"><br>(Chuột phải)</span></span>
                 </button>
 
                 <button id="btn-fire" type="button" class="touch-btn bg-gradient-to-tr from-rose-600 to-amber-500 hover:from-rose-500 hover:to-amber-400 text-white w-20 h-20 sm:w-24 sm:h-24 rounded-full flex flex-col items-center justify-center font-extrabold tracking-wide border-2 border-white/45 shadow-[0_0_25px_rgba(244,63,94,0.7)]">
@@ -427,6 +479,22 @@
                 </button>
                 <button id="btn-result-menu" type="button" class="bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-400 hover:to-cyan-400 text-slate-950 font-black text-xs sm:text-sm py-3 px-4 rounded-xl shadow-lg transition active:scale-95">
                     🏠 Về Màn Hình Chính
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="exit-confirm-modal" class="hidden fixed inset-0 z-40 bg-slate-950/75 backdrop-blur-md flex items-center justify-center p-4 pointer-events-auto" role="dialog" aria-modal="true" aria-labelledby="exit-confirm-title">
+        <div class="glass-panel max-w-sm w-full rounded-3xl p-6 text-center border border-rose-400/35 shadow-2xl">
+            <div class="text-4xl mb-2">🚪</div>
+            <h2 id="exit-confirm-title" class="text-xl font-black text-rose-200">Thoát màn chơi?</h2>
+            <p class="text-sm text-slate-200 mt-2">Bạn có chắc muốn thoát về sảnh không?</p>
+            <div class="mt-5 grid grid-cols-2 gap-2.5">
+                <button id="btn-exit-cancel" type="button" class="bg-slate-800 hover:bg-slate-700 border border-white/20 text-white font-bold text-sm py-3 px-3 rounded-xl transition active:scale-95">
+                    Không, tiếp tục
+                </button>
+                <button id="btn-exit-confirm" type="button" class="bg-gradient-to-r from-rose-600 to-orange-500 hover:from-rose-500 hover:to-orange-400 text-white font-black text-sm py-3 px-3 rounded-xl shadow-lg transition active:scale-95">
+                    Có, thoát
                 </button>
             </div>
         </div>
@@ -1196,8 +1264,8 @@
                 shortName: 'BATMAN',
                 vip: true,
                 gradient: 'from-zinc-700 via-neutral-900 to-amber-500',
-                gemCost: 0,
-                targetCost: 0,
+                gemCost: 36,
+                targetCost: 50,
                 body: 0x18181b, head: 0x09090b, ears: 0x09090b, snout: 0xfed7aa, nose: 0x7c2d12, belly: 0x27272a, limbs: 0x18181b, paws: 0x09090b, eyes: 0xffffff
             },
             thor: {
@@ -1205,8 +1273,8 @@
                 shortName: 'THOR',
                 vip: true,
                 gradient: 'from-slate-300 via-blue-900 to-red-600',
-                gemCost: 0,
-                targetCost: 0,
+                gemCost: 36,
+                targetCost: 50,
                 body: 0x1e293b, head: 0xfde68a, ears: 0xd97706, snout: 0xfed7aa, nose: 0x92400e, belly: 0x334155, limbs: 0x1e3a8a, paws: 0x78350f, eyes: 0x38bdf8
             },
             captain: {
@@ -1214,8 +1282,8 @@
                 shortName: 'CAPTAIN',
                 vip: true,
                 gradient: 'from-blue-600 via-white to-red-600',
-                gemCost: 0,
-                targetCost: 0,
+                gemCost: 36,
+                targetCost: 50,
                 body: 0x1d4ed8, head: 0x1e40af, ears: 0xf8fafc, snout: 0xfed7aa, nose: 0x7c2d12, belly: 0xf8fafc, limbs: 0x1e3a8a, paws: 0xb91c1c, eyes: 0x38bdf8
             },
             spiderman: {
@@ -1223,8 +1291,8 @@
                 shortName: 'SPIDER',
                 vip: true,
                 gradient: 'from-red-600 via-rose-500 to-blue-700',
-                gemCost: 0,
-                targetCost: 0,
+                gemCost: 36,
+                targetCost: 50,
                 body: 0xdc2626, head: 0xdc2626, ears: 0xb91c1c, snout: 0xdc2626, nose: 0x991b1b, belly: 0xdc2626, limbs: 0x1d4ed8, paws: 0xdc2626, eyes: 0xffffff
             },
             maczt: {
@@ -1838,6 +1906,8 @@
         const rollingRails = [];
         const sweeperSpinners = [];
         const miniMapWalls = [];
+        const cameraOccluders = [];
+        const cameraOcclusionRaycaster = new THREE.Raycaster();
         const huntSpawnPoints = [];
         const healingPools = [];
 
@@ -1854,6 +1924,7 @@
             rollingRails.length = 0;
             sweeperSpinners.length = 0;
             miniMapWalls.length = 0;
+            cameraOccluders.length = 0;
             huntSpawnPoints.length = 0;
             healingPools.length = 0;
 
@@ -1899,14 +1970,57 @@
                 maxY: y + h / 2,
                 minZ: z - d / 2,
                 maxZ: z + d / 2,
-                stepNumber
+                stepNumber,
+                cameraOccluder: recordMiniMapWall ? mesh : null
             });
 
             if (recordMiniMapWall) {
                 miniMapWalls.push({ x, z, w, d, color: '#' + colorHex.toString(16).padStart(6, '0') });
+                cameraOccluders.push(mesh);
             }
 
             return mesh;
+        }
+
+        function updateCameraOcclusion(targetFocus) {
+            if (state.gameMode !== 'hunt' || state.screen !== 'playing') return;
+
+            const direction = targetFocus.clone().sub(camera.position);
+            const distance = direction.length();
+            if (distance === 0) return;
+
+            cameraOcclusionRaycaster.set(camera.position, direction.normalize());
+            cameraOcclusionRaycaster.far = distance;
+            const blockedWalls = new Set(
+                cameraOcclusionRaycaster.intersectObjects(cameraOccluders, false).map(hit => hit.object)
+            );
+
+            cameraOccluders.forEach(mesh => {
+                const shouldFade = blockedWalls.has(mesh);
+                if (mesh.userData.cameraOcclusionFaded === shouldFade) return;
+
+                const material = mesh.material;
+                if (shouldFade) {
+                    mesh.userData.cameraOcclusionState = {
+                        transparent: material.transparent,
+                        opacity: material.opacity,
+                        depthWrite: material.depthWrite
+                    };
+                    material.transparent = true;
+                    material.opacity = 0.2;
+                    material.depthWrite = false;
+                } else {
+                    const original = mesh.userData.cameraOcclusionState;
+                    if (original) {
+                        material.transparent = original.transparent;
+                        material.opacity = original.opacity;
+                        material.depthWrite = original.depthWrite;
+                        delete mesh.userData.cameraOcclusionState;
+                    }
+                }
+                material.needsUpdate = true;
+                mesh.userData.cameraOcclusionFaded = shouldFade;
+            });
         }
 
         // Healing Water Pool Builder for Climb Mode Maps (+5 HP/s when standing inside)
@@ -2168,7 +2282,7 @@
 
             const podium = new THREE.Mesh(
                 new THREE.CylinderGeometry(3.2, 3.8, 0.5, 36),
-                new THREE.MeshStandardMaterial({ color: 0x0f172a, metalness: 0.6, roughness: 0.25 })
+                new THREE.MeshStandardMaterial({ color: 0x90ee90, metalness: 0.1, roughness: 0.45 })
             );
             podium.position.set(0, 0.25, 0);
             podium.receiveShadow = true;
@@ -2629,8 +2743,9 @@
             return { startPos, velocity };
         }
 
-        function checkPointColliderHit(pt) {
+        function checkPointColliderHit(pt, ignoreFadedCameraOccluders = false) {
             for (const box of colliders) {
+                if (ignoreFadedCameraOccluders && box.cameraOccluder?.userData.cameraOcclusionFaded) continue;
                 if (
                     pt.x >= box.minX && pt.x <= box.maxX &&
                     pt.y >= box.minY && pt.y <= box.maxY &&
@@ -2714,7 +2829,8 @@
         function getCrosshairWorldTarget() {
             aimRaycaster.setFromCamera(new THREE.Vector2(0, 0), camera);
             const targetMeshes = targets.map(t => t.body);
-            const candidates = [...targetMeshes, ...platformMeshes];
+            const visibleBlockers = platformMeshes.filter(mesh => !mesh.userData.cameraOcclusionFaded);
+            const candidates = [...targetMeshes, ...visibleBlockers];
 
             const hits = aimRaycaster.intersectObjects(candidates, false);
             for (const hit of hits) {
@@ -2856,7 +2972,7 @@
                 }
 
                 if (!hit && p.distanceTo(state.pos) > 2.2) {
-                    if (checkPointColliderHit(p)) {
+                    if (checkPointColliderHit(p, true)) {
                         hit = true;
                         sound.playHit(false);
                         spawnImpactSparks(p, 0x22d3ee, 10);
@@ -3057,12 +3173,13 @@
             gameMode: 'climb', // 'climb' | 'hunt'
             climbMapId: 'map1',
             matchEnded: false,
+            isPaused: false,
             matchStartTime: 0,
 
             pos: new THREE.Vector3(0, 0.5, 0),
             vel: new THREE.Vector3(0, 0, 0),
             rotationY: 0,
-            menuTurntableYaw: 0.35,
+            menuTurntableYaw: Math.PI,
             aimPitch: 0,
             aimHoldTimer: 0,
             isAimingBomb: false,
@@ -3084,7 +3201,7 @@
             huntGoal: 15,
             totalStarsAllTime: 0,
             totalTargetsAllTime: 0,
-            unlockedSkins: ['chrome', 'cyber', 'batman', 'thor', 'captain', 'spiderman', 'maczt'],
+            unlockedSkins: ['chrome', 'cyber', 'maczt'],
             completedMaps: {
                 climb_map1: false,
                 climb_map2: false,
@@ -3260,6 +3377,18 @@
         // ==========================================
         // SKIN SHOP RENDERER & PURCHASE UNLOCK LOGIC
         // ==========================================
+        function getSkinCostLabel(skinInfo) {
+            return skinInfo.vip
+                ? `${skinInfo.gemCost}💎 + ${skinInfo.targetCost}🎯`
+                : `${skinInfo.gemCost}💎 hoặc ${skinInfo.targetCost}🎯`;
+        }
+
+        function canAffordSkin(skinInfo) {
+            return skinInfo.vip
+                ? state.totalStarsAllTime >= skinInfo.gemCost && state.totalTargetsAllTime >= skinInfo.targetCost
+                : state.totalStarsAllTime >= skinInfo.gemCost || state.totalTargetsAllTime >= skinInfo.targetCost;
+        }
+
         function handleSkinClick(skinKey) {
             const skinInfo = SKINS[skinKey];
             if (!skinInfo) return;
@@ -3269,90 +3398,214 @@
                 return;
             }
 
-            if (state.totalStarsAllTime >= skinInfo.gemCost) {
-                state.totalStarsAllTime -= skinInfo.gemCost;
-                state.unlockedSkins.push(skinKey);
-                sound.playVictory();
-                applySkinSelection(skinKey, true);
-                renderSkinShopUI();
-                updateMenuStatsUI();
-                updateObjectiveHUD();
-                saveManager.saveNow(true);
-                showToast(`🎉 Đã mở khóa ${skinInfo.name} bằng ${skinInfo.gemCost} 💎!`);
-            } else if (state.totalTargetsAllTime >= skinInfo.targetCost) {
-                state.totalTargetsAllTime -= skinInfo.targetCost;
-                state.unlockedSkins.push(skinKey);
-                sound.playVictory();
-                applySkinSelection(skinKey, true);
-                renderSkinShopUI();
-                updateMenuStatsUI();
-                updateObjectiveHUD();
-                saveManager.saveNow(true);
-                showToast(`🎉 Đã mở khóa ${skinInfo.name} bằng ${skinInfo.targetCost} 🎯!`);
-            } else {
+            if (!canAffordSkin(skinInfo)) {
                 sound.playDamage();
-                showToast(`🔒 Cần ${skinInfo.gemCost} 💎 hoặc ${skinInfo.targetCost} 🎯 để mở khóa ${skinInfo.name}!`);
+                showToast(`🔒 Cần ${getSkinCostLabel(skinInfo)} để mở khóa ${skinInfo.name}!`);
+                return;
             }
+
+            if (skinInfo.vip) {
+                state.totalStarsAllTime -= skinInfo.gemCost;
+                state.totalTargetsAllTime -= skinInfo.targetCost;
+            } else if (state.totalStarsAllTime >= skinInfo.gemCost) {
+                state.totalStarsAllTime -= skinInfo.gemCost;
+            } else {
+                state.totalTargetsAllTime -= skinInfo.targetCost;
+            }
+
+            state.unlockedSkins.push(skinKey);
+            sound.playVictory();
+            applySkinSelection(skinKey, true);
+            renderSkinShopUI();
+            updateMenuStatsUI();
+            updateObjectiveHUD();
+            saveManager.saveNow(true);
+            showToast(`🎉 Đã mở khóa ${skinInfo.name} với ${getSkinCostLabel(skinInfo)}!`);
+        }
+
+        function drawSkinAvatarIcon(canvas, skinInfo, skinKey) {
+            const ctx = canvas.getContext('2d');
+            if (!ctx) return;
+
+            const color = (value) => `#${value.toString(16).padStart(6, '0')}`;
+            const roundedRect = (x, y, width, height, radius, fill) => {
+                ctx.fillStyle = fill;
+                ctx.beginPath();
+                ctx.moveTo(x + radius, y);
+                ctx.arcTo(x + width, y, x + width, y + height, radius);
+                ctx.arcTo(x + width, y + height, x, y + height, radius);
+                ctx.arcTo(x, y + height, x, y, radius);
+                ctx.arcTo(x, y, x + width, y, radius);
+                ctx.closePath();
+                ctx.fill();
+            };
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            const background = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+            background.addColorStop(0, color(skinInfo.head));
+            background.addColorStop(1, color(skinInfo.body));
+            roundedRect(0, 0, canvas.width, canvas.height, 12, background);
+
+            if (skinKey === 'thor' || skinKey === 'spiderman') {
+                roundedRect(22, 53, 36, 24, 8, skinKey === 'thor' ? '#b91c1c' : '#1d4ed8');
+            }
+            roundedRect(29, 51, 22, 27, 7, color(skinInfo.body));
+
+            if (skinKey === 'batman') {
+                ctx.fillStyle = '#09090b';
+                ctx.beginPath();
+                ctx.moveTo(20, 33);
+                ctx.lineTo(22, 10);
+                ctx.lineTo(35, 25);
+                ctx.lineTo(45, 25);
+                ctx.lineTo(58, 10);
+                ctx.lineTo(60, 33);
+                ctx.closePath();
+                ctx.fill();
+            } else {
+                roundedRect(12, 27, 15, 20, 7, color(skinInfo.ears));
+                roundedRect(53, 27, 15, 20, 7, color(skinInfo.ears));
+            }
+
+            roundedRect(19, 20, 42, 38, 12, color(skinInfo.head));
+
+            if (skinKey === 'thor') {
+                roundedRect(20, 17, 40, 8, 4, '#cbd5e1');
+                roundedRect(14, 24, 8, 7, 3, '#e2e8f0');
+                roundedRect(58, 24, 8, 7, 3, '#e2e8f0');
+            } else if (skinKey === 'spiderman') {
+                ctx.strokeStyle = 'rgba(15, 23, 42, 0.7)';
+                ctx.lineWidth = 1;
+                for (let offset = -20; offset <= 20; offset += 10) {
+                    ctx.beginPath();
+                    ctx.moveTo(40 + offset, 21);
+                    ctx.lineTo(40 + offset * 0.45, 57);
+                    ctx.moveTo(20, 39 + offset * 0.35);
+                    ctx.lineTo(60, 39 + offset * 0.35);
+                    ctx.stroke();
+                }
+            }
+
+            if (skinKey === 'maczt') {
+                roundedRect(22, 33, 36, 10, 4, '#0f172a');
+                roundedRect(25, 35, 30, 5, 2, '#38bdf8');
+                ctx.fillStyle = '#f97316';
+                ctx.beginPath();
+                ctx.arc(59, 45, 3, 0, Math.PI * 2);
+                ctx.fill();
+            } else if (skinKey === 'spiderman') {
+                roundedRect(23, 34, 15, 6, 4, '#fff');
+                roundedRect(42, 34, 15, 6, 4, '#fff');
+            } else if (skinKey !== 'batman') {
+                ctx.fillStyle = color(skinInfo.eyes);
+                ctx.beginPath();
+                ctx.arc(31, 36, 3, 0, Math.PI * 2);
+                ctx.arc(49, 36, 3, 0, Math.PI * 2);
+                ctx.fill();
+            } else {
+                roundedRect(24, 34, 13, 4, 2, '#facc15');
+                roundedRect(43, 34, 13, 4, 2, '#facc15');
+            }
+
+            ctx.fillStyle = color(skinInfo.snout);
+            ctx.beginPath();
+            ctx.ellipse(40, 47, 9, 6, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = color(skinInfo.nose);
+            ctx.beginPath();
+            ctx.ellipse(40, 45, 3.5, 2.5, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            if (skinKey === 'captain') {
+                ctx.fillStyle = '#dc2626';
+                ctx.beginPath();
+                ctx.arc(40, 65, 8, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.fillStyle = '#f8fafc';
+                ctx.beginPath();
+                ctx.arc(40, 65, 5, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.fillStyle = '#2563eb';
+                ctx.beginPath();
+                ctx.arc(40, 65, 2.5, 0, Math.PI * 2);
+                ctx.fill();
+            } else if (skinKey === 'batman') {
+                ctx.fillStyle = '#facc15';
+                ctx.beginPath();
+                ctx.arc(40, 65, 4, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        function createSkinIconButton(skinKey, compact = false) {
+            const skinInfo = SKINS[skinKey];
+            const unlocked = state.unlockedSkins.includes(skinKey);
+            const selected = state.skin === skinKey;
+            const canAfford = !unlocked && canAffordSkin(skinInfo);
+            const costLabel = getSkinCostLabel(skinInfo);
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.title = unlocked ? skinInfo.name : `${skinInfo.name} — ${costLabel}`;
+            btn.setAttribute('aria-label', unlocked ? skinInfo.name : `${skinInfo.name}, ${costLabel}`);
+            btn.className = `relative ${compact ? 'h-10' : 'h-14'} rounded-xl border-2 ${selected ? 'border-amber-400 ring-2 ring-amber-300/40' : skinInfo.vip ? 'border-amber-300/60' : canAfford ? 'border-emerald-400' : 'border-white/15'} bg-gradient-to-br ${skinInfo.gradient} shadow-md transition-transform hover:scale-105 flex items-center justify-center overflow-hidden`;
+
+            const preview = document.createElement('canvas');
+            preview.width = 80;
+            preview.height = 80;
+            preview.className = compact ? 'w-7 h-7 rounded-md' : 'w-11 h-11 rounded-lg';
+            preview.setAttribute('aria-hidden', 'true');
+            drawSkinAvatarIcon(preview, skinInfo, skinKey);
+            btn.appendChild(preview);
+
+            if (!unlocked) {
+                const lock = document.createElement('span');
+                lock.className = 'absolute top-0 right-0.5 text-[10px] drop-shadow';
+                lock.textContent = canAfford ? '🔓' : '🔒';
+                btn.appendChild(lock);
+                if (!compact) {
+                    const cost = document.createElement('span');
+                    cost.className = 'absolute bottom-0.5 px-1 rounded bg-slate-950/85 text-[8px] font-black text-amber-300 leading-tight';
+                    cost.textContent = costLabel;
+                    btn.appendChild(cost);
+                }
+            } else if (selected || skinInfo.vip) {
+                const badge = document.createElement('span');
+                badge.className = 'absolute top-0 right-0.5 text-[10px] drop-shadow';
+                badge.textContent = selected ? '✅' : '👑';
+                btn.appendChild(badge);
+            }
+
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                handleSkinClick(skinKey);
+            });
+            return btn;
         }
 
         function renderSkinShopUI() {
             const menuContainer = document.getElementById('menu-skin-selector');
             const drawerContainer = document.getElementById('skin-selector');
+            const selectedPreview = document.getElementById('menu-skin-preview');
             const skinKeys = Object.keys(SKINS);
+
+            if (selectedPreview) {
+                const selectedSkin = SKINS[state.skin] || SKINS.chrome;
+                drawSkinAvatarIcon(selectedPreview, selectedSkin, state.skin);
+                selectedPreview.title = selectedSkin.name;
+                selectedPreview.setAttribute('aria-label', selectedSkin.name);
+            }
 
             if (menuContainer) {
                 menuContainer.innerHTML = '';
                 skinKeys.forEach(key => {
-                    const s = SKINS[key];
-                    const unlocked = state.unlockedSkins.includes(key);
-                    const selected = state.skin === key;
-                    const canAfford = !unlocked && (state.totalStarsAllTime >= s.gemCost || state.totalTargetsAllTime >= s.targetCost);
-
-                    const btn = document.createElement('button');
-                    btn.type = 'button';
-                    btn.title = unlocked ? s.name : `${s.name} — Mở khóa: ${s.gemCost} 💎 hoặc ${s.targetCost} 🎯`;
-                    btn.className = `relative h-12 rounded-xl border-2 ${selected ? 'border-amber-400 scale-105 ring-2 ring-amber-300/50' : s.vip ? 'border-amber-300/60' : canAfford ? 'border-emerald-400 animate-pulse' : 'border-white/15'} bg-gradient-to-br ${s.gradient} shadow-md transition-transform hover:scale-105 flex flex-col items-center justify-end pb-1 overflow-hidden`;
-
-                    if (unlocked) {
-                        btn.innerHTML = `
-                            ${s.vip ? '<span class="absolute top-0.5 left-1 text-[9px] font-black px-1 rounded bg-amber-400 text-slate-950 shadow">👑 VIP</span>' : ''}
-                            <span class="text-[8.5px] font-black px-1 rounded bg-slate-950/75 text-white">${s.shortName}</span>
-                        `;
-                    } else {
-                        btn.innerHTML = `
-                            <span class="absolute top-0.5 right-1 text-[10px]">${canAfford ? '🔓' : '🔒'}</span>
-                            <span class="text-[8px] font-black px-1 rounded bg-slate-950/85 text-amber-300 leading-tight">${s.gemCost}💎/${s.targetCost}🎯</span>
-                        `;
-                    }
-                    btn.addEventListener('click', (e) => {
-                        e.stopPropagation();
-                        handleSkinClick(key);
-                    });
-                    menuContainer.appendChild(btn);
+                    menuContainer.appendChild(createSkinIconButton(key));
                 });
             }
 
             if (drawerContainer) {
                 drawerContainer.innerHTML = '';
                 skinKeys.forEach(key => {
-                    const s = SKINS[key];
-                    const unlocked = state.unlockedSkins.includes(key);
-                    const selected = state.skin === key;
-
-                    const btn = document.createElement('button');
-                    btn.type = 'button';
-                    btn.title = unlocked ? s.name : `${s.name} (${s.gemCost}💎 / ${s.targetCost}🎯)`;
-                    btn.className = `relative h-8 rounded-xl border-2 ${selected ? 'border-amber-400' : s.vip ? 'border-amber-300/50' : 'border-transparent'} bg-gradient-to-br ${s.gradient} shadow-md transition-transform hover:scale-105 flex items-center justify-center`;
-                    if (!unlocked) {
-                        btn.innerHTML = `<span class="text-[9px] font-black bg-slate-950/85 text-amber-300 px-1 rounded">🔒${s.gemCost}💎</span>`;
-                    } else if (s.vip) {
-                        btn.innerHTML = `<span class="text-[8px] font-black bg-amber-400/90 text-slate-950 px-1 rounded">👑${s.shortName}</span>`;
-                    }
-                    btn.addEventListener('click', (e) => {
-                        e.stopPropagation();
-                        handleSkinClick(key);
-                    });
-                    drawerContainer.appendChild(btn);
+                    drawerContainer.appendChild(createSkinIconButton(key, true));
                 });
             }
         }
@@ -3360,7 +3613,7 @@
         // ==========================================
         // LOCAL SAVE MANAGER (LocalStorage + JSON File Export/Import)
         // ==========================================
-        const DEFAULT_UNLOCKED_SKINS = ['chrome', 'cyber', 'batman', 'thor', 'captain', 'spiderman', 'maczt'];
+        const DEFAULT_UNLOCKED_SKINS = ['chrome', 'cyber', 'maczt'];
 
         class LocalSaveManager {
             constructor() {
@@ -3371,7 +3624,7 @@
 
             buildPayload() {
                 return {
-                    version: 4,
+                    version: 5,
                     game: 'Roblox Bearbrick 3D World',
                     savedAt: new Date().toISOString(),
                     skin: state.skin || 'chrome',
@@ -3418,11 +3671,11 @@
             applyLoadedData(data) {
                 if (!data || typeof data !== 'object') return false;
 
-                if (Array.isArray(data.unlockedSkins) && data.unlockedSkins.length > 0) {
-                    state.unlockedSkins = Array.from(new Set([...DEFAULT_UNLOCKED_SKINS, ...data.unlockedSkins.filter(k => SKINS[k])]));
-                } else {
-                    state.unlockedSkins = [...DEFAULT_UNLOCKED_SKINS];
-                }
+                const hasPaidVipUnlocks = Number(data.version) >= 5;
+                const savedUnlockedSkins = Array.isArray(data.unlockedSkins)
+                    ? data.unlockedSkins.filter(key => SKINS[key] && (!SKINS[key].vip || key === 'maczt' || hasPaidVipUnlocks))
+                    : [];
+                state.unlockedSkins = Array.from(new Set([...DEFAULT_UNLOCKED_SKINS, ...savedUnlockedSkins]));
 
                 const validSkin = data.skin && SKINS[data.skin] && state.unlockedSkins.includes(data.skin) ? data.skin : 'chrome';
                 applySkinSelection(validSkin, true);
@@ -3520,6 +3773,7 @@
             }
             state.screen = 'menu';
             state.matchEnded = false;
+            state.isPaused = false;
             state.isAimingBomb = false;
             trajectoryGroup.visible = false;
             const xrayLayer = document.getElementById('xray-markers-layer');
@@ -3529,6 +3783,7 @@
             player.root.visible = true;
 
             document.getElementById('result-modal').classList.add('hidden');
+            document.getElementById('exit-confirm-modal').classList.add('hidden');
             document.getElementById('gameplay-hud').classList.add('hidden');
             document.getElementById('main-menu-overlay').classList.remove('hidden');
 
@@ -3554,9 +3809,11 @@
             state.gameMode = mode;
             state.climbMapId = mapId;
             state.matchEnded = false;
+            state.isPaused = false;
             state.isAimingBomb = false;
             state.inWaterPool = false;
             trajectoryGroup.visible = false;
+            document.getElementById('exit-confirm-modal').classList.add('hidden');
             const xrayLayer = document.getElementById('xray-markers-layer');
             if (xrayLayer) xrayLayer.innerHTML = '';
 
@@ -3616,13 +3873,41 @@
             renderSkinShopUI();
         }
 
+        function pauseForExitConfirmation() {
+            if (state.screen !== 'playing' || state.matchEnded || state.isPaused) return;
+
+            state.isPaused = true;
+            state.keys = { w: false, a: false, s: false, d: false, space: false };
+            state.joyVec = { x: 0, y: 0 };
+            state.isDragging = false;
+            state.isAimingBomb = false;
+            trajectoryGroup.visible = false;
+            cameraTouchId = null;
+            joyTouchId = null;
+            document.getElementById('joystick-knob').style.transform = 'translate(0px, 0px)';
+            if (document.pointerLockElement) document.exitPointerLock?.();
+            document.getElementById('exit-confirm-modal').classList.remove('hidden');
+        }
+
+        function resumeFromExitConfirmation() {
+            state.isPaused = false;
+            document.getElementById('exit-confirm-modal').classList.add('hidden');
+        }
+
         // ==========================================
         // INPUT & UI EVENT HANDLERS (INCLUDING FULL-SCREEN MENU TURNTABLE DRAG)
         // ==========================================
         window.addEventListener('keydown', (e) => {
-            if (state.screen !== 'playing' || state.matchEnded) return;
-            sound.init();
+            if (state.screen !== 'playing' || state.matchEnded || state.isPaused) return;
             const code = e.code;
+            if (code === 'Space' || code === 'Enter') {
+                e.preventDefault();
+                const activeElement = document.activeElement;
+                if (activeElement instanceof HTMLElement && document.getElementById('gameplay-hud').contains(activeElement)) {
+                    activeElement.blur();
+                }
+            }
+            sound.init();
             if (code === 'KeyW' || code === 'ArrowUp') state.keys.w = true;
             if (code === 'KeyS' || code === 'ArrowDown') state.keys.s = true;
             if (code === 'KeyA' || code === 'ArrowLeft') state.keys.a = true;
@@ -3636,9 +3921,7 @@
                 }
             }
             if (code === 'KeyF' && state.gameMode === 'hunt') shootLaser();
-            if (code === 'KeyG' && !e.repeat && state.gameMode === 'hunt') {
-                state.isAimingBomb = true;
-            }
+            if (code === 'KeyG' && !e.repeat && state.gameMode === 'hunt') setWeaponMode(state.weaponMode === 'plasma' ? 'lightning' : 'plasma');
             if (code === 'KeyQ' && state.gameMode === 'hunt') setWeaponMode(state.weaponMode === 'plasma' ? 'lightning' : 'plasma');
             if (code === 'Digit1' && state.gameMode === 'hunt') setWeaponMode('plasma');
             if (code === 'Digit2' && state.gameMode === 'hunt') setWeaponMode('lightning');
@@ -3652,15 +3935,17 @@
             if (code === 'KeyA' || code === 'ArrowLeft') state.keys.a = false;
             if (code === 'KeyD' || code === 'ArrowRight') state.keys.d = false;
             if (code === 'Space') state.keys.space = false;
-            if (code === 'KeyG') {
-                if (state.isAimingBomb) {
-                    state.isAimingBomb = false;
-                    throwShampooBomb();
-                }
-            }
         });
 
         const domElem = renderer.domElement;
+        const gameplayHud = document.getElementById('gameplay-hud');
+
+        gameplayHud.addEventListener('click', (e) => {
+            const target = e.target;
+            if (target instanceof Element) {
+                target.closest('button')?.blur();
+            }
+        }, true);
 
         function isInteractiveUIElement(target) {
             if (!target || typeof target.closest !== 'function') return false;
@@ -3669,8 +3954,8 @@
 
         // Mouse Drag Handler on Window so Main Menu background always rotates Bearbrick smoothly
         window.addEventListener('mousedown', (e) => {
-            sound.init();
             if (state.screen === 'menu') {
+                sound.init();
                 if (!isInteractiveUIElement(e.target)) {
                     state.isDragging = true;
                     state.prevMouse.x = e.clientX;
@@ -3678,7 +3963,14 @@
                 }
                 return;
             }
+            if (state.isPaused) return;
+            sound.init();
             if (e.target !== domElem) return;
+            if (e.button === 2 && state.gameMode === 'hunt') {
+                e.preventDefault();
+                state.isAimingBomb = true;
+                return;
+            }
             if (e.button === 0 && document.pointerLockElement === domElem && state.gameMode === 'hunt') {
                 shootLaser();
                 return;
@@ -3690,7 +3982,11 @@
             }
         });
 
-        window.addEventListener('mouseup', () => {
+        window.addEventListener('mouseup', (e) => {
+            if (e.button === 2 && state.isAimingBomb && state.screen === 'playing' && state.gameMode === 'hunt' && !state.matchEnded) {
+                state.isAimingBomb = false;
+                throwShampooBomb();
+            }
             state.isDragging = false;
         });
 
@@ -3704,16 +4000,18 @@
                 }
                 return;
             }
+            if (state.isPaused) return;
 
             const sensitivity = 0.0055;
+            const verticalSensitivity = sensitivity * 0.5;
             if (document.pointerLockElement === domElem) {
                 state.camYaw -= e.movementX * sensitivity;
-                state.camPitch = THREE.MathUtils.clamp(state.camPitch + e.movementY * sensitivity, -0.35, 1.38);
+                state.camPitch = THREE.MathUtils.clamp(state.camPitch + e.movementY * verticalSensitivity, -0.35, 1.38);
             } else if (state.isDragging) {
                 const dx = e.clientX - state.prevMouse.x;
                 const dy = e.clientY - state.prevMouse.y;
                 state.camYaw -= dx * sensitivity * 1.25;
-                state.camPitch = THREE.MathUtils.clamp(state.camPitch + dy * sensitivity * 1.25, -0.35, 1.38);
+                state.camPitch = THREE.MathUtils.clamp(state.camPitch + dy * verticalSensitivity * 1.25, -0.35, 1.38);
                 state.prevMouse.x = e.clientX;
                 state.prevMouse.y = e.clientY;
             }
@@ -3722,7 +4020,7 @@
         domElem.addEventListener('contextmenu', (e) => e.preventDefault());
 
         domElem.addEventListener('wheel', (e) => {
-            if (state.screen !== 'playing') return;
+            if (state.screen !== 'playing' || state.isPaused) return;
             e.preventDefault();
             state.camDistance = THREE.MathUtils.clamp(state.camDistance + e.deltaY * 0.008, 0.6, 24.0);
         }, { passive: false });
@@ -3748,6 +4046,7 @@
         }, { passive: true });
 
         domElem.addEventListener('touchstart', (e) => {
+            if (state.isPaused) return;
             e.preventDefault();
             sound.init();
             for (let i = 0; i < e.changedTouches.length; i++) {
@@ -3761,6 +4060,7 @@
         }, { passive: false });
 
         window.addEventListener('touchmove', (e) => {
+            if (state.isPaused) return;
             for (let i = 0; i < e.changedTouches.length; i++) {
                 const t = e.changedTouches[i];
                 if (t.identifier === cameraTouchId) {
@@ -3812,6 +4112,7 @@
         joystickZone.addEventListener('touchstart', (e) => {
             e.preventDefault();
             e.stopPropagation();
+            if (state.isPaused) return;
             sound.init();
             if (joyTouchId === null && e.changedTouches.length > 0) {
                 const t = e.changedTouches[0];
@@ -3823,6 +4124,7 @@
         joystickZone.addEventListener('touchmove', (e) => {
             e.preventDefault();
             e.stopPropagation();
+            if (state.isPaused) return;
             for (let i = 0; i < e.changedTouches.length; i++) {
                 const t = e.changedTouches[i];
                 if (t.identifier === joyTouchId) updateJoystickFromTouch(t);
@@ -3846,7 +4148,9 @@
         document.getElementById('btn-start-climb-1').addEventListener('click', () => startGameMode('climb', 'map1'));
         document.getElementById('btn-start-climb-2').addEventListener('click', () => startGameMode('climb', 'map2'));
         document.getElementById('btn-start-hunt').addEventListener('click', () => startGameMode('hunt'));
-        document.getElementById('btn-back-menu').addEventListener('click', enterMainMenu);
+        document.getElementById('btn-back-menu').addEventListener('click', pauseForExitConfirmation);
+        document.getElementById('btn-exit-cancel').addEventListener('click', resumeFromExitConfirmation);
+        document.getElementById('btn-exit-confirm').addEventListener('click', enterMainMenu);
         document.getElementById('btn-result-menu').addEventListener('click', enterMainMenu);
         document.getElementById('btn-result-replay').addEventListener('click', () => startGameMode(state.gameMode, state.climbMapId));
 
@@ -3952,9 +4256,6 @@
             const skinInfo = SKINS[skinKey] || SKINS.chrome;
             state.skin = skinKey;
             player.applySkin(skinKey);
-
-            const menuNameEl = document.getElementById('menu-skin-name');
-            if (menuNameEl) menuNameEl.textContent = skinInfo.name;
 
             const badgeRing = document.getElementById('avatar-badge-ring');
             if (badgeRing && skinInfo.gradient) {
@@ -4353,6 +4654,7 @@
             } else {
                 camera.lookAt(targetFocus);
             }
+            updateCameraOcclusion(targetFocus);
         }
 
         function updateCollectibles(elapsedTime) {
@@ -4556,33 +4858,88 @@
             const dt = Math.min(clock.getDelta(), 0.05);
             const elapsedTime = clock.getElapsedTime();
 
-            if (spacePlanet) {
+            if (spacePlanet && !state.isPaused) {
                 spacePlanet.rotation.y = elapsedTime * 0.08;
             }
 
-            updateDynamicObstacles(dt, elapsedTime);
-            const speed = updatePhysics(dt);
-            player.animate(
-                dt,
-                speed,
-                state.isGrounded,
-                state.vel.y,
-                elapsedTime,
-                state.aimPitch,
-                state.isAimingBomb,
-                state.screen === 'menu'
-            );
-            updateBombAimPreview();
-            updateProjectiles(dt, elapsedTime);
-            updateCollectibles(elapsedTime);
-            updateCamera();
-            renderMiniMap(elapsedTime);
+            if (!state.isPaused) {
+                if (state.screen === 'menu' && !state.isDragging) {
+                    state.menuTurntableYaw += dt * 0.18;
+                }
+                updateDynamicObstacles(dt, elapsedTime);
+                const speed = updatePhysics(dt);
+                player.animate(
+                    dt,
+                    speed,
+                    state.isGrounded,
+                    state.vel.y,
+                    elapsedTime,
+                    state.aimPitch,
+                    state.isAimingBomb,
+                    state.screen === 'menu'
+                );
+                updateBombAimPreview();
+                updateProjectiles(dt, elapsedTime);
+                updateCollectibles(elapsedTime);
+                updateCamera();
+                renderMiniMap(elapsedTime);
+            }
 
             renderer.render(scene, camera);
         }
 
         window.onload = function () {
             animate();
+
+            // ==========================================
+            // Toggle Collapsible Menu Panels (Skin Shop & Game Modes)
+            // ==========================================
+            const btnToggleSkinShop = document.getElementById('btn-toggle-skin-shop');
+            const panelSkinShop = document.getElementById('menu-skin-shop-panel');
+            const iconSkinShop = document.getElementById('skin-shop-toggle-icon');
+            if (btnToggleSkinShop && panelSkinShop && iconSkinShop) {
+                btnToggleSkinShop.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    const isHidden = panelSkinShop.classList.toggle('hidden');
+                    iconSkinShop.textContent = isHidden ? '▼' : '▲';
+                });
+            }
+
+            const btnToggleGameModes = document.getElementById('btn-toggle-game-modes');
+            const panelGameModes = document.getElementById('menu-game-modes-panel');
+            const iconGameModes = document.getElementById('game-modes-toggle-icon');
+            if (btnToggleGameModes && panelGameModes && iconGameModes) {
+                btnToggleGameModes.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    const isHidden = panelGameModes.classList.toggle('hidden');
+                    iconGameModes.textContent = isHidden ? '▼' : '▲';
+                });
+            }
+
+            const skinShopTabs = [
+                { id: 'skins', button: 'skin-shop-tab-skins', panel: 'skin-shop-panel-skins' },
+                { id: 'accessories', button: 'skin-shop-tab-accessories', panel: 'skin-shop-panel-accessories' },
+                { id: 'weapons', button: 'skin-shop-tab-weapons', panel: 'skin-shop-panel-weapons' }
+            ];
+            skinShopTabs.forEach(tab => {
+                const button = document.getElementById(tab.button);
+                if (!button) return;
+                button.addEventListener('click', () => {
+                    skinShopTabs.forEach(item => {
+                        const selected = item.id === tab.id;
+                        const tabButton = document.getElementById(item.button);
+                        const tabPanel = document.getElementById(item.panel);
+                        if (!tabButton || !tabPanel) return;
+                        tabButton.setAttribute('aria-selected', String(selected));
+                        tabButton.className = selected
+                            ? 'rounded-lg border border-amber-400/50 bg-amber-500/20 text-amber-200 px-2 py-1.5 text-[10px] sm:text-xs font-bold transition'
+                            : 'rounded-lg border border-white/10 bg-slate-950/40 text-slate-300 px-2 py-1.5 text-[10px] sm:text-xs font-bold transition';
+                        tabPanel.classList.toggle('hidden', !selected);
+                    });
+                });
+            });
         };
     </script>
 </body>
