@@ -538,6 +538,12 @@
                 this.ctx = null;
                 this.muted = false;
                 this.masterGain = null;
+                this.musicBus = null;
+                this.musicTimer = null;
+                this.musicTrackKey = '';
+                this.musicStep = 0;
+                this.musicTheme = 'galaxy';
+                this.musicMode = 'menu';
             }
 
             init() {
@@ -548,10 +554,14 @@
                     this.masterGain = this.ctx.createGain();
                     this.masterGain.gain.value = this.muted ? 0 : 0.36;
                     this.masterGain.connect(this.ctx.destination);
+                    this.musicBus = this.ctx.createGain();
+                    this.musicBus.gain.value = 0;
+                    this.musicBus.connect(this.masterGain);
                 }
                 if (this.ctx && this.ctx.state === 'suspended') {
                     this.ctx.resume();
                 }
+                if (this.ctx) this.syncBackgroundMusic(this.musicTheme, this.musicMode);
             }
 
             toggleMute() {
@@ -560,7 +570,127 @@
                 if (this.masterGain && this.ctx) {
                     this.masterGain.gain.setTargetAtTime(this.muted ? 0 : 0.36, this.ctx.currentTime, 0.02);
                 }
+                this.syncBackgroundMusic(this.musicTheme, this.musicMode);
                 return this.muted;
+            }
+
+            syncBackgroundMusic(theme, mode) {
+                this.musicTheme = theme === 'noel' ? 'noel' : 'galaxy';
+                this.musicMode = mode === 'playing' ? 'playing' : 'menu';
+                const trackKey = `${this.musicTheme}:${this.musicMode}`;
+                if (!this.ctx || !this.musicBus) return;
+
+                if (this.muted) {
+                    if (this.musicTimer !== null) clearTimeout(this.musicTimer);
+                    this.musicTimer = null;
+                    this.musicTrackKey = '';
+                    this.musicBus.gain.setTargetAtTime(0, this.ctx.currentTime, 0.05);
+                    return;
+                }
+                if (this.musicTrackKey === trackKey && this.musicTimer !== null) return;
+
+                if (this.musicTimer !== null) clearTimeout(this.musicTimer);
+                const changingTrack = Boolean(this.musicTrackKey && this.musicTrackKey !== trackKey);
+                this.musicTrackKey = trackKey;
+                this.musicStep = 0;
+                this.musicBus.gain.cancelScheduledValues(this.ctx.currentTime);
+                if (changingTrack) {
+                    this.musicBus.gain.setTargetAtTime(0, this.ctx.currentTime, 0.04);
+                    this.musicTimer = setTimeout(() => {
+                        if (!this.ctx || this.muted || this.musicTrackKey !== trackKey) return;
+                        this.musicBus.gain.setTargetAtTime(0.72, this.ctx.currentTime, 0.3);
+                        this.scheduleMusicStep(trackKey);
+                    }, 140);
+                } else {
+                    this.musicBus.gain.setTargetAtTime(0.72, this.ctx.currentTime, 0.35);
+                    this.scheduleMusicStep(trackKey);
+                }
+            }
+
+            scheduleMusicStep(trackKey) {
+                if (!this.ctx || this.muted || this.musicTrackKey !== trackKey) return;
+
+                const isNoel = this.musicTheme === 'noel';
+                const isPlaying = this.musicMode === 'playing';
+                const bpm = isPlaying
+                    ? (isNoel ? 126 : 116)
+                    : (isNoel ? 82 : 68);
+                const beat = 60 / bpm;
+                const step = this.musicStep++;
+                const now = this.ctx.currentTime + 0.025;
+                const galaxyLobby = [0, 3, 7, 10, 7, 5, 3, 5];
+                const galaxyGame = [0, 3, 5, 7, 10, 7, 5, 12, 10, 7, 5, 3, 7, 10, 12, 7];
+                const noelLobby = [0, 4, 7, 9, 7, 4, 2, 4];
+                const noelGame = [0, 4, 7, 9, 11, 9, 7, 4, 2, 4, 7, 11, 9, 7, 4, 2];
+                const phrase = isNoel
+                    ? (isPlaying ? noelGame : noelLobby)
+                    : (isPlaying ? galaxyGame : galaxyLobby);
+                const semitone = phrase[step % phrase.length];
+                const root = isNoel ? (isPlaying ? 164.81 : 130.81) : (isPlaying ? 146.83 : 196);
+                const leadOctave = isPlaying ? 2 : 1;
+                const leadFrequency = root * Math.pow(2, (semitone + leadOctave * 12) / 12);
+                const leadType = isNoel ? 'triangle' : 'sine';
+                this.playMusicNote(leadFrequency, now, beat * (isPlaying ? 0.72 : 1.25), leadType, isPlaying ? 0.105 : 0.055);
+
+                if (step % 4 === 0) {
+                    const chordShift = Math.floor(step / 8) % 2 === 0 ? 0 : (isNoel ? 5 : 3);
+                    const chordRoot = root * Math.pow(2, chordShift / 12);
+                    this.playMusicNote(chordRoot * 0.5, now, beat * 3.6, 'sine', isPlaying ? 0.11 : 0.065);
+                    this.playMusicNote(chordRoot * Math.pow(2, 7 / 12), now, beat * 2.8, 'triangle', isPlaying ? 0.035 : 0.025);
+                }
+
+                if (isNoel && step % 2 === 0) {
+                    this.playMusicNote(leadFrequency * 2, now + beat * 0.12, beat * 0.42, 'sine', isPlaying ? 0.075 : 0.045);
+                }
+                if (isPlaying && step % 4 === 0) this.playMusicKick(now, 0.12);
+                if (isPlaying && step % 4 === 2) this.playMusicTick(now, isNoel ? 1450 : 980, 0.035);
+
+                this.musicTimer = setTimeout(() => this.scheduleMusicStep(trackKey), beat * 1000);
+            }
+
+            playMusicNote(frequency, startTime, duration, waveform, volume) {
+                const oscillator = this.ctx.createOscillator();
+                const filter = this.ctx.createBiquadFilter();
+                const gain = this.ctx.createGain();
+                oscillator.type = waveform;
+                oscillator.frequency.setValueAtTime(frequency, startTime);
+                filter.type = 'lowpass';
+                filter.frequency.setValueAtTime(waveform === 'sine' ? 1800 : 2800, startTime);
+                gain.gain.setValueAtTime(0.0001, startTime);
+                gain.gain.linearRampToValueAtTime(volume, startTime + 0.025);
+                gain.gain.exponentialRampToValueAtTime(0.0001, startTime + duration);
+                oscillator.connect(filter);
+                filter.connect(gain);
+                gain.connect(this.musicBus);
+                oscillator.start(startTime);
+                oscillator.stop(startTime + duration + 0.03);
+            }
+
+            playMusicKick(startTime, volume) {
+                const oscillator = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                oscillator.type = 'sine';
+                oscillator.frequency.setValueAtTime(105, startTime);
+                oscillator.frequency.exponentialRampToValueAtTime(48, startTime + 0.14);
+                gain.gain.setValueAtTime(volume, startTime);
+                gain.gain.exponentialRampToValueAtTime(0.0001, startTime + 0.16);
+                oscillator.connect(gain);
+                gain.connect(this.musicBus);
+                oscillator.start(startTime);
+                oscillator.stop(startTime + 0.17);
+            }
+
+            playMusicTick(startTime, frequency, volume) {
+                const oscillator = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                oscillator.type = 'triangle';
+                oscillator.frequency.setValueAtTime(frequency, startTime);
+                gain.gain.setValueAtTime(volume, startTime);
+                gain.gain.exponentialRampToValueAtTime(0.0001, startTime + 0.055);
+                oscillator.connect(gain);
+                gain.connect(this.musicBus);
+                oscillator.start(startTime);
+                oscillator.stop(startTime + 0.06);
             }
 
             playJump() {
@@ -4066,6 +4196,7 @@
             spaceBackdrop.galaxyGroup.visible = !isNoelTheme;
             spaceBackdrop.noelGroup.visible = isNoelTheme;
             updateBackgroundThemeButtons();
+            sound.syncBackgroundMusic(state.backgroundTheme, state.screen);
             if (refreshLobby && state.screen === 'menu') buildMenuShowcaseWorld();
 
             if (saveSelection) {
@@ -4633,6 +4764,7 @@
                 document.exitPointerLock?.();
             }
             state.screen = 'menu';
+            sound.syncBackgroundMusic(state.backgroundTheme, 'menu');
             state.matchEnded = false;
             state.isPaused = false;
             state.isAimingBomb = false;
@@ -4665,6 +4797,7 @@
         }
 
         function startGameMode(mode, mapId = 'map1') {
+            sound.syncBackgroundMusic(state.backgroundTheme, 'playing');
             sound.init();
             domElem.requestPointerLock?.();
             state.screen = 'playing';
@@ -5801,6 +5934,7 @@
 
         window.onload = function () {
             animate();
+            window.addEventListener('pointerdown', () => sound.init(), { once: true });
 
             [
                 { id: 'btn-background-galaxy', theme: 'galaxy' },

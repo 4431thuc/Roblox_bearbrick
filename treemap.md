@@ -31,6 +31,7 @@ Roblox_bearbrick/
 - Tạo `scene`, `camera`, `renderer`, ánh sáng và nền chủ đề ở section 2.
 - `createSpaceBackdrop()` dựng các model nền dùng chung; `updateSpaceBackdrop()` quay hành tinh/mặt trăng, cho tàu bay theo quỹ đạo, sinh sao băng hoặc cập nhật tuyết/mây/xe tuần lộc Noel.
 - `setBackgroundTheme()` đổi theme từ panel Background ở sảnh và lưu lựa chọn.
+- `SoundEngine` phát BGM procedural theo theme Galaxy/Noel và mode sảnh/trận; audio bắt đầu sau tương tác đầu tiên để tuân thủ autoplay policy của trình duyệt.
 - Đọc save, dựng sảnh qua `enterMainMenu()`, rồi gọi `animate()` khi trang tải.
 - Mỗi frame, nếu không pause: cập nhật obstacle, vật lý, animation nhân vật, projectile/collectible, camera và radar; cuối cùng render Three.js.
 - `startGameMode(mode, mapId)` dựng world và reset state cho trận mới. Hàm này được gọi từ nút chọn mode/map và nút chơi lại; yêu cầu Pointer Lock ngay trong thao tác bắt đầu.
@@ -40,7 +41,7 @@ Roblox_bearbrick/
 
 | Section trong source | Trách nhiệm và điểm vào chính |
 |---|---|
-| 1. Pure Code Web Audio API Sound Engine | `SoundEngine`: âm thanh Web Audio tổng hợp |
+| 1. Pure Code Web Audio API Sound Engine | `SoundEngine`: SFX và BGM procedural theo theme/mode |
 | 2. Three.js Scene, Space-Obby Sky & Lighting | Scene/camera/renderer, Galaxy và Noel backdrop |
 | 3. Procedural Textures | Studs, cỏ, nhãn shampoo, logo VIP |
 | 4. Bearbrick Character Builder & Skin Catalog | `SKINS`, `BearbrickCharacter`, dựng/animation nhân vật |
