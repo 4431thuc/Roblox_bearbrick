@@ -1,6 +1,6 @@
 # Roblox Bearbrick 3D World — Code Treemap
 
-Tài liệu định hướng nhanh cho agent/contributor trước khi sửa game. Mã nguồn runtime hiện tập trung trong một file: [`index.html`](./index.html). Các vị trí dòng bên dưới là mốc của phiên bản hiện tại; nếu có thay đổi lớn, hãy tìm theo tên hàm hoặc tiêu đề section.
+Tài liệu định hướng nhanh cho agent/contributor trước khi sửa game. Mã nguồn runtime hiện tập trung trong một file: [`index.html`](./index.html). Dùng tên section hoặc hàm để tìm trong source; vị trí dòng thay đổi theo các lần cập nhật.
 
 ## 1. Cấu trúc repository
 
@@ -38,19 +38,19 @@ Roblox_bearbrick/
 
 ## 3. Bản đồ section JavaScript trong `index.html`
 
-| Section / mốc hiện tại | Trách nhiệm và điểm vào chính |
+| Section trong source | Trách nhiệm và điểm vào chính |
 |---|---|
-| 1 — khoảng dòng 534 | `SoundEngine`: âm thanh Web Audio tổng hợp |
-| 2 — khoảng dòng 864 | Three.js scene, camera, renderer, Galaxy/Noel backdrop và ánh sáng |
-| 3 — khoảng dòng 1406 | Texture procedural: studs, cỏ, nhãn shampoo, logo VIP |
-| 4 — khoảng dòng 1683 | `SKINS`, `BearbrickCharacter`, dựng/tạo animation nhân vật |
-| 5 — khoảng dòng 2385 | World arrays, collision helpers, builders; trang trí cây/tuyết/tuần lộc cho map climb |
-| 6 — khoảng dòng 3212 | Mục tiêu hunt (bia kẹo khi Noel), súng, bom, hiệu ứng và projectile |
-| 7 — khoảng dòng 3790 | `state`, theme selection, HUD, skin shop, `LocalSaveManager`, chuyển màn hình |
-| Input/UI — khoảng dòng 4555 | Keyboard, mouse/pointer lock, touch/joystick và bindings của button |
-| 8 — khoảng dòng 4972 | Obstacle animation, tuần lộc map, AABB physics, damage, HP regen và camera |
-| 9 — khoảng dòng 5357 | `renderMiniMap()`: radar camera-relative, tường, gem, bia và mũi tên chỉ bia ngoài phạm vi |
-| 10 — khoảng dòng 5536 | `animate()`, backdrop update, load save và khởi chạy |
+| 1. Pure Code Web Audio API Sound Engine | `SoundEngine`: âm thanh Web Audio tổng hợp |
+| 2. Three.js Scene, Space-Obby Sky & Lighting | Scene/camera/renderer, Galaxy và Noel backdrop |
+| 3. Procedural Textures | Studs, cỏ, nhãn shampoo, logo VIP |
+| 4. Bearbrick Character Builder & Skin Catalog | `SKINS`, `BearbrickCharacter`, dựng/animation nhân vật |
+| 5. World Builders | World registries, collision helpers, map builders và trang trí lobby theo theme |
+| 6. Weapons | Mục tiêu hunt (bia kẹo khi Noel), súng, bom, hiệu ứng và projectile |
+| 7. Player State, HUD, Skin Shop & Save System | `state`, theme selection, HUD, skin shop, `LocalSaveManager`, chuyển màn hình |
+| Input & UI Event Handlers | Keyboard, mouse/pointer lock, touch/joystick và button bindings |
+| 8. Obstacle Updates, AABB Physics & HP Regen | Obstacle animation, tuần lộc map/lobby, physics, HP và camera |
+| 9. Camera-Relative Rotating 2D Radar Mini-Map | `renderMiniMap()`: tường, gem, bia và mũi tên chỉ bia ngoài phạm vi |
+| 10. Main Animation Loop & Initialization | `animate()`, backdrop update, load save và khởi chạy |
 
 ## 4. Chức năng theo subsystem
 
@@ -61,6 +61,7 @@ Roblox_bearbrick/
 - Registry chính: `colliders`, `platformMeshes`, `stars`, `targets`, `rollingRails`, `sweeperSpinners`, `miniMapWalls`, `cameraOccluders`, `huntSpawnPoints`, `healingPools`.
 - Builders: `buildMenuShowcaseWorld()`, `buildClimbMap1()`, `buildClimbMap2()`, `buildHuntArenaMap()`.
 - `buildChristmasMapDecorations()` thêm cây thông, mảng tuyết và tuần lộc chuyển động cho hai map climb khi theme Noel được chọn.
+- `buildLobbyThemeDecorations()` thêm UFO/người ngoài hành tinh cho Galaxy hoặc cây thông, tuần lộc, quà, gậy kẹo và tất chân cho Noel.
 - `updateCameraOcclusion()` làm mờ tường chắn camera. Khi bắn, các tường đang mờ được bỏ qua trong chọn điểm ngắm và kiểm tra va chạm projectile.
 
 ### Gameplay và input

@@ -1157,8 +1157,8 @@
                 wingLight.position.set(-1.7, 0.08, z);
                 spacecraft.add(wingLight);
             });
-            spacecraft.scale.setScalar(1.25);
-            spacecraft.position.set(45, 55, -110);
+            spacecraft.scale.setScalar(1.75);
+            spacecraft.position.set(18, 24, -60);
             galaxyGroup.add(spacecraft);
 
             const cloudMaterial = new THREE.MeshStandardMaterial({
@@ -1204,7 +1204,7 @@
             });
 
             const santaSleigh = createSantaSleigh();
-            santaSleigh.group.scale.setScalar(1.35);
+            santaSleigh.group.scale.setScalar(2.0);
             noelGroup.add(santaSleigh.group);
 
             const snowCount = 720;
@@ -1312,9 +1312,9 @@
 
                 const sleighPhase = elapsedTime * 0.075;
                 spaceBackdrop.santaSleigh.group.position.set(
-                    Math.sin(sleighPhase) * 100,
-                    61 + Math.sin(elapsedTime * 0.35) * 2.5,
-                    -145
+                    Math.sin(sleighPhase) * 40,
+                    24 + Math.sin(elapsedTime * 0.35) * 2.5,
+                    -70
                 );
                 spaceBackdrop.santaSleigh.group.rotation.y = Math.cos(sleighPhase) >= 0 ? 0 : Math.PI;
                 spaceBackdrop.santaSleigh.reindeer.forEach((deer, deerIndex) => {
@@ -1342,9 +1342,9 @@
                 spaceBackdrop.moon.rotation.y += dt * 0.012;
 
                 const orbit = elapsedTime * 0.045;
-                const shipX = 45 + Math.sin(orbit) * 32;
-                const shipZ = -112 + Math.cos(orbit) * 22;
-                spaceBackdrop.spacecraft.position.set(shipX, 55 + Math.sin(orbit * 1.7) * 7, shipZ);
+                const shipX = 18 + Math.sin(orbit) * 24;
+                const shipZ = -60 + Math.cos(orbit) * 10;
+                spaceBackdrop.spacecraft.position.set(shipX, 24 + Math.sin(orbit * 1.7) * 3, shipZ);
                 spaceBackdrop.spacecraft.rotation.y = Math.atan2(Math.sin(orbit) * 22, Math.cos(orbit) * 32);
                 spaceBackdrop.spacecraft.rotation.z = Math.sin(orbit * 1.7) * 0.035;
 
@@ -2400,6 +2400,8 @@
         const huntSpawnPoints = [];
         const healingPools = [];
         const christmasReindeers = [];
+        const lobbyFlyingSaucers = [];
+        const lobbyAliens = [];
 
         const MAP_BOUNDS = { halfSize: 50 };
 
@@ -2418,6 +2420,8 @@
             huntSpawnPoints.length = 0;
             healingPools.length = 0;
             christmasReindeers.length = 0;
+            lobbyFlyingSaucers.length = 0;
+            lobbyAliens.length = 0;
 
             bullets.forEach(b => scene.remove(b.mesh));
             bullets.length = 0;
@@ -2856,6 +2860,203 @@
             });
         }
 
+        function createLobbySaucer() {
+            const saucer = new THREE.Group();
+            const hullMat = new THREE.MeshStandardMaterial({ color: 0xcbd5e1, metalness: 0.8, roughness: 0.22 });
+            const rimMat = new THREE.MeshStandardMaterial({ color: 0x64748b, metalness: 0.75, roughness: 0.3 });
+            const domeMat = new THREE.MeshStandardMaterial({
+                color: 0x67e8f9,
+                emissive: 0x0891b2,
+                emissiveIntensity: 0.4,
+                transparent: true,
+                opacity: 0.78,
+                roughness: 0.16
+            });
+            const hull = new THREE.Mesh(new THREE.CylinderGeometry(2.15, 2.45, 0.52, 24), hullMat);
+            saucer.add(hull);
+            const rim = new THREE.Mesh(new THREE.TorusGeometry(2.25, 0.12, 10, 32), rimMat);
+            rim.rotation.x = Math.PI / 2;
+            rim.position.y = -0.05;
+            saucer.add(rim);
+
+            const dome = new THREE.Mesh(new THREE.SphereGeometry(1.25, 18, 12), domeMat);
+            dome.scale.set(1, 0.62, 1);
+            dome.position.y = 0.48;
+            saucer.add(dome);
+
+            const lights = [];
+            for (let i = 0; i < 10; i++) {
+                const angle = (i / 10) * Math.PI * 2;
+                const light = new THREE.Mesh(
+                    new THREE.SphereGeometry(0.16, 8, 6),
+                    new THREE.MeshBasicMaterial({ color: i % 2 ? 0xf472b6 : 0x67e8f9 })
+                );
+                light.position.set(Math.cos(angle) * 2.05, -0.08, Math.sin(angle) * 2.05);
+                saucer.add(light);
+                lights.push(light);
+            }
+
+            const beamMaterial = new THREE.MeshBasicMaterial({
+                color: 0x67e8f9,
+                transparent: true,
+                opacity: 0.14,
+                side: THREE.DoubleSide,
+                depthWrite: false
+            });
+            const beam = new THREE.Mesh(new THREE.ConeGeometry(1.25, 4.2, 20, 1, true), beamMaterial);
+            beam.position.y = -2.35;
+            saucer.add(beam);
+
+            saucer.position.set(-5.3, 4.0, -7.0);
+            saucer.scale.setScalar(0.95);
+            worldGroup.add(saucer);
+            lobbyFlyingSaucers.push({ group: saucer, baseY: 4.0, beamMaterial, lights, phase: Math.random() * Math.PI * 2 });
+        }
+
+        function createLobbyAlien() {
+            const alien = new THREE.Group();
+            const greenMat = new THREE.MeshStandardMaterial({ color: 0x4ade80, roughness: 0.5, metalness: 0.12 });
+            const darkMat = new THREE.MeshStandardMaterial({ color: 0x052e2b, roughness: 0.25, metalness: 0.2 });
+            const eyeMat = new THREE.MeshBasicMaterial({ color: 0x0f172a });
+            const glowMat = new THREE.MeshBasicMaterial({ color: 0xa3e635 });
+
+            const body = new THREE.Mesh(new RoundedBoxGeometry(0.9, 1.15, 0.72, 4, 0.22), greenMat);
+            body.position.y = 0.9;
+            alien.add(body);
+            const head = new THREE.Mesh(new THREE.SphereGeometry(0.88, 18, 14), greenMat);
+            head.scale.set(0.9, 1.08, 0.72);
+            head.position.set(0, 2.05, 0);
+            alien.add(head);
+
+            [-1, 1].forEach(side => {
+                const eye = new THREE.Mesh(new THREE.SphereGeometry(0.26, 12, 8), eyeMat);
+                eye.scale.set(0.72, 1.35, 0.48);
+                eye.position.set(side * 0.32, 2.12, 0.58);
+                alien.add(eye);
+                const arm = new THREE.Mesh(new RoundedBoxGeometry(0.24, 0.85, 0.24, 3, 0.07), greenMat);
+                arm.position.set(side * 0.62, 1.0, 0);
+                arm.rotation.z = side * -0.22;
+                alien.add(arm);
+            });
+
+            const antenna = new THREE.Mesh(new THREE.CylinderGeometry(0.055, 0.08, 0.55, 8), darkMat);
+            antenna.position.set(0, 2.92, 0);
+            alien.add(antenna);
+            const antennaTip = new THREE.Mesh(new THREE.SphereGeometry(0.18, 10, 8), glowMat);
+            antennaTip.position.set(0, 3.24, 0);
+            alien.add(antennaTip);
+
+            const footLeft = new THREE.Mesh(new RoundedBoxGeometry(0.4, 0.2, 0.52, 3, 0.08), darkMat);
+            footLeft.position.set(-0.25, 0.1, 0.02);
+            alien.add(footLeft);
+            const footRight = footLeft.clone();
+            footRight.position.x = 0.25;
+            alien.add(footRight);
+
+            alien.position.set(4.8, 0, -7.5);
+            alien.scale.setScalar(0.92);
+            worldGroup.add(alien);
+            lobbyAliens.push({ group: alien, baseY: 0, phase: 1.2, head });
+        }
+
+        function addLobbyGift(x, z, size, color) {
+            const gift = new THREE.Group();
+            const boxMat = new THREE.MeshStandardMaterial({ color, roughness: 0.38, metalness: 0.12 });
+            const ribbonMat = new THREE.MeshStandardMaterial({ color: 0xfacc15, metalness: 0.35, roughness: 0.3 });
+            const box = new THREE.Mesh(new RoundedBoxGeometry(size, size * 0.72, size * 0.78, 3, 0.1), boxMat);
+            box.position.y = size * 0.36;
+            gift.add(box);
+            const lid = new THREE.Mesh(new RoundedBoxGeometry(size * 1.08, size * 0.16, size * 0.84, 3, 0.06), boxMat);
+            lid.position.y = size * 0.78;
+            gift.add(lid);
+            const ribbon = new THREE.Mesh(new RoundedBoxGeometry(size * 0.14, size * 0.9, size * 0.86, 2, 0.04), ribbonMat);
+            ribbon.position.y = size * 0.42;
+            gift.add(ribbon);
+            [-1, 1].forEach(side => {
+                const bow = new THREE.Mesh(new THREE.TorusGeometry(size * 0.18, size * 0.06, 6, 12), ribbonMat);
+                bow.position.set(side * size * 0.15, size * 0.94, 0);
+                bow.rotation.y = side * 0.5;
+                gift.add(bow);
+            });
+            gift.position.set(x, 0, z);
+            worldGroup.add(gift);
+        }
+
+        function addLobbyStocking(x, z, color) {
+            const stocking = new THREE.Group();
+            const clothMat = new THREE.MeshStandardMaterial({ color, roughness: 0.82 });
+            const cuffMat = new THREE.MeshStandardMaterial({ color: 0xf8fafc, roughness: 0.9 });
+            const goldMat = new THREE.MeshStandardMaterial({ color: 0xfacc15, metalness: 0.45, roughness: 0.32 });
+            const leg = new THREE.Mesh(new RoundedBoxGeometry(0.46, 0.84, 0.24, 4, 0.1), clothMat);
+            leg.position.y = 0.75;
+            stocking.add(leg);
+            const foot = new THREE.Mesh(new RoundedBoxGeometry(0.68, 0.3, 0.25, 4, 0.12), clothMat);
+            foot.position.set(0.12, 0.34, 0);
+            stocking.add(foot);
+            const cuff = new THREE.Mesh(new RoundedBoxGeometry(0.52, 0.2, 0.3, 3, 0.06), cuffMat);
+            cuff.position.y = 1.2;
+            stocking.add(cuff);
+            const loop = new THREE.Mesh(new THREE.TorusGeometry(0.16, 0.035, 6, 12, Math.PI), goldMat);
+            loop.position.set(-0.12, 1.38, 0);
+            loop.rotation.z = Math.PI;
+            stocking.add(loop);
+            stocking.position.set(x, 0, z);
+            worldGroup.add(stocking);
+        }
+
+        function addLobbyCandyCane(x, z, scale = 1) {
+            const candyCane = new THREE.Group();
+            const curve = new THREE.CatmullRomCurve3([
+                new THREE.Vector3(0, 0, 0),
+                new THREE.Vector3(0, 0.8, 0),
+                new THREE.Vector3(0, 1.75, 0),
+                new THREE.Vector3(0.08, 2.35, 0),
+                new THREE.Vector3(0.48, 2.58, 0),
+                new THREE.Vector3(0.9, 2.3, 0)
+            ]);
+            const whiteMat = new THREE.MeshStandardMaterial({ color: 0xf8fafc, roughness: 0.32 });
+            const redMat = new THREE.MeshStandardMaterial({ color: 0xdc2626, roughness: 0.38 });
+            candyCane.add(new THREE.Mesh(new THREE.TubeGeometry(curve, 32, 0.16, 10, false), whiteMat));
+            [0.42, 0.82, 1.22, 1.62].forEach(y => {
+                const stripe = new THREE.Mesh(new THREE.TorusGeometry(0.17, 0.055, 6, 14), redMat);
+                stripe.rotation.x = Math.PI / 2;
+                stripe.position.set(0, y, 0);
+                candyCane.add(stripe);
+            });
+            candyCane.scale.setScalar(scale);
+            candyCane.position.set(x, 0, z);
+            worldGroup.add(candyCane);
+        }
+
+        function buildLobbyThemeDecorations() {
+            if (state.backgroundTheme === 'noel') {
+                addChristmasTree(-5.2, -8.0, 0.72);
+                addChristmasTree(-9.0, -10.0, 0.48);
+                const lobbyReindeer = createReindeerModel();
+                lobbyReindeer.scale.setScalar(1.45);
+                lobbyReindeer.rotation.y = -Math.PI / 2;
+                lobbyReindeer.position.set(5.2, 0, -8.5);
+                worldGroup.add(lobbyReindeer);
+                christmasReindeers.push({
+                    group: lobbyReindeer,
+                    originX: 5.2,
+                    originZ: -8.5,
+                    patrolRadius: 1.3,
+                    speed: 0.22,
+                    phase: 0
+                });
+                addLobbyGift(-2.2, -8.2, 1.05, 0xdc2626);
+                addLobbyGift(-0.7, -9.0, 0.78, 0x15803d);
+                addLobbyGift(2.0, -8.7, 0.9, 0x2563eb);
+                addLobbyCandyCane(3.6, -8.4, 0.9);
+                addLobbyStocking(-3.8, -8.1, 0xb91c1c);
+                addLobbyStocking(0.7, -10.0, 0x166534);
+            } else {
+                createLobbySaucer();
+                createLobbyAlien();
+            }
+        }
+
         // Main Menu 3D Showcase Podium
         function buildMenuShowcaseWorld() {
             clearWorld();
@@ -2885,6 +3086,8 @@
             neonRing.rotation.x = Math.PI / 2;
             neonRing.position.set(0, 0.52, 0);
             worldGroup.add(neonRing);
+
+            buildLobbyThemeDecorations();
 
             state.pos.set(0, 0.5, 0);
             state.vel.set(0, 0, 0);
@@ -3857,12 +4060,13 @@
             });
         }
 
-        function setBackgroundTheme(theme, saveSelection = true) {
+        function setBackgroundTheme(theme, saveSelection = true, refreshLobby = false) {
             state.backgroundTheme = theme === 'noel' ? 'noel' : 'galaxy';
             const isNoelTheme = state.backgroundTheme === 'noel';
             spaceBackdrop.galaxyGroup.visible = !isNoelTheme;
             spaceBackdrop.noelGroup.visible = isNoelTheme;
             updateBackgroundThemeButtons();
+            if (refreshLobby && state.screen === 'menu') buildMenuShowcaseWorld();
 
             if (saveSelection) {
                 saveManager.scheduleSave();
@@ -4406,7 +4610,7 @@
 
             resetAllData() {
                 try { localStorage.removeItem(this.STORAGE_KEY); } catch {}
-                setBackgroundTheme('galaxy', false);
+                setBackgroundTheme('galaxy', false, true);
                 state.totalStarsAllTime = 0;
                 state.totalTargetsAllTime = 0;
                 state.unlockedSkins = [...DEFAULT_UNLOCKED_SKINS];
@@ -4973,6 +5177,22 @@
         // 8. OBSTACLE UPDATES, WATER POOL ANIMATION, AABB PHYSICS & HP REGEN
         // ==========================================
         function updateDynamicObstacles(dt, elapsedTime) {
+            if (state.screen === 'menu' && state.backgroundTheme === 'galaxy') {
+                for (const saucer of lobbyFlyingSaucers) {
+                    saucer.group.position.y = saucer.baseY + Math.sin(elapsedTime * 1.15 + saucer.phase) * 0.24;
+                    saucer.group.rotation.y += dt * 0.35;
+                    saucer.beamMaterial.opacity = 0.1 + (Math.sin(elapsedTime * 2.2 + saucer.phase) + 1) * 0.045;
+                    saucer.lights.forEach((light, index) => {
+                        light.material.color.setHex(Math.sin(elapsedTime * 3 + index) > 0 ? 0x67e8f9 : 0xf472b6);
+                    });
+                }
+                for (const alien of lobbyAliens) {
+                    alien.group.position.y = alien.baseY + Math.sin(elapsedTime * 1.8 + alien.phase) * 0.12;
+                    alien.group.rotation.y = Math.sin(elapsedTime * 0.9 + alien.phase) * 0.14;
+                    alien.head.rotation.y = Math.sin(elapsedTime * 1.3 + alien.phase) * 0.12;
+                }
+            }
+
             // 0. Animate Healing Water Pools
             for (const pool of healingPools) {
                 pool.waterSurface.position.y = 0.16 + Math.sin(elapsedTime * 3.0) * 0.03;
@@ -5586,7 +5806,7 @@
                 { id: 'btn-background-galaxy', theme: 'galaxy' },
                 { id: 'btn-background-noel', theme: 'noel' }
             ].forEach(({ id, theme }) => {
-                document.getElementById(id).addEventListener('click', () => setBackgroundTheme(theme));
+                document.getElementById(id).addEventListener('click', () => setBackgroundTheme(theme, true, true));
             });
 
             const menuPanels = [
