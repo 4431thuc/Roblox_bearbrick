@@ -23,9 +23,23 @@ Game có nhiều chế độ chơi, nhiều bản đồ, hệ thống skin sưu 
 | `hunt` | Săn bia | Map 1: Mê Cung Cổ Điển | Bia đứng yên, bắn hạ số lượng mục tiêu quy định |
 | `hunt` | Săn bia | Map 2: Mê Cung Chuyển Động | Bia di chuyển chậm, bố cục tường khác |
 | `runner` | Chạy tự động | — | Chạy theo làn, đổi làn bằng A/D hoặc joystick, Space nhảy |
-| `bomber` | Đặt bom | Map 1 | Di chuyển theo tâm lối, E/Space đặt bom, phá thùng tìm nâng cấp |
+| `bomber` | Đặt bom | Map 1: Đảo Bomber; Map 2: Đảo Nước | Đặt bom, phá thùng, hạ quái và Boss; map 2 có nước chặn đường nhưng không chặn vụ nổ |
 
 Mỗi bản đồ climb bắt đầu ở **độ khó 1⭐**. Thắng map sẽ lưu độ khó kế tiếp riêng cho map đó và thêm **4 tầng** vào đường leo, xen kẽ ray trượt và vòng xoay.
+
+Mỗi map Bomber có tiến độ riêng và hai màn, mỗi màn có đồng hồ riêng: level 1 là **2 phút/màn**, mỗi level tiếp theo tăng **1 phút/màn**. Đồng hồ được đặt lại khi chuyển sang màn Boss. Người chơi bắt đầu với 2 bom đồng thời; bot không coi bom là vật cản.
+
+Khi bắt đầu mỗi lượt Bomber, 6 vật phẩm nâng cấp được đặt ngẫu nhiên trên các ô đường trống có thể tới được; phá thùng vẫn có thể nhận thêm vật phẩm.
+
+Phá thùng có thể nhận vật phẩm **💪**: mỗi lần nhặt cộng 50% sát thương cơ bản của bom lên quái và Boss (36 → 54 → 72...). Nâng cấp giữ qua màn Boss, đặt lại khi bắt đầu lượt chơi mới và không tăng sát thương lên người chơi.
+
+Trong sảnh, mở **Skin & VIP → Vũ khí** để chọn miễn phí **Bom thường** hoặc **Máy chích điện** cho Bomber. Bom thường tạo khói; máy chích điện phóng tia sét, với cùng phạm vi và sát thương. Lựa chọn được lưu cùng tiến trình.
+
+### Chỉnh bố cục map
+
+Trong `index.html`, sửa `BOMBER_MAP_1`, `BOMBER_MAP_2` hoặc `HUNT_MAPS.map1` / `HUNT_MAPS.map2`: mỗi chuỗi là một hàng, `0` là đường đi và `1` là tường; riêng Bomber còn có `2` là nước chặn di chuyển nhưng không chặn vụ nổ. Có thể đặt cả tường và nước trong một map Bomber. Hàng đi từ bắc xuống nam, cột từ tây sang đông. Bomber có 11×11 ô bên trong viền nước, mỗi ô 4 đơn vị, dùng `0`/`1`/`2`; Săn bia có 49×49 ô bên trong tường viền, mỗi ô 2 đơn vị, chỉ dùng `0`/`1`.
+
+Viền nước/tường, thùng Bomber, vị trí nhân vật, Boss, bia và các bục Săn bia được định nghĩa riêng, không nằm trong ma trận. Khi đổi tường, giữ các vị trí này thông thoáng, bảo đảm đường đi đủ rộng và các khu vực có thể tiếp cận; map Bomber cần ít nhất 6 ô trống có thể đến được ngoài vị trí người chơi và bot để đặt vật phẩm. Kiểm tra lại trong game.
 
 ---
 
@@ -79,10 +93,10 @@ Skin VIP cần đồng thời **36 💎 + 50 🎯** để mở khóa (trừ `mac
 
 ## 💾 Lưu tiến trình
 
-- Dữ liệu lưu trong `localStorage` dưới key `roblox_bearbrick_3d_save_v4` (phiên bản 8)
+- Dữ liệu lưu trong `localStorage` dưới key `roblox_bearbrick_3d_save_v4` (phiên bản 10)
 - Tự động lưu (debounce) khi thay đổi tiến trình
 - Có nút **Lưu ngay**, **Xuất JSON**, **Nhập JSON**, **Đặt lại dữ liệu**
-- Lưu: theme nền, cấp độ/map đã đạt, skin đã mở, weapon mode, âm thanh, tổng gem/mục tiêu, completed maps
+- Lưu: theme nền, cấp độ/map đã đạt, skin đã mở, vũ khí săn bia và Boom, âm thanh, tổng gem/mục tiêu, completed maps
 
 ---
 
@@ -100,7 +114,7 @@ Skin VIP cần đồng thời **36 💎 + 50 🎯** để mở khóa (trừ `mac
 
 1. Mở tệp `index.html` trên trình duyệt web hiện đại (Chrome, Firefox, Edge, Safari)
 2. Đảm bảo kết nối internet để tải Tailwind CSS, Google Fonts, Three.js từ CDN
-3. Chọn chế độ chơi và bản đồ trên màn hình chính, sau đó nhấn **Bắt đầu**
+3. Mở **Chế độ** ở sảnh, chọn tab chế độ rồi chọn map để xem thông tin; nhấn **Vào game** để bắt đầu
 4. Trong màn chơi, điều khiển nhân vật theo mục tiêu của từng chế độ
 5. Nhấn **Thoát** để quay về màn hình chính (có hộp thoại xác nhận)
 

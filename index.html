@@ -78,6 +78,93 @@
         .touch-btn:active {
             transform: scale(0.92);
         }
+        #menu-dock {
+            position: absolute;
+            left: 0.75rem;
+            right: 0.75rem;
+            bottom: 0.75rem;
+            width: auto;
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 0.5rem;
+        }
+        #menu-drag-hint {
+            position: absolute;
+            left: 50%;
+            bottom: 4rem;
+            width: max-content;
+            max-width: calc(100% - 1.5rem);
+            transform: translateX(-50%);
+        }
+        .menu-short-label { display: none; }
+        @media (min-width: 640px) {
+            #menu-dock { left: 1.5rem; right: 1.5rem; bottom: 1.5rem; }
+            #menu-drag-hint { bottom: 4.75rem; }
+        }
+        @media (max-width: 480px) {
+            .menu-long-label, #background-toggle-icon, #skin-shop-toggle-icon, #game-modes-toggle-icon { display: none; }
+            .menu-short-label { display: inline; }
+            #menu-dock button[id^="btn-toggle-"] { justify-content: center; padding: 0.6rem 0.35rem; }
+        }
+        .menu-dock-column {
+            position: relative;
+            min-width: 0;
+        }
+        .menu-dock-panel {
+            position: absolute;
+            bottom: calc(100% + 0.5rem);
+            max-height: min(58vh, 32rem);
+            overflow-y: auto;
+            overscroll-behavior: contain;
+            touch-action: pan-y;
+        }
+        #background-theme-panel, #menu-skin-shop-panel {
+            left: 0;
+            width: min(100%, 28rem);
+        }
+        #menu-game-modes-panel {
+            right: 0;
+            width: min(calc(100vw - 1.5rem), 36rem);
+        }
+        .mode-tab {
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            border-radius: 0.75rem;
+            padding: 0.55rem 0.2rem;
+            color: #cbd5e1;
+            font-size: 0.7rem;
+            font-weight: 800;
+            background: rgba(15, 23, 42, 0.7);
+        }
+        .mode-tab[aria-selected="true"] {
+            color: #cffafe;
+            border-color: rgba(34, 211, 238, 0.8);
+            background: rgba(8, 145, 178, 0.25);
+        }
+        .mode-art {
+            display: block;
+            width: 100%;
+            height: clamp(4.5rem, 12vh, 7rem);
+            border-radius: 0.75rem;
+        }
+        .mode-map-button {
+            width: 100%;
+            min-height: 3rem;
+            text-align: left;
+            border-radius: 0.75rem;
+            border: 1px solid rgba(103, 232, 249, 0.3);
+            background: rgba(30, 41, 59, 0.8);
+            padding: 0.6rem 0.75rem;
+            font-size: 0.75rem;
+            font-weight: 800;
+            color: white;
+        }
+        .mode-map-button:hover, .mode-map-button:focus-visible {
+            background: rgba(8, 145, 178, 0.3);
+            border-color: #67e8f9;
+        }
+        #map-info-modal {
+            touch-action: pan-y;
+        }
         @keyframes game-start-fade {
             0%, 20% { opacity: 1; }
             100% { opacity: 0; }
@@ -247,21 +334,21 @@
         </div>
 
         <!-- Bottom Control Dock: Skin Shop + Game Modes + Save Manager -->
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-3 max-w-6xl w-full mx-auto pointer-events-none max-h-[60vh] overflow-y-auto pr-0.5">
+        <div id="menu-dock" class="max-w-6xl w-full mx-auto pointer-events-none">
             <!-- Left Column (5 cols): Skin Shop (collapsed by default, expand on button click) -->
-            <div class="lg:col-span-5 flex flex-col-reverse gap-2">
+            <div class="menu-dock-column">
                 <div class="grid grid-cols-2 gap-2">
                     <button id="btn-toggle-background" type="button" aria-expanded="false" class="w-full glass-panel hover:bg-indigo-500/20 border border-indigo-400/30 text-indigo-200 text-xs font-bold px-3 py-2.5 rounded-xl flex items-center justify-between gap-2 transition active:scale-95 pointer-events-auto">
-                        <span class="flex items-center gap-1.5 pointer-events-none">🌌 Background</span>
+                        <span class="pointer-events-none">🌌 <span class="menu-long-label">Background</span><span class="menu-short-label">Nền</span></span>
                         <span id="background-toggle-icon" class="text-[10px] font-bold pointer-events-none">▼</span>
                     </button>
                     <button id="btn-toggle-skin-shop" type="button" aria-expanded="false" class="w-full glass-panel hover:bg-amber-500/20 border border-amber-400/30 text-amber-200 text-xs font-bold px-3 py-2.5 rounded-xl flex items-center justify-between gap-2 transition active:scale-95 pointer-events-auto">
-                        <span class="flex items-center gap-1.5 pointer-events-none">🎨 Skin &amp; VIP</span>
+                        <span class="pointer-events-none">🎨 <span class="menu-long-label">Skin &amp; VIP</span><span class="menu-short-label">Skin</span></span>
                         <span id="skin-shop-toggle-icon" class="text-[10px] font-bold pointer-events-none">▼</span>
                     </button>
                 </div>
 
-                <div id="background-theme-panel" class="hidden glass-panel rounded-2xl p-3.5 border border-indigo-400/25 pointer-events-auto">
+                <div id="background-theme-panel" class="menu-dock-panel hidden glass-panel rounded-2xl p-3.5 border border-indigo-400/25 pointer-events-auto">
                     <div class="text-xs font-extrabold uppercase tracking-wider text-indigo-200 mb-2">Chủ đề background</div>
                     <div class="grid grid-cols-2 gap-2">
                         <button id="btn-background-galaxy" type="button" aria-pressed="true" class="background-theme-option rounded-xl border border-indigo-300/50 bg-gradient-to-r from-indigo-500/25 to-cyan-500/20 px-3 py-2.5 flex items-center gap-2 text-left text-white">
@@ -278,7 +365,7 @@
                 </div>
 
                 <!-- Skin Shop Panel (hidden by default) -->
-                <div id="menu-skin-shop-panel" class="hidden glass-panel rounded-2xl p-3.5 sm:p-4 flex flex-col justify-between border border-white/15 pointer-events-auto">
+                <div id="menu-skin-shop-panel" class="menu-dock-panel hidden glass-panel rounded-2xl p-3.5 sm:p-4 flex flex-col justify-between border border-white/15 pointer-events-auto">
                     <div role="tablist" aria-label="Danh mục cửa hàng" class="grid grid-cols-3 gap-1.5 mb-2">
                         <button id="skin-shop-tab-skins" type="button" role="tab" aria-selected="true" aria-controls="skin-shop-panel-skins" class="rounded-lg border border-amber-400/50 bg-amber-500/20 text-amber-200 px-2 py-1.5 text-[10px] sm:text-xs font-bold transition">👕 Skin</button>
                         <button id="skin-shop-tab-accessories" type="button" role="tab" aria-selected="false" aria-controls="skin-shop-panel-accessories" class="rounded-lg border border-white/10 bg-slate-950/40 text-slate-300 px-2 py-1.5 text-[10px] sm:text-xs font-bold transition">🎒 Phụ kiện</button>
@@ -298,9 +385,13 @@
                         <span class="text-xs font-bold text-slate-200">Phụ kiện sẽ ra mắt sau</span>
                     </div>
 
-                    <div id="skin-shop-panel-weapons" role="tabpanel" aria-labelledby="skin-shop-tab-weapons" class="hidden min-h-28 rounded-xl border border-white/10 bg-slate-950/35 flex flex-col items-center justify-center gap-1.5 text-center">
-                        <span class="text-3xl" aria-hidden="true">🔫</span>
-                        <span class="text-xs font-bold text-slate-200">Skin vũ khí sẽ ra mắt sau</span>
+                    <div id="skin-shop-panel-weapons" role="tabpanel" aria-labelledby="skin-shop-tab-weapons" class="hidden rounded-xl border border-white/10 bg-slate-950/35 p-2">
+                        <div class="text-[10px] font-bold text-cyan-200 mb-1">Vũ khí Boom • 💣 dùng trong chế độ Boom</div>
+                        <canvas id="bomber-weapon-preview" width="360" height="160" class="w-full h-24 rounded-lg bg-slate-950/60" aria-label="Mô hình 3D vũ khí Boom đang chọn"></canvas>
+                        <div class="grid grid-cols-2 gap-2 mt-2">
+                            <button id="bomber-weapon-bomb" type="button" class="relative rounded-lg border px-2 py-2 text-left text-xs font-bold" aria-pressed="true"><span class="absolute top-1 right-1" aria-label="Vũ khí Boom">💣</span>Bom thường<span class="block text-[10px] font-medium text-slate-300">Mặc định • Miễn phí</span></button>
+                            <button id="bomber-weapon-electric" type="button" class="relative rounded-lg border px-2 py-2 text-left text-xs font-bold" aria-pressed="false"><span class="absolute top-1 right-1" aria-label="Vũ khí Boom">💣</span>Máy chích điện<span class="block text-[10px] font-medium text-slate-300">Miễn phí • Tia sét</span></button>
+                        </div>
                     </div>
 
                     <!-- Save / Load Bar -->
@@ -316,100 +407,71 @@
             </div>
 
             <!-- Right Column (7 cols): Game Modes (collapsed by default, expand on button click) -->
-            <div class="lg:col-span-7 flex flex-col-reverse gap-2">
+            <div class="menu-dock-column">
                 <!-- Toggle button: Chọn Game / Chế Độ Chơi -->
                 <button id="btn-toggle-game-modes" type="button" aria-expanded="false" class="w-full glass-panel hover:bg-cyan-500/20 border border-cyan-400/30 text-cyan-200 text-xs font-bold px-3 py-2.5 rounded-xl flex items-center justify-between gap-2 transition active:scale-95 pointer-events-auto">
-                    <span class="flex items-center gap-1.5 pointer-events-none">🎮 Chọn Game / Chế Độ Chơi</span>
+                    <span class="pointer-events-none">🎮 <span class="menu-long-label">Chế độ</span><span class="menu-short-label">Game</span></span>
                     <span id="game-modes-toggle-icon" class="text-[10px] font-bold pointer-events-none">▼</span>
                 </button>
 
                 <!-- Game Modes Panel (hidden by default) -->
-                <div id="menu-game-modes-panel" class="hidden glass-panel rounded-2xl p-3.5 sm:p-4 flex flex-col justify-between gap-3 border border-white/15 pointer-events-auto">
-                    <!-- Mode 1: Parkour Climb (2 Complete Maps) -->
-                    <div class="bg-slate-900/60 rounded-xl p-3 border border-amber-400/25">
-                        <div class="flex items-center justify-between mb-1.5">
-                            <div class="font-black text-sm text-amber-300 flex items-center gap-1.5">
-                                <span>🏔️</span><span>Chế Độ 1: Leo Map Nhặt Điểm (Tay Không)</span>
-                            </div>
-                            <span class="text-[10px] font-bold text-cyan-200 bg-cyan-500/15 border border-cyan-400/30 px-2 py-0.5 rounded-full">Đứng im hồi +2HP/s • Hồ nước +5HP/s</span>
+                <div id="menu-game-modes-panel" class="menu-dock-panel hidden glass-panel rounded-2xl p-3 sm:p-4 border border-white/15 pointer-events-auto">
+                    <div class="flex items-center justify-between mb-2">
+                        <div>
+                            <div class="text-[10px] uppercase tracking-widest font-bold text-cyan-300">Chọn cuộc phiêu lưu</div>
+                            <div class="text-sm font-black text-white">Chế độ chơi</div>
                         </div>
-                        <p class="text-[11px] text-slate-300 mb-2.5 leading-snug">
-                            Vượt đường ray lăn &amp; vòng xoay 4 thanh đẩy (-2 HP khi trúng) lên đỉnh nhặt đủ <strong>12 Gem (💎)</strong>. Đứng im hồi <strong>2 HP/s</strong> hoặc ngâm <strong>Hồ Nước</strong> hồi <strong>5 HP/s</strong>!
-                        </p>
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                            <button id="btn-start-climb-1" type="button" class="group bg-gradient-to-r from-amber-500/25 to-orange-600/25 hover:from-amber-500/40 hover:to-orange-600/40 border border-amber-400/50 rounded-xl p-2.5 text-left transition active:scale-95 flex items-center justify-between">
-                                <div>
-                                    <div class="font-extrabold text-xs text-white group-hover:text-amber-200">🌈 Map 1: Tháp Không Gian</div>
-                                    <div id="climb-map1-progress" class="text-[10px] text-slate-300 mt-0.5">18 Tầng • Độ khó 1⭐</div>
-                                </div>
-                            </button>
-
-                            <button id="btn-start-climb-2" type="button" class="group bg-gradient-to-r from-indigo-500/25 to-purple-600/25 hover:from-indigo-500/40 hover:to-purple-600/40 border border-purple-400/50 rounded-xl p-2.5 text-left transition active:scale-95 flex items-center justify-between">
-                                <div>
-                                    <div class="font-extrabold text-xs text-white group-hover:text-purple-200">🏰 Map 2: Pháo Đài Không Gian</div>
-                                    <div id="climb-map2-progress" class="text-[10px] text-slate-300 mt-0.5">20 Tầng • Độ khó 1⭐</div>
-                                </div>
-                            </button>
+                        <span class="text-[10px] text-slate-400">Chọn map để xem chi tiết</span>
+                    </div>
+                    <div role="tablist" aria-label="Chế độ chơi" class="grid grid-cols-4 gap-1.5 mb-2">
+                        <button id="mode-tab-climb" class="mode-tab" type="button" role="tab" aria-selected="true" aria-controls="mode-panel-climb">🏔️ Leo map</button>
+                        <button id="mode-tab-hunt" class="mode-tab" type="button" role="tab" aria-selected="false" aria-controls="mode-panel-hunt" tabindex="-1">🎯 Săn bia</button>
+                        <button id="mode-tab-runner" class="mode-tab" type="button" role="tab" aria-selected="false" aria-controls="mode-panel-runner" tabindex="-1">🏃 Chạy</button>
+                        <button id="mode-tab-bomber" class="mode-tab" type="button" role="tab" aria-selected="false" aria-controls="mode-panel-bomber" tabindex="-1">💣 Boom</button>
+                    </div>
+                    <div id="mode-panel-climb" role="tabpanel" aria-labelledby="mode-tab-climb">
+                        <canvas id="mode-art-climb" class="mode-art" width="600" height="180" role="img" aria-label="Minh họa leo qua các bậc và nhặt gem"></canvas>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2">
+                            <button id="btn-start-climb-1" type="button" class="mode-map-button">🌈 Map 1: Tháp Không Gian<span id="climb-map1-progress" class="block text-[10px] font-medium text-slate-300 mt-1">18 tầng • Độ khó 1⭐</span></button>
+                            <button id="btn-start-climb-2" type="button" class="mode-map-button">🏰 Map 2: Pháo Đài Không Gian<span id="climb-map2-progress" class="block text-[10px] font-medium text-slate-300 mt-1">20 tầng • Độ khó 1⭐</span></button>
                         </div>
                     </div>
-
-                    <!-- Mode 3: Endless Runner -->
-                    <div class="bg-slate-900/60 rounded-xl p-3 border border-emerald-400/30">
-                        <div class="font-black text-sm text-emerald-300 flex items-center gap-1.5 mb-1.5">
-                            <span>🏃</span><span>Chế Độ 3: Đường Chạy Vô Tận (Endless Runner)</span>
-                        </div>
-                        <p class="text-[11px] text-slate-300 mb-2.5 leading-snug">
-                            Chạy tự động trên 3 làn đường, né chướng ngại vật, nhảy qua rào chắn và nhặt Gem. Tốc độ tăng dần theo quãng đường — va chạm là kết thúc lượt chơi!
-                        </p>
-                        <button id="btn-start-runner" type="button" class="w-full group bg-gradient-to-r from-emerald-600/30 to-cyan-500/25 hover:from-emerald-600/45 hover:to-cyan-500/40 border border-emerald-400/50 rounded-xl p-3 text-left transition active:scale-95 flex items-center justify-between">
-                            <div>
-                                <div class="font-extrabold text-xs text-white group-hover:text-emerald-200">🚄 Bắt đầu chạy vô tận</div>
-                                <div class="text-[10px] text-slate-300 mt-0.5">A / D hoặc joystick để đổi làn • Space / NHẢY để vượt rào</div>
-                            </div>
-                            <span class="text-2xl">🏁</span>
-                        </button>
-                    </div>
-
-                    <!-- Mode 4: Bomber Adventure -->
-                    <div class="bg-slate-900/60 rounded-xl p-3 border border-orange-400/35">
-                        <div class="font-black text-sm text-orange-300 flex items-center gap-1.5 mb-1.5">
-                            <span>💣</span><span>Chế Độ 4: Bomber Adventure (Phong cách Boom Online)</span>
-                        </div>
-                        <p class="text-[11px] text-slate-300 mb-2.5 leading-snug">
-                            Map 1 gồm 2 màn: hạ 20 quái nhỏ bằng bom ở màn 1, sau đó đối đầu Boss ở màn 2. Bom nổ theo 4 hướng, hãy chạy khỏi vùng nổ!
-                        </p>
-                        <button id="btn-start-bomber-map1" type="button" class="w-full group bg-gradient-to-r from-orange-600/30 to-rose-500/25 hover:from-orange-600/45 hover:to-rose-500/40 border border-orange-400/50 rounded-xl p-3 text-left transition active:scale-95 flex items-center justify-between">
-                            <div>
-                                <div class="font-extrabold text-xs text-white group-hover:text-orange-200">💣 Map 1: Đảo Bomber</div>
-                                <div id="bomber-map1-progress" class="text-[10px] text-slate-300 mt-0.5">2 màn • Hạ 20 quái nhỏ → Hạ Boss</div>
-                            </div>
-                            <span class="text-2xl">👾</span>
-                        </button>
-                    </div>
-
-                    <!-- Mode 2: Target Hunt Maze Arena -->
-                    <div class="bg-slate-900/60 rounded-xl p-3 border border-rose-400/30">
-                        <div class="flex items-start justify-between gap-2 mb-2">
-                            <div>
-                                <div class="font-black text-sm text-rose-400 flex items-center gap-1.5">
-                                    <span>🎯</span><span>Chế Độ 2: Săn Bia Mê Cung (Bắn Súng &amp; Ném Bom)</span>
-                                </div>
-                                <p class="text-[11px] text-slate-300 mt-0.5 leading-snug">
-                                    Chọn một trong hai mê cung. Bia nhấp nháy vàng <strong>10s</strong>, sau đó có <strong>3s nguy hiểm</strong> kèm X-Ray xuyên tường. Mỗi lần thắng, map tăng <strong>1⭐</strong> và thêm <strong>5 bia</strong>.
-                                </p>
-                            </div>
-                        </div>
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                            <button id="btn-start-hunt-map1" type="button" class="group bg-gradient-to-r from-rose-600/25 to-orange-500/25 hover:from-rose-600/40 hover:to-orange-500/40 border border-rose-400/40 rounded-xl p-2.5 text-left transition active:scale-95">
-                                <span class="block font-extrabold text-xs text-white group-hover:text-rose-200">🎯 Map 1: Mê Cung Cổ Điển</span>
-                                <span id="hunt-map1-progress" class="block text-[10px] text-slate-300 mt-1">Độ khó 1⭐ • Hạ 15 bia</span>
-                            </button>
-                            <button id="btn-start-hunt-map2" type="button" class="group bg-gradient-to-r from-cyan-600/25 to-indigo-500/25 hover:from-cyan-600/40 hover:to-indigo-500/40 border border-cyan-400/40 rounded-xl p-2.5 text-left transition active:scale-95">
-                                <span class="block font-extrabold text-xs text-white group-hover:text-cyan-200">⚡ Map 2: Mê Cung Chuyển Động</span>
-                                <span id="hunt-map2-progress" class="block text-[10px] text-slate-300 mt-1">Độ khó 1⭐ • Hạ 15 bia • Bia di chuyển chậm</span>
-                            </button>
+                    <div id="mode-panel-hunt" class="hidden" role="tabpanel" aria-labelledby="mode-tab-hunt">
+                        <canvas id="mode-art-hunt" class="mode-art" width="600" height="180" role="img" aria-label="Minh họa săn bia trong mê cung"></canvas>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2">
+                            <button id="btn-start-hunt-map1" type="button" class="mode-map-button">🎯 Map 1: Mê Cung Cổ Điển<span id="hunt-map1-progress" class="block text-[10px] font-medium text-slate-300 mt-1">Độ khó 1⭐ • Hạ 15 bia</span></button>
+                            <button id="btn-start-hunt-map2" type="button" class="mode-map-button">⚡ Map 2: Mê Cung Chuyển Động<span id="hunt-map2-progress" class="block text-[10px] font-medium text-slate-300 mt-1">Độ khó 1⭐ • Hạ 15 bia</span></button>
                         </div>
                     </div>
+                    <div id="mode-panel-runner" class="hidden" role="tabpanel" aria-labelledby="mode-tab-runner">
+                        <canvas id="mode-art-runner" class="mode-art" width="600" height="180" role="img" aria-label="Minh họa chạy trên ba làn đường"></canvas>
+                        <div class="mt-2"><button id="btn-start-runner" type="button" class="mode-map-button">🚄 Đường Chạy Vô Tận<span class="block text-[10px] font-medium text-slate-300 mt-1">Chạy, né chướng ngại và nhặt gem</span></button></div>
+                    </div>
+                    <div id="mode-panel-bomber" class="hidden" role="tabpanel" aria-labelledby="mode-tab-bomber">
+                        <canvas id="mode-art-bomber" class="mode-art" width="600" height="180" role="img" aria-label="Minh họa đặt bom trong mê cung"></canvas>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2">
+                            <button id="btn-start-bomber-map1" type="button" class="mode-map-button">💣 Map 1: Đảo Bomber<span id="bomber-map1-summary" class="block text-[10px] font-medium text-slate-300 mt-1">Level 1⭐ • 2 màn</span></button>
+                            <button id="btn-start-bomber-map2" type="button" class="mode-map-button">💧 Map 2: Đảo Nước<span id="bomber-map2-summary" class="block text-[10px] font-medium text-slate-300 mt-1">Level 1⭐ • 2 màn</span></button>
+                            <span id="bomber-map1-progress" class="hidden"></span><span id="bomber-map2-progress" class="hidden"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div id="map-info-modal" class="hidden fixed inset-0 z-50 bg-slate-950/75 flex items-center justify-center p-4 pointer-events-auto" role="dialog" aria-modal="true" aria-labelledby="map-info-title" aria-describedby="map-info-description">
+            <div class="glass-panel w-full max-w-md max-h-[85vh] overflow-y-auto rounded-2xl p-5 border border-cyan-400/30">
+                <div class="flex items-start justify-between gap-3">
+                    <div>
+                        <div id="map-info-mode" class="text-[11px] uppercase tracking-wider font-bold text-cyan-300"></div>
+                        <h2 id="map-info-title" class="text-lg font-black text-white mt-1"></h2>
+                    </div>
+                    <button id="map-info-close" type="button" aria-label="Đóng thông tin map" class="rounded-lg px-2 py-1 text-slate-300 hover:bg-white/10 text-xl leading-none">×</button>
+                </div>
+                <p id="map-info-description" class="text-sm text-slate-300 leading-relaxed mt-3"></p>
+                <p id="map-info-progress" class="text-xs font-bold text-amber-200 bg-slate-950/60 rounded-xl p-3 mt-3"></p>
+                <div class="flex justify-end gap-2 mt-4">
+                    <button id="map-info-cancel" type="button" class="rounded-xl border border-white/15 px-4 py-2 text-sm font-bold text-slate-300 hover:bg-white/10">Quay lại</button>
+                    <button id="map-info-play" type="button" class="rounded-xl bg-cyan-400 px-5 py-2 text-sm font-black text-slate-950 hover:bg-cyan-300">Vào game</button>
                 </div>
             </div>
         </div>
@@ -2747,7 +2809,7 @@
         const bomberDamagePopups = [];
         const bomberDeaths = [];
         const bomberSpawnFades = [];
-        const bomberUpgrade = { blastRange: 2, moveSpeed: 9.6, shieldHits: 0, bombCapacity: 1 };
+        const bomberUpgrade = { blastRange: 2, moveSpeed: 9.6, shieldHits: 0, bombCapacity: 2, damageBonus: 0 };
         const BOMBER_PLAYER_HALF = 1.92;
         const BOMBER_BLAST_DAMAGE = 36;
         const BOMBER_PLAYER_RENDER_OFFSET_Z = 0.18;
@@ -2760,11 +2822,50 @@
         let bomberIntroElapsed = 1;
         let bomberIntroActive = false;
         const bomberHardCells = new Set();
+        const bomberWaterCells = new Set();
         const bomberSoftByCell = new Map();
         const bomberWaterWaves = [];
         const BOMBER_GRID_SIZE = 13;
         const BOMBER_TILE = 4;
         const BOMBER_ORIGIN = -24;
+        // Ma trận 11×11 bên trong; viền nước được tạo riêng.
+        // 0 = đường đi, 1 = tường đá chặn vụ nổ, 2 = nước chặn di chuyển nhưng không chặn vụ nổ.
+        // Hàng từ bắc xuống nam, cột từ tây sang đông. Có thể dùng cả 1 và 2 trong cùng map.
+        const BOMBER_MAP_1 = [
+            '00000000000',
+            '01010101010',
+            '00000000000',
+            '01010101010',
+            '00000000000',
+            '01010101010',
+            '00000000000',
+            '01010101010',
+            '00000000000',
+            '00010101010',
+            '00000000000'
+        ];
+        const BOMBER_MAP_2 = [
+            '00000000000',
+            '02020202020',
+            '00000000000',
+            '02020202020',
+            '00000000000',
+            '02020202020',
+            '00000000000',
+            '02020202020',
+            '00000000000',
+            '00020202020',
+            '00000000000'
+        ];
+        function bomberStageDuration() {
+            return 120 + (Math.max(1, state.bomberMapLevel) - 1) * 60;
+        }
+        function validateWallGrid(grid, rows, columns, name, allowed = '01') {
+            if (!Array.isArray(grid) || grid.length !== rows ||
+                grid.some(row => typeof row !== 'string' || row.length !== columns || [...row].some(cell => !allowed.includes(cell)))) {
+                throw new Error(`${name}: expected ${rows} rows of ${columns} cells containing only ${[...allowed].join(', ')}`);
+            }
+        }
         const bomberWaterCanvas = document.createElement('canvas');
         bomberWaterCanvas.width = 256;
         bomberWaterCanvas.height = 128;
@@ -2811,6 +2912,7 @@
         });
         const bomberWaterHorizontalGeometry = new THREE.PlaneGeometry(52, 4);
         const bomberWaterVerticalGeometry = new THREE.PlaneGeometry(4, 44);
+        const bomberWaterCellGeometry = new THREE.PlaneGeometry(3.88, 3.88);
         const bomberStoneCanvas = document.createElement('canvas');
         bomberStoneCanvas.width = 128;
         bomberStoneCanvas.height = 128;
@@ -2866,7 +2968,10 @@
             }
             bomberDamagePopups.forEach(popup => disposeBomberOverlay(popup.sprite));
             bomberDamagePopups.length = 0;
-            bomberBombs.forEach(disposeBomberBombWarning);
+            bomberBombs.forEach(bomb => {
+                disposeBomberBombWarning(bomb);
+                disposeBomberOverlay(bomb.group);
+            });
             bomberDeaths.forEach(death => disposeBomberEntityVisuals(death.entity));
             bomberDeaths.length = 0;
             bomberSpawnFades.forEach(restoreBomberSpawnFade);
@@ -2915,6 +3020,7 @@
             }));
             bomberItems.length = 0;
             bomberHardCells.clear();
+            bomberWaterCells.clear();
             bomberSoftByCell.clear();
             bomberBoss = null;
             bomberBossExtra = null;
@@ -2925,7 +3031,10 @@
             bullets.length = 0;
             shampooBombs.forEach(b => scene.remove(b.mesh));
             shampooBombs.length = 0;
-            lightningBolts.forEach(l => scene.remove(l.group));
+            lightningBolts.forEach(l => {
+                scene.remove(l.group);
+                disposeBomberOverlay(l.group);
+            });
             lightningBolts.length = 0;
             shockwaves.forEach(s => scene.remove(s.mesh));
             shockwaves.length = 0;
@@ -4031,7 +4140,16 @@
         function bomberCellBlocked(col, row) {
             if (col <= 0 || row <= 0 || col >= BOMBER_GRID_SIZE - 1 || row >= BOMBER_GRID_SIZE - 1) return true;
             const key = bomberCellKey(col, row);
-            return bomberHardCells.has(key) || bomberSoftByCell.has(key);
+            return bomberHardCells.has(key) || bomberWaterCells.has(key) || bomberSoftByCell.has(key);
+        }
+
+        function addBomberWaterCell(col, row) {
+            const { x, z } = bomberCellWorld(col, row);
+            const water = new THREE.Mesh(bomberWaterCellGeometry, bomberWaterHorizontalMaterial);
+            water.rotation.x = -Math.PI / 2;
+            water.position.set(x, 0.075, z);
+            worldGroup.add(water);
+            bomberWaterCells.add(bomberCellKey(col, row));
         }
 
         function addBomberHardWall(col, row) {
@@ -4197,7 +4315,9 @@
             return block;
         }
 
-        function buildBomberMap1() {
+        function buildBomberMap(mapId) {
+            const grid = mapId === 'map2' ? BOMBER_MAP_2 : BOMBER_MAP_1;
+            validateWallGrid(grid, 11, 11, `BOMBER_MAP_${mapId === 'map2' ? '2' : '1'}`, '012');
             clearWorld();
             MAP_BOUNDS.halfSize = 27;
             const floor = new THREE.Mesh(
@@ -4229,13 +4349,12 @@
             worldGroup.add(gridLines);
 
             addBomberWaterRing();
-            for (let row = 2; row < BOMBER_GRID_SIZE - 1; row += 2) {
-                for (let col = 2; col < BOMBER_GRID_SIZE - 1; col += 2) {
-                    // Keep one opening beside the spawn so the first bomb has a safe escape turn.
-                    if (col === 2 && row === 10) continue;
-                    addBomberHardWall(col, row);
-                }
-            }
+            grid.forEach((cells, row) => {
+                [...cells].forEach((cell, col) => {
+                    if (cell === '1') addBomberHardWall(col + 1, row + 1);
+                    else if (cell === '2') addBomberWaterCell(col + 1, row + 1);
+                });
+            });
 
             const monsterCells = [
                 [11, 1], [11, 5], [9, 7], [7, 9],
@@ -4255,7 +4374,7 @@
             const blockKinds = ['wood', 'barrel', 'bush', 'metal', 'wood', 'bush', 'barrel'];
             crateCells.forEach(([col, row]) => {
                 const key = bomberCellKey(col, row);
-                if (!safeCells.has(key) && !bomberHardCells.has(key)) {
+                if (!safeCells.has(key) && !bomberCellBlocked(col, row)) {
                     const kind = blockKinds[(col * 3 + row * 5) % blockKinds.length];
                     addBomberSoftBlock(col, row, kind);
                 }
@@ -4272,6 +4391,7 @@
                 worldGroup.add(lamp);
             }
             spawnBomberStageOneEnemies(monsterCells);
+            spawnInitialBomberItems();
         }
 
         function createBomberMonster(col, row, isBoss = false) {
@@ -4402,7 +4522,6 @@
                     const key = bomberCellKey(nc, nr);
                     if (nc <= 0 || nr <= 0 || nc >= BOMBER_GRID_SIZE - 1 || nr >= BOMBER_GRID_SIZE - 1) continue;
                     if (visited.has(key) || bomberCellBlocked(nc, nr)) continue;
-                    if (bomberBombs.some(b => b.col === nc && b.row === nr)) continue;
                     visited.set(key, distance + 1);
                     queue.push([nc, nr, distance + 1]);
                 }
@@ -4484,7 +4603,8 @@
             bomberUpgrade.blastRange = 2;
             bomberUpgrade.moveSpeed = 9.6;
             bomberUpgrade.shieldHits = 0;
-            bomberUpgrade.bombCapacity = 1;
+            bomberUpgrade.bombCapacity = 2;
+            bomberUpgrade.damageBonus = 0;
             syncBomberShieldVisual();
             player.root.scale.setScalar(1.95);
             state.bomberStage = 1;
@@ -4493,14 +4613,14 @@
             state.bomberTransitioning = false;
             state.bomberTransitionTimer = 0;
             state.bomberBombCooldown = 0;
-            state.bomberTimeRemaining = 120;
+            state.bomberTimeRemaining = bomberStageDuration();
             state.bomberLastDisplayedTime = -1;
             bomberBoss = null;
             bomberBossExtra = null;
             bomberNextStageTimer = 0;
             const playerSpawn = bomberCellWorld(1, 11);
             state.pos.set(playerSpawn.x, 0.5, playerSpawn.z);
-            buildBomberMap1();
+            buildBomberMap(state.bomberMapId);
             bomberPlayerFootprint = createBomberPlayerFootprint();
             bomberPlayerHealthBar = createBomberHealthBar(player.root, 2.8, 8.3);
             bomberIntroElapsed = 0;
@@ -4530,7 +4650,6 @@
                     const nr = row + dr;
                     const key = bomberCellKey(nc, nr);
                     if (cameFrom.has(key) || nc <= 0 || nr <= 0 || nc >= BOMBER_GRID_SIZE - 1 || nr >= BOMBER_GRID_SIZE - 1 || bomberCellBlocked(nc, nr)) continue;
-                    if (bomberBombs.some(b => b.col === nc && b.row === nr)) continue;
                     if ([bomberBoss, bomberBossExtra].some(boss => boss && boss !== movingEntity && !boss.dying && boss.col === nc && boss.row === nr)) continue;
                     cameFrom.set(key, bomberCellKey(col, row));
                     queue.push([nc, nr]);
@@ -4550,7 +4669,6 @@
         function chooseBomberRetreatCell(entity) {
             const isAvailable = cell => {
                 if (bomberCellBlocked(cell.col, cell.row)) return false;
-                if (bomberBombs.some(bomb => bomb.col === cell.col && bomb.row === cell.row)) return false;
                 if (bomberEnemies.some(other => other !== entity && !other.dying && other.col === cell.col && other.row === cell.row)) return false;
                 const primaryIsFree = !bomberBoss || bomberBoss === entity || bomberBoss.dying ||
                     bomberBoss.col !== cell.col || bomberBoss.row !== cell.row;
@@ -4714,7 +4832,7 @@
 
                 if (bomberBoss === entity) bomberBoss = null;
                 if (bomberBossExtra === entity) bomberBossExtra = null;
-                if (!bomberBoss && !bomberBossExtra && state.bomberStage === 2) completeBomberMap1();
+                if (!bomberBoss && !bomberBossExtra && state.bomberStage === 2) completeBomberMap();
             }
         }
 
@@ -4830,13 +4948,6 @@
                     }
                 }
             }
-            if (entity.targetCell && bomberBombs.some(bomb =>
-                bomb.col === entity.targetCell.col && bomb.row === entity.targetCell.row
-            )) {
-                entity.targetCell = null;
-                entity.movePause = 0;
-            }
-
             let isMoving = false;
             if (!bossIsTelegraphing && entity.targetCell) {
                 const target = bomberCellWorld(entity.targetCell.col, entity.targetCell.row);
@@ -4915,13 +5026,13 @@
         }
 
         function spawnBomberItem(col, row) {
-            if (Math.random() > 0.46) return;
             const options = [
                 { type: 'flame', emoji: '🔥', color: '#f97316' },
                 { type: 'speed', emoji: '👟', color: '#eab308' },
                 { type: 'shield', emoji: '🛡️', color: '#06b6d4' },
                 { type: 'health', emoji: '💚', color: '#22c55e' },
-                { type: 'capacity', emoji: '💣', color: '#ef4444' }
+                { type: 'capacity', emoji: '💣', color: '#ef4444' },
+                { type: 'damage', emoji: '💪', color: '#f97316' }
             ];
             const itemType = options[Math.floor(Math.random() * options.length)];
             const { x, z } = bomberCellWorld(col, row);
@@ -4939,6 +5050,21 @@
             group.position.set(x, 0, z);
             worldGroup.add(group);
             bomberItems.push({ group, type: itemType.type, phase: Math.random() * Math.PI * 2 });
+        }
+
+        function spawnInitialBomberItems() {
+            const playerCell = bomberWorldToCell(state.pos.x, state.pos.z);
+            const candidates = getBomberReachableCells(playerCell.col, playerCell.row).filter(cell =>
+                cell.distance > 0 && !bomberEnemies.some(enemy => enemy.col === cell.col && enemy.row === cell.row)
+            );
+            if (candidates.length < 6) {
+                throw new Error('Bomber map needs at least 6 reachable empty cells for initial items');
+            }
+            for (let i = 0; i < 6; i++) {
+                const index = Math.floor(Math.random() * candidates.length);
+                const [cell] = candidates.splice(index, 1);
+                spawnBomberItem(cell.col, cell.row);
+            }
         }
 
         function syncBomberShieldVisual() {
@@ -4990,6 +5116,9 @@
                         bomberUpgrade.shieldHits = Math.min(2, bomberUpgrade.shieldHits + 1);
                         syncBomberShieldVisual();
                         showToast(`🛡️ Nhặt khiên! Đỡ được ${bomberUpgrade.shieldHits} đòn đánh.`);
+                    } else if (item.type === 'damage') {
+                        bomberUpgrade.damageBonus += BOMBER_BLAST_DAMAGE * 0.5;
+                        showToast(`💪 Tăng sát thương bom lên ${BOMBER_BLAST_DAMAGE + bomberUpgrade.damageBonus} HP với quái và Boss!`);
                     } else {
                         const old = bomberUpgrade.bombCapacity;
                         bomberUpgrade.bombCapacity = Math.min(5, bomberUpgrade.bombCapacity + 1);
@@ -5017,14 +5146,14 @@
             bomberSoftByCell.delete(bomberCellKey(block.col, block.row));
             const index = bomberBlocks.indexOf(block);
             if (index >= 0) bomberBlocks.splice(index, 1);
-            if (dropItem) spawnBomberItem(block.col, block.row);
+            if (dropItem && Math.random() <= 0.46) spawnBomberItem(block.col, block.row);
         }
 
-        function spawnBomberBlastTile(col, row) {
+        function spawnBomberBlastTile(col, row, weapon) {
             const { x, z } = bomberCellWorld(col, row);
             const mesh = new THREE.Mesh(
                 new THREE.BoxGeometry(3.72, 0.3, 3.72),
-                new THREE.MeshBasicMaterial({ color: 0xff8a00, transparent: true, opacity: 0.92 })
+                new THREE.MeshBasicMaterial({ color: weapon === 'electric' ? 0x67e8f9 : 0xff8a00, transparent: true, opacity: 0.92 })
             );
             mesh.position.set(x, 0.22, z);
             worldGroup.add(mesh);
@@ -5094,26 +5223,26 @@
         }
 
         function spawnBomberSmokePuff(origin, direction, travelDistance) {
-            const smokeColors = [0x64748b, 0x94a3b8, 0x475569];
+            const smokeColors = [0xf8fafc, 0xcbd5e1, 0x94a3b8, 0x4b5563, 0x171717];
             const mesh = new THREE.Mesh(
-                new THREE.SphereGeometry(0.3 + Math.random() * 0.16, 8, 6),
+                new THREE.SphereGeometry(0.42 + Math.random() * 0.28, 8, 6),
                 new THREE.MeshBasicMaterial({
                     color: smokeColors[Math.floor(Math.random() * smokeColors.length)],
                     transparent: true,
-                    opacity: 0.72,
+                    opacity: 0.88,
                     depthWrite: false
                 })
             );
             const side = new THREE.Vector3(-direction.z, 0, direction.x);
-            const sideVelocity = (Math.random() - 0.5) * 3;
+            const sideVelocity = (Math.random() - 0.5) * 7;
             const launchDuration = 0.18;
             const velocity = direction.clone().multiplyScalar(travelDistance / launchDuration);
             velocity.addScaledVector(side, sideVelocity);
-            velocity.y = 1.6 + Math.random() * 1.8;
+            velocity.y = 1.8 + Math.random() * 3;
             mesh.position.set(origin.x + direction.x * 0.08, 0.34, origin.z + direction.z * 0.08);
             mesh.scale.setScalar(0.8 + Math.random() * 0.55);
             worldGroup.add(mesh);
-            bomberEffects.push({ mesh, life: 0.46, maxLife: 0.46, velocity, launchRemaining: launchDuration, opacity: 0.72 });
+            bomberEffects.push({ mesh, life: 0.75, maxLife: 0.75, velocity, launchRemaining: launchDuration, opacity: 0.88 });
         }
 
         function spawnBomberSmokeBurst(bomb, blastCells) {
@@ -5123,13 +5252,27 @@
                 const dz = cell.row - bomb.row;
                 if (dx === 0 && dz === 0) {
                     [[1, 0], [-1, 0], [0, 1], [0, -1]].forEach(([x, z]) => {
-                        spawnBomberSmokePuff(origin, new THREE.Vector3(x, 0, z), BOMBER_TILE * 0.7);
+                        for (let i = 0; i < 3; i++) spawnBomberSmokePuff(origin, new THREE.Vector3(x, 0, z), BOMBER_TILE * (0.25 + Math.random() * 0.45));
                     });
                     continue;
                 }
                 const direction = new THREE.Vector3(dx, 0, dz).normalize();
-                spawnBomberSmokePuff(origin, direction, Math.hypot(dx, dz) * BOMBER_TILE);
+                for (let i = 0; i < 4; i++) {
+                    spawnBomberSmokePuff(origin, direction, Math.hypot(dx, dz) * BOMBER_TILE * (0.8 + Math.random() * 0.2));
+                }
             }
+        }
+
+        function spawnBomberElectricBurst(bomb, blastCells) {
+            const origin = bomberCellWorld(bomb.col, bomb.row);
+            const start = new THREE.Vector3(origin.x, 1.1, origin.z);
+            blastCells.forEach(cell => {
+                const point = bomberCellWorld(cell.col, cell.row);
+                for (let i = 0; i < 2; i++) {
+                    const end = new THREE.Vector3(point.x + (Math.random() - 0.5) * 2, 0.5 + Math.random() * 2, point.z + (Math.random() - 0.5) * 2);
+                    createLightningEffect(start, end);
+                }
+            });
         }
 
         function bomberBodyOverlapsBlast(position, blastCells, halfWidth, halfDepth = halfWidth) {
@@ -5149,8 +5292,10 @@
             if (!bomb) return;
             disposeBomberBombWarning(bomb);
             worldGroup.remove(bomb.group);
+            disposeBomberOverlay(bomb.group);
             bomberBombs.splice(bombIndex, 1);
-            sound.playBombExplosion();
+            if (bomb.weapon === 'electric') sound.playLightning();
+            else sound.playBombExplosion();
 
             const blastCells = getBomberBlastCells(bomb);
             blastCells.slice(1).forEach(cell => {
@@ -5160,9 +5305,11 @@
                 const position = bomberCellWorld(cell.col, cell.row);
                 spawnImpactSparks(new THREE.Vector3(position.x, 1.4, position.z), 0xf59e0b, 12);
             });
-            blastCells.forEach(cell => spawnBomberBlastTile(cell.col, cell.row));
+            blastCells.forEach(cell => spawnBomberBlastTile(cell.col, cell.row, bomb.weapon));
             const blastWorld = blastCells.map(cell => ({ ...cell, ...bomberCellWorld(cell.col, cell.row) }));
-            spawnBomberSmokeBurst(bomb, blastCells);
+            if (bomb.weapon === 'electric') spawnBomberElectricBurst(bomb, blastCells);
+            else spawnBomberSmokeBurst(bomb, blastCells);
+            const enemyDamage = BOMBER_BLAST_DAMAGE + bomberUpgrade.damageBonus;
 
             for (let i = bomberEnemies.length - 1; i >= 0; i--) {
                 const enemy = bomberEnemies[i];
@@ -5171,7 +5318,7 @@
                 const hit = bomberBodyOverlapsBlast(enemy.group.position, blastWorld, halfSize);
                 if (hit) {
                     const previousHp = enemy.hp;
-                    enemy.hp = Math.max(0, enemy.hp - BOMBER_BLAST_DAMAGE);
+                    enemy.hp = Math.max(0, enemy.hp - enemyDamage);
                     const damage = previousHp - enemy.hp;
                     updateBomberHealthBar(enemy.healthBar, enemy.hp, enemy.maxHp);
                     showBomberDamagePopup(enemy.group.position.clone().add(new THREE.Vector3(0, enemy.isBoss ? 5.8 : 4.3, 0)), damage, '#fca5a5');
@@ -5189,7 +5336,7 @@
             [bomberBoss, bomberBossExtra].forEach(boss => {
                 if (!boss || boss.dying || !bomberBodyOverlapsBlast(boss.group.position, blastWorld, 1.5)) return;
                 const previousHp = boss.hp;
-                boss.hp = Math.max(0, boss.hp - BOMBER_BLAST_DAMAGE);
+                boss.hp = Math.max(0, boss.hp - enemyDamage);
                 const damage = previousHp - boss.hp;
                 boss.damageFlash = 0.36;
                 updateBomberHealthBar(boss.healthBar, boss.hp, boss.maxHp);
@@ -5218,6 +5365,47 @@
             startBomberStageTransitionIfReady();
         }
 
+        function createBomberWeaponModel(weapon) {
+            const group = new THREE.Group();
+            if (weapon === 'electric') {
+                const body = new THREE.Mesh(
+                    new THREE.CylinderGeometry(0.9, 1.05, 1.4, 16),
+                    new THREE.MeshStandardMaterial({ color: 0x164e63, metalness: 0.65, roughness: 0.3, emissive: 0x0e7490, emissiveIntensity: 0.3 })
+                );
+                body.position.y = 0.8;
+                body.castShadow = true;
+                group.add(body);
+                const core = new THREE.Mesh(new THREE.SphereGeometry(0.52, 16, 12), new THREE.MeshStandardMaterial({ color: 0x67e8f9, emissive: 0x22d3ee, emissiveIntensity: 1.2 }));
+                core.position.y = 1.6;
+                group.add(core);
+                for (const x of [-0.5, 0.5]) {
+                    const prong = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.65, 0.16), new THREE.MeshStandardMaterial({ color: 0xcbd5e1, metalness: 0.8, roughness: 0.25 }));
+                    prong.position.set(x, 1.7, 0);
+                    group.add(prong);
+                }
+            } else {
+                const shell = new THREE.Mesh(
+                    new THREE.SphereGeometry(1.12, 20, 16),
+                    new THREE.MeshStandardMaterial({ color: 0x111827, metalness: 0.55, roughness: 0.3, emissive: 0x7c2d12, emissiveIntensity: 0.32 })
+                );
+                shell.position.y = 0.9;
+                shell.castShadow = true;
+                group.add(shell);
+                const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.28, 0.28, 10), new THREE.MeshStandardMaterial({ color: 0xf59e0b, metalness: 0.5 }));
+                cap.position.y = 1.62;
+                group.add(cap);
+            }
+            const fuse = new THREE.Mesh(new THREE.ConeGeometry(0.15, 0.38, 8), new THREE.MeshBasicMaterial({ color: weapon === 'electric' ? 0x67e8f9 : 0xfef08a }));
+            fuse.position.set(0.13, 1.93, 0);
+            group.add(fuse);
+            group.userData.fuse = fuse;
+            const ring = new THREE.Mesh(new THREE.TorusGeometry(1.30, 0.09, 8, 28), new THREE.MeshBasicMaterial({ color: weapon === 'electric' ? 0x22d3ee : 0xfb923c, transparent: true, opacity: 0.85 }));
+            ring.rotation.x = Math.PI / 2;
+            ring.position.y = 0.1;
+            group.add(ring);
+            return group;
+        }
+
         function placeBomberBomb() {
             if (state.screen !== 'playing' || state.matchEnded || state.isPaused || state.gameMode !== 'bomber') return;
             if (bomberBombs.length >= bomberUpgrade.bombCapacity) {
@@ -5239,27 +5427,10 @@
                 return;
             }
             const cell = bomberCellWorld(col, row);
-            const group = new THREE.Group();
-            const shell = new THREE.Mesh(
-                new THREE.SphereGeometry(1.12, 20, 16),
-                new THREE.MeshStandardMaterial({ color: 0x111827, metalness: 0.55, roughness: 0.3, emissive: 0x7c2d12, emissiveIntensity: 0.32 })
-            );
-            shell.position.y = 0.9;
-            shell.castShadow = true;
-            group.add(shell);
-            const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.28, 0.28, 10), new THREE.MeshStandardMaterial({ color: 0xf59e0b, metalness: 0.5 }));
-            cap.position.y = 1.62;
-            group.add(cap);
-            const fuse = new THREE.Mesh(new THREE.ConeGeometry(0.15, 0.38, 8), new THREE.MeshBasicMaterial({ color: 0xfef08a }));
-            fuse.position.set(0.13, 1.93, 0);
-            group.add(fuse);
-            const ring = new THREE.Mesh(new THREE.TorusGeometry(1.30, 0.09, 8, 28), new THREE.MeshBasicMaterial({ color: 0xfb923c, transparent: true, opacity: 0.85 }));
-            ring.rotation.x = Math.PI / 2;
-            ring.position.y = 0.1;
-            group.add(ring);
+            const group = createBomberWeaponModel(state.bomberWeapon);
             group.position.set(cell.x, 0, cell.z);
             worldGroup.add(group);
-            bomberBombs.push({ group, col, row, fuse: 2.35, phase: 0, warningMarkers: [], warningSignature: '' });
+            bomberBombs.push({ group, col, row, weapon: state.bomberWeapon, fuse: 2.35, phase: 0, warningMarkers: [], warningSignature: '' });
             sound.playThrow();
             showToast(`💣 Đã đặt bom! Chạy khỏi vùng nổ ${bomberUpgrade.blastRange} ô!`);
             updateObjectiveHUD();
@@ -5269,12 +5440,13 @@
             if (state.matchEnded || state.bomberStage !== 1) return;
             state.bomberStage = 2;
             state.bomberTransitioning = false;
-            state.bomberTimeRemaining = 120;
+            state.bomberTimeRemaining = bomberStageDuration();
             state.bomberLastDisplayedTime = -1;
             bomberNextStageTimer = 0;
             bomberBombs.forEach(b => {
                 disposeBomberBombWarning(b);
                 worldGroup.remove(b.group);
+                disposeBomberOverlay(b.group);
             });
             bomberBombs.length = 0;
             bomberBossExtra = null;
@@ -5292,14 +5464,14 @@
             }
             const bossCount = bomberBossExtra ? 2 : 1;
             document.getElementById('hud-mode-title').textContent =
-                `BOMBER ADVENTURE • MAP 1 • LV ${state.bomberMapLevel}⭐ • MÀN 2`;
+                `BOMBER ADVENTURE • MAP ${state.bomberMapId === 'map2' ? '2' : '1'} • LV ${state.bomberMapLevel}⭐ • MÀN 2`;
             showToast(bossCount === 2
                 ? '👑👑 HAI BOSS XUẤT HIỆN Ở HAI GÓC! Né các đòn nổ lệch nhịp và phản công bằng bom!'
                 : '👑 BOSS XUẤT HIỆN! Né luồng nổ thẳng và vùng nổ quanh Boss; dùng bom để phản công!');
             updateObjectiveHUD();
         }
 
-        function completeBomberMap1() {
+        function completeBomberMap() {
             if (state.matchEnded) return;
             state.matchEnded = true;
             const bomberHud = document.getElementById('bomber-stage-hud');
@@ -5309,7 +5481,8 @@
             const completedLevel = state.bomberMapLevel;
             const defeatedBossCount = completedLevel >= 4 ? 2 : 1;
             state.bomberMapLevel += 1;
-            state.completedMaps.bomber_map1 = true;
+            state.bomberMapLevels[state.bomberMapId] = state.bomberMapLevel;
+            state.completedMaps[`bomber_${state.bomberMapId}`] = true;
             state.totalStarsAllTime += 10;
             state.totalTargetsAllTime += 5;
             if (document.pointerLockElement) document.exitPointerLock?.();
@@ -5321,7 +5494,7 @@
             document.getElementById('result-emoji').textContent = '👑';
             document.getElementById('result-title').textContent = `CHIẾN THẮNG LEVEL ${completedLevel}!`;
             document.getElementById('result-title').className = 'text-2xl font-black text-amber-300 tracking-tight';
-            document.getElementById('result-desc').textContent = `Bạn đã hạ đủ ${state.bomberEnemiesTotal} quái nhỏ và ${defeatedBossCount} Boss. Bomber tăng lên Level ${state.bomberMapLevel}⭐!`;
+            document.getElementById('result-desc').textContent = `Bạn đã hạ đủ ${state.bomberEnemiesTotal} quái nhỏ và ${defeatedBossCount} Boss. Map ${state.bomberMapId === 'map2' ? '2' : '1'} tăng lên Level ${state.bomberMapLevel}⭐!`;
             document.getElementById('result-stats').textContent = `Thời gian: ${mins}:${secs} • Thưởng: +10 💎 +5 🎯 • Quái nhỏ đã hạ: ${state.bomberKills}/${state.bomberEnemiesTotal}`;
             beginResultPresentation('victory', 3000);
         }
@@ -5333,12 +5506,13 @@
             const check = (key) => {
                 const [col, row] = key.split(',').map(Number);
                 const center = bomberCellWorld(col, row);
-                const obstacleHalf = bomberHardCells.has(key) ? 1.94 : 1.02;
+                const obstacleHalf = bomberHardCells.has(key) || bomberWaterCells.has(key) ? 1.94 : 1.02;
                 const overlapX = Math.abs(x - center.x) < obstacleHalf + halfX - 0.015;
                 const overlapZ = Math.abs(z - center.z) < obstacleHalf + halfZ - 0.015;
                 return overlapX && overlapZ;
             };
             for (const key of bomberHardCells) if (check(key)) return true;
+            for (const key of bomberWaterCells) if (check(key)) return true;
             for (const key of bomberSoftByCell.keys()) if (check(key)) return true;
             return false;
         }
@@ -5676,7 +5850,7 @@
         function updateBomberWorld(dt) {
             if (state.gameMode !== 'bomber' || state.screen !== 'playing' || state.matchEnded) return;
 
-            // Each stage has its own two-minute countdown. The short inter-stage
+            // Each stage has its own level-dependent countdown. The short inter-stage
             // transition is not charged against either stage's play time.
             const deathSequenceInProgress =
                 (state.bomberStage === 2 && [bomberBoss, bomberBossExtra].filter(Boolean).length > 0 &&
@@ -5704,7 +5878,7 @@
                 const pulse = 1 + Math.max(0, Math.sin(bomb.phase)) * 0.1;
                 bomb.group.scale.setScalar(pulse);
                 bomb.group.rotation.y += dt * 1.8;
-                if (bomb.group.children[2]) bomb.group.children[2].material.color.setHex(Math.sin(bomb.phase * 1.7) > 0 ? 0xffffff : 0xf97316);
+                bomb.group.userData.fuse.material.color.setHex(Math.sin(bomb.phase * 1.7) > 0 ? 0xffffff : bomb.weapon === 'electric' ? 0x22d3ee : 0xf97316);
                 if (bomb.fuse <= 0) explodeBomberBomb(i);
             }
 
@@ -5854,8 +6028,117 @@
             if (state.backgroundTheme === 'noel') buildChristmasMapDecorations('map2');
         }
 
+        // Hunt maps: 0 = path, 1 = wall; each cell is 2 world units.
+        // Rows run north to south, columns west to east. Outer walls are separate.
+        const HUNT_MAPS = {
+            map1: [
+                '0000000000000000000000000000000000000000000000000',
+                '0000000000000000000000000000000000000000000000000',
+                '0000000000000000000000000000000000000000000000000',
+                '0000000000000000000000000000000000000000000000000',
+                '0000000000000000000000001000000000000000000000000',
+                '0000000000000000000000001000000000000000000000000',
+                '0000000000000000000000001000000000000000000000000',
+                '0000000000000000000000001000000000000000000000000',
+                '0000000000000000000000001000000000000000000000000',
+                '0000000000000000000000001000000000000000000000000',
+                '0000000111111111110000001000000111111111110000000',
+                '0000000100000000000000001000000000000000010000000',
+                '0000000100000000000000001000000000000000010000000',
+                '0000000100000000000000000000000000000000010000000',
+                '0000000100000000000000000000000000000000010000000',
+                '0000000100000000000000000000000000000000010000000',
+                '0000000100000000000000000000000000000000010000000',
+                '0000000100000111111111000000111111110000010000000',
+                '0000000100000000000000000000000000000000010000000',
+                '0000000100000000000000000000000000000000010000000',
+                '0000000100000000000000000000000000000000010000000',
+                '0000000100000000000000000000000000000000010000000',
+                '0000000000000000000000000000000000000000010000000',
+                '0000000000000000000000000000000000000000000000000',
+                '0000000111111111000000000000000001111111110000000',
+                '0000000000000000000000000000000000000000000000000',
+                '0000000000000000000000000000000000000000010000000',
+                '0000000100000000000000000000000000000000010000000',
+                '0000000100000000000000000000000000000000010000000',
+                '0000000100000000000000000000000000000000010000000',
+                '0000000100000000000000000000000000000000010000000',
+                '0000000100000111111111000000111111110000010000000',
+                '0000000100000000000000000000000000000000010000000',
+                '0000000100000000000000000000000000000000010000000',
+                '0000000100000000000000000000000000000000010000000',
+                '0000000100000000000000000000000000000000010000000',
+                '0000000100000000000000001000000000000000010000000',
+                '0000000100000000000000001000000000000000010000000',
+                '0000000111111111110000001000000111111111110000000',
+                '0000000000000000000000001000000000000000000000000',
+                '0000000000000000000000001000000000000000000000000',
+                '0000000000000000000000001000000000000000000000000',
+                '0000000000000000000000001000000000000000000000000',
+                '0000000000000000000000001000000000000000000000000',
+                '0000000000000000000000001000000000000000000000000',
+                '0000000000000000000000000000000000000000000000000',
+                '0000000000000000000000000000000000000000000000000',
+                '0000000000000000000000000000000000000000000000000',
+                '0000000000000000000000000000000000000000000000000'
+            ],
+            map2: [
+                '0000000000000000000000000000000000000000000000000',
+                '0000000000000000000000000000000000000000000000000',
+                '0000000000000000000000000000000000000000000000000',
+                '0000000000000000000000000000000000000000000000000',
+                '0000000000000000000000000000000000000000000000000',
+                '0000000000000000000000000000000000000000000000000',
+                '0000000000000000000000000000000000000000000000000',
+                '0001111111111111110010000000000000000000000010000',
+                '0000000000000000000010000011111111111111111010000',
+                '0000100000000000000010000000000000000000000010000',
+                '0000100000100000000010000000000000000000000010000',
+                '0000100000100000000010000000000000000000000010000',
+                '0000100000100000000010000000000000000000000010000',
+                '0000100000100000000010000000000000000000000010000',
+                '0000100000100000000010000000000000000000000010000',
+                '0000100000100000000010000000000000000000000010000',
+                '0000100000100000000010000011111111111000000010000',
+                '0000100000100000000010000000000000000000000010000',
+                '0000100000100000000000001000000000000000000010000',
+                '0000100000000000000000001000000000000000000010000',
+                '0000100011111111111111101000000000000000000010000',
+                '0000100000000000000000001000000000000000000010000',
+                '0000100000000000000000001000000000000000000010000',
+                '0000100000000000000000000000000000000000000010000',
+                '0000100000000000000000000011111111110000000010000',
+                '0000000000000000000000000000000000000010000000000',
+                '0000000000000000000000000000100000000010000000000',
+                '0000100000000000000000000000100000000010000000000',
+                '0000100000000000000000000000100000000010000000000',
+                '0000100000000000000000000000100000000010000000000',
+                '0000101111111111111110000000100000000010000000000',
+                '0000100000000000000000000000100000000010000000000',
+                '0000100000000000000000000000100000000010000000000',
+                '0000100000000000000000000000101111111111111100000',
+                '0000100000000000000000000000100000000010000000000',
+                '0000100000000000000000000000100000000000000000000',
+                '0000100000000000000000000000100000000000000000000',
+                '0000100000000000000000000000100000000000000000000',
+                '0000100000000000000000000000100000000000000000000',
+                '0000000000000000000000000000100000000000000000000',
+                '0000101111111111111110000000100000000000000000000',
+                '0000000000000000000000000000000000000000000000000',
+                '0000000000000000000000000000000000000000000000000',
+                '0000000000000000000000000000000000000000000000000',
+                '0000000000000000000000000000000000000000000000000',
+                '0000000000000000000000000000000000000000000000000',
+                '0000000000000000000000000000000000000000000000000',
+                '0000000000000000000000000000000000000000000000000',
+                '0000000000000000000000000000000000000000000000000'
+            ]
+        };
+
         // Mode 2: Full Multi-Zone Walled Maze Arena for Target Hunt
         function buildHuntArenaMap(mapId = 'map1') {
+            const grid = HUNT_MAPS[mapId];
+            validateWallGrid(grid, 49, 49, `HUNT_MAPS.${mapId}`);
             clearWorld();
             MAP_BOUNDS.halfSize = 50;
 
@@ -5875,46 +6158,27 @@
             addPlatformBlock(-49, wallH / 2, 0, 2, wallH, 100, 0x334155, true, 0, true);
             addPlatformBlock(49, wallH / 2, 0, 2, wallH, 100, 0x334155, true, 0, true);
 
-            const map1Walls = [
-                { x: -24, z: -28, w: 22, d: 2.2, c: 0x0284c7 },
-                { x: -34, z: -16, w: 2.2, d: 20, c: 0x0284c7 },
-                { x: -14, z: -14, w: 16, d: 2.2, c: 0x0369a1 },
-                { x: 24, z: -28, w: 22, d: 2.2, c: 0x7c3aed },
-                { x: 34, z: -15, w: 2.2, d: 22, c: 0x7c3aed },
-                { x: 15, z: -14, w: 16, d: 2.2, c: 0x6d28d9 },
-                { x: -24, z: 28, w: 22, d: 2.2, c: 0x059669 },
-                { x: -34, z: 16, w: 2.2, d: 20, c: 0x059669 },
-                { x: -14, z: 14, w: 16, d: 2.2, c: 0x047857 },
-                { x: 24, z: 28, w: 22, d: 2.2, c: 0xd97706 },
-                { x: 34, z: 15, w: 2.2, d: 22, c: 0xd97706 },
-                { x: 15, z: 14, w: 16, d: 2.2, c: 0xb45309 },
-                { x: 0, z: -32, w: 2.2, d: 18, c: 0x475569 },
-                { x: 0, z: 32, w: 2.2, d: 18, c: 0x475569 },
-                { x: -26, z: 0, w: 16, d: 2.2, c: 0x475569 },
-                { x: 26, z: 0, w: 16, d: 2.2, c: 0x475569 }
-            ];
-            const map2Walls = [
-                { x: -28, z: -34, w: 30, d: 2.2, c: 0x0891b2 },
-                { x: -39, z: -17, w: 2.2, d: 34, c: 0x0e7490 },
-                { x: -18, z: -8, w: 28, d: 2.2, c: 0x155e75 },
-                { x: -8, z: -24, w: 2.2, d: 21, c: 0x0e7490 },
-                { x: 20, z: -33, w: 34, d: 2.2, c: 0x4338ca },
-                { x: 39, z: -17, w: 2.2, d: 34, c: 0x3730a3 },
-                { x: 13, z: 0, w: 20, d: 2.2, c: 0x4f46e5 },
-                { x: 7, z: 18, w: 2.2, d: 31, c: 0x4338ca },
-                { x: -23, z: 33, w: 32, d: 2.2, c: 0x0f766e },
-                { x: -40, z: 19, w: 2.2, d: 28, c: 0x115e59 },
-                { x: -22, z: 11, w: 30, d: 2.2, c: 0x0f766e },
-                { x: 24, z: 18, w: 29, d: 2.2, c: 0x0e7490 },
-                { x: 0, z: -8, w: 2.2, d: 8, c: 0x475569 },
-                { x: 14, z: -17, w: 20, d: 2.2, c: 0x475569 },
-                { x: -28, z: -19, w: 2.2, d: 20, c: 0x475569 },
-                { x: 28, z: 11, w: 2.2, d: 18, c: 0x475569 }
-            ];
-            const mazeWalls = mapId === 'map2' ? map2Walls : map1Walls;
-
-            mazeWalls.forEach(w => {
-                addPlatformBlock(w.x, 2.7, w.z, w.w, 5.4, w.d, w.c, true, 0, true);
+            const visited = new Set();
+            const cellSize = 2;
+            const isWall = (row, col) => grid[row]?.[col] === '1' && !visited.has(`${row},${col}`);
+            grid.forEach((cells, row) => {
+                for (let col = 0; col < cells.length; col++) {
+                    if (!isWall(row, col)) continue;
+                    let width = 1, depth = 1;
+                    while (isWall(row, col + width)) width++;
+                    while (isWall(row + depth, col)) depth++;
+                    if (width >= depth) depth = 1;
+                    else width = 1;
+                    for (let dz = 0; dz < depth; dz++) {
+                        for (let dx = 0; dx < width; dx++) visited.add(`${row + dz},${col + dx}`);
+                    }
+                    const x = -48 + (col + (width - 1) / 2) * cellSize;
+                    const z = -48 + (row + (depth - 1) / 2) * cellSize;
+                    const color = mapId === 'map2'
+                        ? (x < 0 ? 0x0e7490 : 0x4338ca)
+                        : (z < 0 ? (x < 0 ? 0x0284c7 : 0x7c3aed) : (x < 0 ? 0x059669 : 0xd97706));
+                    addPlatformBlock(x, 2.7, z, width * cellSize, 5.4, depth * cellSize, color, true, 0, true);
+                }
             });
 
             addPlatformBlock(-22, 1.1, -20, 6, 2.2, 6, 0x38bdf8, true, 1);
@@ -6685,7 +6949,10 @@
             runnerCoinsCollected: 0,
             runnerSpeed: 17,
             runnerLaneCooldown: 0,
+            bomberMapId: 'map1',
+            bomberMapLevels: { map1: 1, map2: 1 },
             bomberMapLevel: 1,
+            bomberWeapon: 'bomb',
             bomberStage: 1,
             bomberKills: 0,
             bomberEnemiesTotal: 20,
@@ -6736,7 +7003,8 @@
                 climb_map1: false,
                 climb_map2: false,
                 hunt_mode: false,
-                bomber_map1: false
+                bomber_map1: false,
+                bomber_map2: false
             },
 
             keys: { w: false, a: false, s: false, d: false, space: false },
@@ -6897,7 +7165,7 @@
                         : 'text-sm font-black tabular-nums tracking-wide text-emerald-300 text-right';
             }
             if (progress) {
-                const pct = Math.max(0, Math.min(100, state.bomberTimeRemaining / 120 * 100));
+                const pct = Math.max(0, Math.min(100, state.bomberTimeRemaining / bomberStageDuration() * 100));
                 progress.style.width = `${pct}%`;
                 progress.className = `h-full rounded-full transition-[width] duration-300 ${
                     seconds <= 20 ? 'bg-rose-500 animate-pulse' : seconds <= 60 ? 'bg-amber-400' : 'bg-emerald-400'
@@ -6935,14 +7203,13 @@
                 updateBomberStageHUD();
                 if (state.bomberStage === 1) {
                     prim.textContent = `👾 ${state.bomberKills}/${state.bomberEnemiesTotal}`;
-                    sec.textContent = `MAP 1 • LV ${state.bomberMapLevel}⭐ • MÀN 1`;
-                    sub.innerHTML = `<span>🔥 ${bomberUpgrade.blastRange} ô • 👟 ${bomberUpgrade.moveSpeed.toFixed(1)} • 🛡️ ${bomberUpgrade.shieldHits} • 💣 x${bomberUpgrade.bombCapacity}</span>`;
+                    sec.textContent = `MAP ${state.bomberMapId === 'map2' ? '2' : '1'} • LV ${state.bomberMapLevel}⭐ • MÀN 1`;
                 } else {
                     const { currentHp, maxHp, count } = getBomberBossHealthTotals();
                     prim.textContent = `👑 ${currentHp}/${maxHp} HP`;
-                    sec.textContent = `MAP 1 • LV ${state.bomberMapLevel}⭐ • ${count > 1 ? '2 BOSSES' : 'BOSS'}`;
-                    sub.innerHTML = `<span>🔥 ${bomberUpgrade.blastRange} ô • 👟 ${bomberUpgrade.moveSpeed.toFixed(1)} • 🛡️ ${bomberUpgrade.shieldHits} • 💣 x${bomberUpgrade.bombCapacity}</span>`;
+                    sec.textContent = `MAP ${state.bomberMapId === 'map2' ? '2' : '1'} • LV ${state.bomberMapLevel}⭐ • ${count > 1 ? '2 BOSSES' : 'BOSS'}`;
                 }
+                sub.innerHTML = `<span>🔥 ${bomberUpgrade.blastRange} ô • 👟 ${bomberUpgrade.moveSpeed.toFixed(1)} • 🛡️ ${bomberUpgrade.shieldHits} • 💣 x${bomberUpgrade.bombCapacity} • 💪 ${BOMBER_BLAST_DAMAGE + bomberUpgrade.damageBonus}</span>`;
             } else {
                 prim.textContent = `🎯 ${state.huntDestroyed}/${state.huntGoal}`;
                 sec.textContent = `Đang có: ${targets.length} bia`;
@@ -6959,7 +7226,8 @@
             document.getElementById('menu-total-stars').textContent = state.totalStarsAllTime;
             document.getElementById('menu-total-targets').textContent = state.totalTargetsAllTime;
             const totalDifficultyStars = state.climbMapLevels.map1 + state.climbMapLevels.map2 +
-                state.huntMapLevels.map1 + state.huntMapLevels.map2 + Math.max(0, state.bomberMapLevel - 1);
+                state.huntMapLevels.map1 + state.huntMapLevels.map2 +
+                Math.max(0, state.bomberMapLevels.map1 - 1) + Math.max(0, state.bomberMapLevels.map2 - 1);
             document.getElementById('menu-maps-cleared').textContent = `${totalDifficultyStars}⭐`;
 
             const climbMap1Level = Math.max(1, state.climbMapLevels.map1);
@@ -6974,14 +7242,15 @@
                 `Độ khó ${huntMap1Level}⭐ • Hạ ${15 + (huntMap1Level - 1) * 5} bia`;
             document.getElementById('hunt-map2-progress').textContent =
                 `Độ khó ${huntMap2Level}⭐ • Hạ ${15 + (huntMap2Level - 1) * 5} bia • Bia di chuyển chậm`;
-            const bomberProgress = document.getElementById('bomber-map1-progress');
-            const bomberLevel = Math.max(1, state.bomberMapLevel);
-            const bomberEnemyCount = 20 + (bomberLevel - 1) * 2;
-            const bomberBossHp = 300 + (bomberLevel - 1) * 100;
-            const bomberBossCount = bomberLevel >= 4 ? 2 : 1;
-            if (bomberProgress) {
-                bomberProgress.textContent = `Level ${bomberLevel}⭐ • Hạ ${bomberEnemyCount} quái → ${bomberBossCount} Boss (${bomberBossHp} HP mỗi con)`;
-            }
+            ['map1', 'map2'].forEach(mapId => {
+                const level = Math.max(1, state.bomberMapLevels[mapId]);
+                const enemyCount = 20 + (level - 1) * 2;
+                const bossHp = 300 + (level - 1) * 100;
+                const bossCount = level >= 4 ? 2 : 1;
+                document.getElementById(`bomber-${mapId}-progress`).textContent =
+                    `Level ${level}⭐ • ${level + 1} phút/màn • Hạ ${enemyCount} quái → ${bossCount} Boss (${bossHp} HP mỗi con)`;
+                document.getElementById(`bomber-${mapId}-summary`).textContent = `Level ${level}⭐ • 2 màn`;
+            });
             renderSkinShopUI();
         }
 
@@ -7031,14 +7300,14 @@
             document.getElementById('result-title').textContent = bomberTimedOut ? 'HẾT GIỜ! THẤT BẠI' : 'HẾT MÁU! THẤT BẠI';
             document.getElementById('result-title').className = 'text-2xl font-black text-rose-400 tracking-tight';
             document.getElementById('result-desc').textContent = bomberTimedOut
-                ? `Bạn đã hết 2 phút ở màn ${state.bomberStage} mà chưa hoàn thành mục tiêu. Hãy thử lại và quản lý thời gian đặt bom tốt hơn!`
+                ? `Bạn đã hết ${bomberStageDuration() / 60} phút ở màn ${state.bomberStage} mà chưa hoàn thành mục tiêu. Hãy thử lại và quản lý thời gian đặt bom tốt hơn!`
                 : state.gameMode === 'climb'
                     ? 'Bạn đã bị rớt quá nhiều bậc hoặc va chạm chướng ngại vật quá mạnh!'
                     : state.gameMode === 'bomber'
                         ? `Bạn đã thất bại ở màn ${state.bomberStage}. Hãy đặt bom rồi lập tức chạy khỏi vùng nổ!`
                         : 'Các bia mục tiêu phát nổ đã làm cạn thanh máu của bạn!';
             document.getElementById('result-stats').textContent = bomberTimedOut
-                ? `Hết giờ màn ${state.bomberStage} • Quái đã hạ: ${state.bomberKills}/20 • HP còn lại: ${Math.ceil(state.hp)}`
+                ? `Hết giờ màn ${state.bomberStage} • Quái đã hạ: ${state.bomberKills}/${state.bomberEnemiesTotal} • HP còn lại: ${Math.ceil(state.hp)}`
                 : `Thời gian sinh tồn: ${mins}:${secs}`;
             if (state.gameMode === 'bomber') {
                 if (state.hp <= 0) startBomberPlayerDeathAnimation();
@@ -7089,7 +7358,7 @@
                 return;
             }
             if (state.gameMode === 'bomber') {
-                startGameMode('bomber', 'map1');
+                startGameMode('bomber', state.bomberMapId);
                 return;
             }
             if (state.gameMode === 'climb') {
@@ -7338,7 +7607,60 @@
                     drawerContainer.appendChild(createSkinIconButton(key, true));
                 });
             }
+            renderBomberWeaponShop();
         }
+
+        let bomberPreviewRenderer = null;
+        let bomberPreviewScene = null;
+        let bomberPreviewCamera = null;
+        let bomberPreviewModel = null;
+        let bomberPreviewWeapon = null;
+
+        function renderBomberWeaponShop() {
+            ['bomb', 'electric'].forEach(weapon => {
+                const button = document.getElementById(`bomber-weapon-${weapon}`);
+                const selected = state.bomberWeapon === weapon;
+                button.setAttribute('aria-pressed', String(selected));
+                button.className = `relative rounded-lg border px-2 py-2 text-left text-xs font-bold ${
+                    selected ? 'border-cyan-300 bg-cyan-500/25 text-cyan-100' : 'border-white/15 bg-slate-900/70 text-slate-200'
+                }`;
+            });
+            const canvas = document.getElementById('bomber-weapon-preview');
+            canvas.setAttribute('aria-label', `Mô hình 3D ${state.bomberWeapon === 'electric' ? 'máy chích điện' : 'bom thường'} đang chọn`);
+            if (!bomberPreviewScene || bomberPreviewWeapon === state.bomberWeapon) return;
+            if (bomberPreviewModel) {
+                bomberPreviewScene.remove(bomberPreviewModel);
+                disposeBomberOverlay(bomberPreviewModel);
+            }
+            bomberPreviewModel = createBomberWeaponModel(state.bomberWeapon);
+            bomberPreviewScene.add(bomberPreviewModel);
+            bomberPreviewWeapon = state.bomberWeapon;
+        }
+
+        function initializeBomberWeaponPreview() {
+            if (bomberPreviewRenderer) return;
+            bomberPreviewRenderer = new THREE.WebGLRenderer({ canvas: document.getElementById('bomber-weapon-preview'), alpha: true, antialias: true });
+            bomberPreviewRenderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
+            bomberPreviewRenderer.setSize(360, 160, false);
+            bomberPreviewScene = new THREE.Scene();
+            bomberPreviewCamera = new THREE.PerspectiveCamera(36, 360 / 160, 0.1, 50);
+            bomberPreviewCamera.position.set(3.4, 3.2, 6);
+            bomberPreviewCamera.lookAt(0, 1, 0);
+            bomberPreviewScene.add(new THREE.AmbientLight(0xffffff, 1.8));
+            const light = new THREE.DirectionalLight(0xffffff, 2);
+            light.position.set(3, 5, 4);
+            bomberPreviewScene.add(light);
+            renderBomberWeaponShop();
+        }
+
+        ['bomb', 'electric'].forEach(weapon => {
+            document.getElementById(`bomber-weapon-${weapon}`).addEventListener('click', () => {
+                state.bomberWeapon = weapon;
+                renderBomberWeaponShop();
+                saveManager.scheduleSave();
+                showToast(weapon === 'electric' ? '⚡ Đã chọn máy chích điện cho Boom!' : '💣 Đã chọn bom thường cho Boom!');
+            });
+        });
 
         // ==========================================
         // LOCAL SAVE MANAGER (LocalStorage + JSON File Export/Import)
@@ -7354,13 +7676,15 @@
 
             buildPayload() {
                 return {
-                    version: 9,
+                    version: 10,
                     game: 'Roblox Bearbrick 3D World',
                     savedAt: new Date().toISOString(),
                     backgroundTheme: state.backgroundTheme,
                     climbMapLevels: { ...state.climbMapLevels },
                     huntMapLevels: { ...state.huntMapLevels },
-                    bomberMapLevel: state.bomberMapLevel,
+                    bomberMapLevel: state.bomberMapLevels.map1,
+                    bomberMapLevels: { ...state.bomberMapLevels },
+                    bomberWeapon: state.bomberWeapon,
                     skin: state.skin || 'chrome',
                     unlockedSkins: Array.isArray(state.unlockedSkins) ? [...state.unlockedSkins] : [...DEFAULT_UNLOCKED_SKINS],
                     weaponMode: state.weaponMode || 'plasma',
@@ -7433,9 +7757,14 @@
                 } else {
                     state.huntMapLevels = { map1: legacyHuntCleared ? 2 : 1, map2: 1 };
                 }
-                state.bomberMapLevel = data.bomberMapLevel !== undefined && data.bomberMapLevel !== null
-                    ? normalizeLevel(data.bomberMapLevel)
-                    : legacyBomberCleared ? 2 : 1;
+                const oldBomberLevel = data.bomberMapLevel !== undefined && data.bomberMapLevel !== null
+                    ? normalizeLevel(data.bomberMapLevel) : legacyBomberCleared ? 2 : 1;
+                state.bomberMapLevels = data.bomberMapLevels && typeof data.bomberMapLevels === 'object'
+                    ? { map1: normalizeLevel(data.bomberMapLevels.map1), map2: normalizeLevel(data.bomberMapLevels.map2) }
+                    : { map1: oldBomberLevel, map2: 1 };
+                state.bomberMapId = 'map1';
+                state.bomberMapLevel = state.bomberMapLevels.map1;
+                state.bomberWeapon = data.bomberWeapon === 'electric' ? 'electric' : 'bomb';
 
                 const hasPaidVipUnlocks = Number(data.version) >= 5;
                 const savedUnlockedSkins = Array.isArray(data.unlockedSkins)
@@ -7461,12 +7790,14 @@
                     state.completedMaps.climb_map2 = Boolean(data.completedMaps.climb_map2) || state.climbMapLevels.map2 > 1;
                     state.completedMaps.hunt_mode = Boolean(data.completedMaps.hunt_mode) ||
                         state.huntMapLevels.map1 > 1 || state.huntMapLevels.map2 > 1;
-                    state.completedMaps.bomber_map1 = Boolean(data.completedMaps.bomber_map1) || state.bomberMapLevel > 1;
+                    state.completedMaps.bomber_map1 = Boolean(data.completedMaps.bomber_map1) || state.bomberMapLevels.map1 > 1;
+                    state.completedMaps.bomber_map2 = Boolean(data.completedMaps.bomber_map2) || state.bomberMapLevels.map2 > 1;
                 } else {
                     state.completedMaps.climb_map1 = state.climbMapLevels.map1 > 1;
                     state.completedMaps.climb_map2 = state.climbMapLevels.map2 > 1;
                     state.completedMaps.hunt_mode = state.huntMapLevels.map1 > 1 || state.huntMapLevels.map2 > 1;
-                    state.completedMaps.bomber_map1 = state.bomberMapLevel > 1;
+                    state.completedMaps.bomber_map1 = state.bomberMapLevels.map1 > 1;
+                    state.completedMaps.bomber_map2 = state.bomberMapLevels.map2 > 1;
                 }
                 if (this.menuSaveTimeEl) this.menuSaveTimeEl.textContent = this.formatTimeLabel(data.savedAt);
                 updateMenuStatsUI();
@@ -7533,8 +7864,11 @@
                 state.huntLevel = 1;
                 state.huntGoal = 15;
                 state.bomberMapLevel = 1;
+                state.bomberMapId = 'map1';
+                state.bomberMapLevels = { map1: 1, map2: 1 };
+                state.bomberWeapon = 'bomb';
                 state.unlockedSkins = [...DEFAULT_UNLOCKED_SKINS];
-                state.completedMaps = { climb_map1: false, climb_map2: false, hunt_mode: false, bomber_map1: false };
+                state.completedMaps = { climb_map1: false, climb_map2: false, hunt_mode: false, bomber_map1: false, bomber_map2: false };
                 applySkinSelection('chrome', true);
                 setWeaponMode('plasma', true);
                 updateMenuStatsUI();
@@ -7771,6 +8105,9 @@
             } else if (mode === 'hunt') {
                 state.huntMapId = mapId === 'map2' ? 'map2' : 'map1';
                 state.huntLevel = state.huntMapLevels[state.huntMapId] || 1;
+            } else if (mode === 'bomber') {
+                state.bomberMapId = mapId === 'map2' ? 'map2' : 'map1';
+                state.bomberMapLevel = state.bomberMapLevels[state.bomberMapId];
             }
             state.matchEnded = false;
             state.isPaused = false;
@@ -7825,6 +8162,7 @@
             } else if (mode === 'runner') {
                 player.setWeaponsEquipped(false);
                 setCombatUIVisible(false);
+                titleEl.textContent = 'ĐƯỜNG CHẠY VÔ TẬN';
                 buildRunnerWorld();
                 state.pos.set(0, 0.5, 0);
                 state.camYaw = 0;
@@ -7842,7 +8180,7 @@
                 document.getElementById('touch-jump').classList.add('hidden');
                 document.getElementById('jump-controls-hint').classList.add('hidden');
                 document.getElementById('minimap-wrapper').classList.add('hidden');
-                titleEl.textContent = `BOMBER ADVENTURE • MAP 1 • LV ${state.bomberMapLevel}⭐ • MÀN 1`;
+                titleEl.textContent = `BOMBER ADVENTURE • MAP ${state.bomberMapId === 'map2' ? '2' : '1'} • LV ${state.bomberMapLevel}⭐ • MÀN 1`;
                 showToast('💣 WASD / joystick di chuyển theo tâm lối • E / Space đặt bom • Phá thùng để tìm nâng cấp');
             } else {
                 player.setWeaponsEquipped(true);
@@ -8184,18 +8522,152 @@
         joystickZone.addEventListener('touchcancel', resetJoystick);
 
         // Menu & HUD Button Bindings
-        document.getElementById('btn-start-climb-1').addEventListener('click', () => startGameMode('climb', 'map1'));
-        document.getElementById('btn-start-climb-2').addEventListener('click', () => startGameMode('climb', 'map2'));
-        document.getElementById('btn-start-hunt-map1').addEventListener('click', () => startGameMode('hunt', 'map1'));
-        document.getElementById('btn-start-hunt-map2').addEventListener('click', () => startGameMode('hunt', 'map2'));
-        document.getElementById('btn-start-runner').addEventListener('click', () => startGameMode('runner'));
-        document.getElementById('btn-start-bomber-map1').addEventListener('click', () => startGameMode('bomber', 'map1'));
+        const modeTabs = ['climb', 'hunt', 'runner', 'bomber'];
+        function selectModeTab(mode, focus = false) {
+            modeTabs.forEach(id => {
+                const selected = id === mode;
+                const tab = document.getElementById(`mode-tab-${id}`);
+                tab.setAttribute('aria-selected', String(selected));
+                tab.tabIndex = selected ? 0 : -1;
+                document.getElementById(`mode-panel-${id}`).classList.toggle('hidden', !selected);
+                if (selected && focus) tab.focus();
+            });
+        }
+        modeTabs.forEach((mode, index) => {
+            const tab = document.getElementById(`mode-tab-${mode}`);
+            tab.addEventListener('click', () => selectModeTab(mode));
+            tab.addEventListener('keydown', event => {
+                let next;
+                if (event.key === 'ArrowRight') next = (index + 1) % modeTabs.length;
+                else if (event.key === 'ArrowLeft') next = (index + modeTabs.length - 1) % modeTabs.length;
+                else if (event.key === 'Home') next = 0;
+                else if (event.key === 'End') next = modeTabs.length - 1;
+                else return;
+                event.preventDefault();
+                selectModeTab(modeTabs[next], true);
+            });
+        });
+
+        function drawModeArt(mode) {
+            const ctx = document.getElementById(`mode-art-${mode}`).getContext('2d');
+            const colors = {
+                climb: ['#172554', '#312e81'],
+                hunt: ['#1e1b4b', '#4c1d3c'],
+                runner: ['#042f2e', '#164e63'],
+                bomber: ['#431407', '#713f12']
+            };
+            const gradient = ctx.createLinearGradient(0, 0, 600, 180);
+            gradient.addColorStop(0, colors[mode][0]);
+            gradient.addColorStop(1, colors[mode][1]);
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, 600, 180);
+            ctx.fillStyle = 'rgba(255,255,255,0.22)';
+            for (const [x, y] of [[35, 29], [98, 52], [170, 23], [275, 38], [365, 20], [465, 45], [560, 24]]) {
+                ctx.fillRect(x, y, 3, 3);
+            }
+            if (mode === 'climb') {
+                [[35, 142], [130, 116], [230, 91], [330, 66], [430, 42]].forEach(([x, y], i) => {
+                    ctx.fillStyle = ['#38bdf8', '#818cf8', '#c084fc', '#f472b6', '#fbbf24'][i];
+                    ctx.fillRect(x, y, 80, 14);
+                    ctx.fillStyle = 'rgba(255,255,255,0.3)';
+                    ctx.fillRect(x, y, 80, 3);
+                });
+                ctx.fillStyle = '#67e8f9';
+                ctx.beginPath(); ctx.moveTo(468, 16); ctx.lineTo(480, 27); ctx.lineTo(468, 38); ctx.lineTo(456, 27); ctx.fill();
+            } else if (mode === 'hunt') {
+                ctx.strokeStyle = '#818cf8';
+                ctx.lineWidth = 10;
+                ctx.beginPath(); ctx.moveTo(80, 140); ctx.lineTo(80, 46); ctx.lineTo(220, 46); ctx.lineTo(220, 105); ctx.lineTo(315, 105); ctx.moveTo(360, 40); ctx.lineTo(360, 140); ctx.lineTo(520, 140); ctx.stroke();
+                ctx.fillStyle = '#fda4af';
+                ctx.beginPath(); ctx.arc(455, 78, 35, 0, Math.PI * 2); ctx.fill();
+                ctx.fillStyle = '#fff1f2';
+                ctx.beginPath(); ctx.arc(455, 78, 23, 0, Math.PI * 2); ctx.fill();
+                ctx.fillStyle = '#e11d48';
+                ctx.beginPath(); ctx.arc(455, 78, 11, 0, Math.PI * 2); ctx.fill();
+            } else if (mode === 'runner') {
+                ctx.fillStyle = '#1e293b';
+                ctx.beginPath(); ctx.moveTo(235, 35); ctx.lineTo(365, 35); ctx.lineTo(560, 180); ctx.lineTo(40, 180); ctx.fill();
+                ctx.strokeStyle = '#67e8f9'; ctx.lineWidth = 3;
+                ctx.beginPath(); ctx.moveTo(275, 40); ctx.lineTo(205, 180); ctx.moveTo(325, 40); ctx.lineTo(395, 180); ctx.stroke();
+                ctx.fillStyle = '#fb7185'; ctx.fillRect(328, 102, 55, 20);
+                ctx.fillStyle = '#fbbf24'; ctx.beginPath(); ctx.arc(250, 98, 10, 0, Math.PI * 2); ctx.fill();
+            } else {
+                for (let row = 0; row < 3; row++) {
+                    for (let col = 0; col < 7; col++) {
+                        ctx.fillStyle = (row + col) % 2 ? '#a3a87a' : '#d9dfb2';
+                        ctx.fillRect(150 + col * 44, 25 + row * 44, 42, 42);
+                        if (row === 1 && col % 2 === 1) {
+                            ctx.fillStyle = '#64748b'; ctx.fillRect(154 + col * 44, 29 + row * 44, 34, 34);
+                        }
+                    }
+                }
+                ctx.fillStyle = '#1e293b'; ctx.beginPath(); ctx.arc(260, 91, 20, 0, Math.PI * 2); ctx.fill();
+                ctx.strokeStyle = '#fbbf24'; ctx.lineWidth = 4;
+                ctx.beginPath(); ctx.moveTo(265, 72); ctx.lineTo(274, 61); ctx.lineTo(283, 64); ctx.stroke();
+                ctx.fillStyle = '#fb923c'; ctx.beginPath(); ctx.arc(286, 61, 5, 0, Math.PI * 2); ctx.fill();
+            }
+        }
+        modeTabs.forEach(drawModeArt);
+
+        const mapChoices = [
+            { button: 'btn-start-climb-1', mode: 'climb', map: 'map1', modeName: 'Leo map', title: 'Map 1: Tháp Không Gian', progress: 'climb-map1-progress', description: 'Vượt chướng ngại, leo lên đỉnh và nhặt đủ gem. Đứng im hoặc vào hồ nước để hồi máu.' },
+            { button: 'btn-start-climb-2', mode: 'climb', map: 'map2', modeName: 'Leo map', title: 'Map 2: Pháo Đài Không Gian', progress: 'climb-map2-progress', description: 'Leo qua pháo đài với ray trượt và vòng xoay, thu thập gem để chiến thắng.' },
+            { button: 'btn-start-hunt-map1', mode: 'hunt', map: 'map1', modeName: 'Săn bia', title: 'Map 1: Mê Cung Cổ Điển', progress: 'hunt-map1-progress', description: 'Tìm và bắn các bia đứng yên trước khi chúng phát nổ. Chiến thắng tăng độ khó và số bia.' },
+            { button: 'btn-start-hunt-map2', mode: 'hunt', map: 'map2', modeName: 'Săn bia', title: 'Map 2: Mê Cung Chuyển Động', progress: 'hunt-map2-progress', description: 'Săn các bia di chuyển chậm trong mê cung. Hạ đủ bia trước khi chúng phát nổ.' },
+            { button: 'btn-start-runner', mode: 'runner', map: 'map1', modeName: 'Chạy vô tận', title: 'Đường Chạy Vô Tận', description: 'Chạy tự động, đổi làn và nhảy để tránh chướng ngại, đồng thời nhặt gem.', details: 'A / D hoặc joystick đổi làn • Space / NHẢY vượt rào' },
+            { button: 'btn-start-bomber-map1', mode: 'bomber', map: 'map1', modeName: 'Bomber Adventure', title: 'Map 1: Đảo Bomber', progress: 'bomber-map1-progress', description: 'Đặt bom hạ quái, tìm nâng cấp và đối đầu Boss. Bom nổ theo bốn hướng: hãy chạy khỏi vùng nổ!' },
+            { button: 'btn-start-bomber-map2', mode: 'bomber', map: 'map2', modeName: 'Bomber Adventure', title: 'Map 2: Đảo Nước', progress: 'bomber-map2-progress', description: 'Vũng nước chặn đường đi nhưng bom và tia điện có thể nổ xuyên qua.' }
+        ];
+        const mapInfoModal = document.getElementById('map-info-modal');
+        let selectedMap = null;
+        function closeMapInfo(restoreFocus = true) {
+            mapInfoModal.classList.add('hidden');
+            if (restoreFocus && selectedMap) document.getElementById(selectedMap.button).focus();
+            selectedMap = null;
+        }
+        mapChoices.forEach(choice => {
+            document.getElementById(choice.button).addEventListener('click', () => {
+                selectedMap = choice;
+                document.getElementById('map-info-mode').textContent = choice.modeName;
+                document.getElementById('map-info-title').textContent = choice.title;
+                document.getElementById('map-info-description').textContent = choice.description;
+                document.getElementById('map-info-progress').textContent = choice.progress
+                    ? document.getElementById(choice.progress).textContent : choice.details;
+                mapInfoModal.classList.remove('hidden');
+                document.getElementById('map-info-play').focus();
+            });
+        });
+        document.getElementById('map-info-close').addEventListener('click', () => closeMapInfo());
+        document.getElementById('map-info-cancel').addEventListener('click', () => closeMapInfo());
+        mapInfoModal.addEventListener('click', event => {
+            if (event.target === mapInfoModal) closeMapInfo();
+        });
+        mapInfoModal.addEventListener('keydown', event => {
+            if (event.key === 'Escape') {
+                event.preventDefault();
+                closeMapInfo();
+            } else if (event.key === 'Tab') {
+                const first = document.getElementById('map-info-close');
+                const last = document.getElementById('map-info-play');
+                if (event.shiftKey && document.activeElement === first) {
+                    event.preventDefault(); last.focus();
+                } else if (!event.shiftKey && document.activeElement === last) {
+                    event.preventDefault(); first.focus();
+                }
+            }
+        });
+        document.getElementById('map-info-play').addEventListener('click', () => {
+            if (!selectedMap) return;
+            const { mode, map } = selectedMap;
+            closeMapInfo(false);
+            startGameMode(mode, map);
+        });
         document.getElementById('btn-back-menu').addEventListener('click', pauseForExitConfirmation);
         document.getElementById('btn-exit-cancel').addEventListener('click', resumeFromExitConfirmation);
         document.getElementById('btn-exit-confirm').addEventListener('click', enterMainMenu);
         document.getElementById('btn-result-menu').addEventListener('click', enterMainMenu);
         document.getElementById('btn-result-replay').addEventListener('click', () => {
-            const mapId = state.gameMode === 'hunt' ? state.huntMapId : state.climbMapId;
+            const mapId = state.gameMode === 'hunt' ? state.huntMapId : state.gameMode === 'bomber' ? state.bomberMapId : state.climbMapId;
             startGameMode(state.gameMode, mapId);
         });
 
@@ -9039,6 +9511,12 @@
             }
 
             renderer.render(scene, camera);
+            if (bomberPreviewRenderer && state.screen === 'menu' &&
+                !document.getElementById('menu-skin-shop-panel').classList.contains('hidden') &&
+                !document.getElementById('skin-shop-panel-weapons').classList.contains('hidden')) {
+                bomberPreviewModel.rotation.y += dt * 0.8;
+                bomberPreviewRenderer.render(bomberPreviewScene, bomberPreviewCamera);
+            }
         }
 
         window.onload = function () {
@@ -9102,6 +9580,7 @@
                             : 'rounded-lg border border-white/10 bg-slate-950/40 text-slate-300 px-2 py-1.5 text-[10px] sm:text-xs font-bold transition';
                         tabPanel.classList.toggle('hidden', !selected);
                     });
+                    if (tab.id === 'weapons') initializeBomberWeaponPreview();
                 });
             });
         };

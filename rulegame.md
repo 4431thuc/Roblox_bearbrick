@@ -64,7 +64,7 @@ Hiện có **4 chế độ chính**:
 - **`climb`** (Leo thang): Leo platform, tránh chướng ngại vật và thu thập gem trên hai map.
 - **`hunt`** (Săn bia): Bắn và ném bom vào bia trong mê cung.
 - **`runner`** (Chạy tự động): Nhân vật chạy tự động về phía trước, người chơi đổi làn (A/D hoặc joystick) và nhảy (Space) để tránh chướng ngại vật.
-- **`bomber`** (Đặt bom): Di chuyển theo tâm lối với tốc độ mặc định 9.6, bom ban đầu nổ dài 2 ô theo bốn hướng; phá thùng để tìm nâng cấp, gồm vật phẩm hồi 20% HP tối đa và khiên dạng vành cầu xoay quanh thân. Level 1 có 20 bot (36 HP mỗi bot) và Boss 300 HP. Mỗi chiến thắng tăng 1⭐; mỗi level thêm 2 bot và 18 HP/bot, tăng 100 HP/Boss. Từ Level 4 trở đi có 2 Boss ở hai góc đối diện, ra chiêu lệch nhịp. Bot đuổi theo nhân vật, lùi lại 3 ô rồi tìm đường khác nếu bị kẹt.
+- **`bomber`** (Đặt bom): Di chuyển theo tâm lối với tốc độ mặc định 9.6, bắt đầu đặt được 2 bom đồng thời, nổ dài 2 ô theo bốn hướng; phá thùng để tìm nâng cấp, gồm vật phẩm hồi 20% HP tối đa và khiên dạng vành cầu xoay quanh thân. Level 1 có 20 bot (36 HP mỗi bot) và Boss 300 HP. Mỗi chiến thắng tăng 1⭐ riêng cho map; mỗi level thêm 2 bot và 18 HP/bot, tăng 100 HP/Boss. Mỗi màn có đồng hồ riêng: level 1 là 2 phút, mỗi level sau thêm 1 phút, và đồng hồ đặt lại khi vào màn Boss. Từ Level 4 trở đi có 2 Boss ở hai góc đối diện, ra chiêu lệch nhịp. Bot đuổi theo nhân vật và không coi bom là vật cản.
 
 Khi hoàn thành mục tiêu, Bearbrick nhảy mừng, chữ **VICTORY** bay lên cùng hiệu ứng pháo hoa trong 3 giây rồi mới hiện bảng kết quả. Khi thua ở Runner hoặc Bomber, chữ **LOSE** bay lên 2 giây trước bảng chơi lại/thoát; các thời điểm thắng/thua có âm báo riêng và Bomber có nhạc nền riêng.
 
@@ -75,6 +75,11 @@ Bản đồ:
 - **Hunt Map 2:** Mê Cung Chuyển Động; bố cục tường khác Map 1, có lối đi vào các khu vực và bia di chuyển chậm quanh vị trí spawn.
 - **Runner World:** Địa hình chạy tự động theo làn.
 - **Bomber Map 1:** Bản đồ đặt bom, phá thùng tìm nâng cấp; viền sông liền mạch có sóng chuyển động và không thể đi qua, tường đá bên trong được hạ thấp, thùng nước nhiều chi tiết và bụi cỏ dạng khối đung đưa.
+- **Bomber Map 2:** Cùng bố cục ô như map 1, nhưng thay tường đá bằng vũng nước không thể đi qua; vùng nổ vẫn xuyên qua nước.
+- **Vật phẩm đầu lượt:** 6 vật phẩm nâng cấp ngẫu nhiên xuất hiện trên các ô đường trống có thể tới được, ngoài vật phẩm có thể rơi từ thùng.
+- **Vật phẩm 💪:** Mỗi lần nhặt cộng 50% sát thương cơ bản (18 HP) lên bot và Boss cho cả bom thường lẫn máy chích điện. Nâng cấp giữ qua màn Boss, đặt lại khi bắt đầu lượt mới và không tăng sát thương tự gây cho người chơi.
+
+Các map Bomber được khai báo bằng ma trận `0` (đường) / `1` (tường đá) / `2` (nước), còn Hunt dùng `0` (đường) / `1` (tường) trong `index.html`; xem phần chỉnh bố cục map trong README để biết kích thước và các vị trí cần giữ thông thoáng. Shop vũ khí ở sảnh có bom thường và máy chích điện miễn phí cho Bomber, cùng sát thương và tầm nổ nhưng hiệu ứng khác nhau.
 
 Mỗi climb map bắt đầu ở **độ khó 1⭐**. Thắng map sẽ lưu độ khó kế tiếp riêng cho map đó và thêm **4 tầng** vào đường leo, xen kẽ ray trượt và vòng xoay. Các tầng mở rộng được bố trí theo quy tắc vòng lục giác bán kính 9.5 đơn vị, mỗi bước lệch 60° (không random); ô vòng xoay rộng 7.5 đơn vị để có thêm chỗ đứng. Không có giới hạn level được đặt trong code. Ở Map 2, vòng xoay 1–2 có 2 cánh, vòng 3–4 có 3 cánh; ray trượt nghiêng 15° và đẩy Bearbrick trượt chậm xuống dốc.
 
@@ -439,7 +444,7 @@ state = {
 - Đây là bản chạy trên trình duyệt (web), **không phải** game Roblox thực sự sử dụng Lua/Roblox Studio. Nó chỉ mô phỏng phong cách Roblox/Bearbrick bằng Three.js.
 - Âm thanh được tạo thủ tục qua Web Audio API, cần tương tác người dùng đầu tiên (click/chạm) để khởi tạo `AudioContext` (tránh bị chặn bởi trình duyệt).
 - Dữ liệu lưu trữ cục bộ qua `localStorage`, có thể bị xóa nếu người dùng xóa dữ liệu duyệt web.
-- Hiện có **2 bản đồ climb** (Tháp Không Gian 18 tầng, Pháo Đài Không Gian 20 tầng), **2 bản đồ hunt** (Mê Cung Cổ Điển, Mê Cung Chuyển Động), **1 world runner** và **1 bản đồ bomber**. Các bản đồ/chế độ khác có thể mở rộng bằng cách viết thêm hàm builder và gọi trong `startGameMode()`.
+- Hiện có **2 bản đồ climb** (Tháp Không Gian 18 tầng, Pháo Đài Không Gian 20 tầng), **2 bản đồ hunt** (Mê Cung Cổ Điển, Mê Cung Chuyển Động), **1 world runner** và **2 bản đồ bomber**. Các bản đồ/chế độ khác có thể mở rộng bằng cách viết thêm hàm builder và gọi trong `startGameMode()`.
 
 ---
 
