@@ -29,9 +29,13 @@ Mỗi bản đồ climb bắt đầu ở **độ khó 1⭐**. Thắng map sẽ l
 
 Mỗi map Bomber có tiến độ riêng và hai màn, mỗi màn có đồng hồ riêng: level 1 là **2 phút/màn**, mỗi level tiếp theo tăng **1 phút/màn**. Đồng hồ được đặt lại khi chuyển sang màn Boss. Người chơi bắt đầu với 2 bom đồng thời; bot không coi bom là vật cản.
 
+Boss ở cả hai map đều có chiêu bắn tia laser. Chiêu còn lại ở map 1 nổ khói quanh Boss với bán kính 14,8 đơn vị; ở map 2, 12 ô đường trống không kề cạnh được chọn ngẫu nhiên, cảnh báo rồi phóng tia điện.
+
 Khi bắt đầu mỗi lượt Bomber, 6 vật phẩm nâng cấp được đặt ngẫu nhiên trên các ô đường trống có thể tới được; phá thùng vẫn có thể nhận thêm vật phẩm.
 
 Phá thùng có thể nhận vật phẩm **💪**: mỗi lần nhặt cộng 50% sát thương cơ bản của bom lên quái và Boss (36 → 54 → 72...). Nâng cấp giữ qua màn Boss, đặt lại khi bắt đầu lượt chơi mới và không tăng sát thương lên người chơi.
+
+Thanh máu quái và Boss chia theo sát thương bom hiện tại và cập nhật ngay khi nhặt 💪. Các vạch tính từ máu tối đa; nếu không chia hết, phần nhỏ hơn nằm bên trái. Thanh Boss trên HUD cũng chia theo tổng máu tối đa.
 
 Trong sảnh, mở **Skin & VIP → Vũ khí** để chọn miễn phí **Bom thường** hoặc **Máy chích điện** cho Bomber. Bom thường tạo khói; máy chích điện phóng tia sét, với cùng phạm vi và sát thương. Lựa chọn được lưu cùng tiến trình.
 
@@ -39,7 +43,7 @@ Trong sảnh, mở **Skin & VIP → Vũ khí** để chọn miễn phí **Bom th
 
 Trong `index.html`, sửa `BOMBER_MAP_1`, `BOMBER_MAP_2` hoặc `HUNT_MAPS.map1` / `HUNT_MAPS.map2`: mỗi chuỗi là một hàng, `0` là đường đi và `1` là tường; riêng Bomber còn có `2` là nước chặn di chuyển nhưng không chặn vụ nổ. Có thể đặt cả tường và nước trong một map Bomber. Hàng đi từ bắc xuống nam, cột từ tây sang đông. Bomber có 11×11 ô bên trong viền nước, mỗi ô 4 đơn vị, dùng `0`/`1`/`2`; Săn bia có 49×49 ô bên trong tường viền, mỗi ô 2 đơn vị, chỉ dùng `0`/`1`.
 
-Viền nước/tường, thùng Bomber, vị trí nhân vật, Boss, bia và các bục Săn bia được định nghĩa riêng, không nằm trong ma trận. Khi đổi tường, giữ các vị trí này thông thoáng, bảo đảm đường đi đủ rộng và các khu vực có thể tiếp cận; map Bomber cần ít nhất 6 ô trống có thể đến được ngoài vị trí người chơi và bot để đặt vật phẩm. Kiểm tra lại trong game.
+Viền nước/tường, thùng Bomber, vị trí nhân vật, Boss, bia và các bục Săn bia được định nghĩa riêng, không nằm trong ma trận. Khi đổi tường, giữ các vị trí này thông thoáng, bảo đảm đường đi đủ rộng và các khu vực có thể tiếp cận; map Bomber cần ít nhất 6 ô trống có thể đến được ngoài vị trí người chơi và bot để đặt vật phẩm. Map 2 còn cần ít nhất 12 ô đường trống cùng màu trên bàn cờ ô xen kẽ để Boss chọn các ô nổ không kề cạnh, kể cả khi thùng chưa bị phá. Kiểm tra lại trong game.
 
 ---
 

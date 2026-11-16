@@ -76,8 +76,10 @@ Bản đồ:
 - **Runner World:** Địa hình chạy tự động theo làn.
 - **Bomber Map 1:** Bản đồ đặt bom, phá thùng tìm nâng cấp; viền sông liền mạch có sóng chuyển động và không thể đi qua, tường đá bên trong được hạ thấp, thùng nước nhiều chi tiết và bụi cỏ dạng khối đung đưa.
 - **Bomber Map 2:** Cùng bố cục ô như map 1, nhưng thay tường đá bằng vũng nước không thể đi qua; vùng nổ vẫn xuyên qua nước.
+- **Chiêu Boss:** Cả hai map đều có chiêu bắn tia laser. Chiêu thứ hai ở map 1 nổ khói quanh Boss với bán kính 14,8 đơn vị; ở map 2, 12 ô đường trống không kề cạnh được chọn ngẫu nhiên, cảnh báo rồi phóng tia điện chớp giật. Mỗi chiêu gây 30 HP sát thương vùng.
 - **Vật phẩm đầu lượt:** 6 vật phẩm nâng cấp ngẫu nhiên xuất hiện trên các ô đường trống có thể tới được, ngoài vật phẩm có thể rơi từ thùng.
 - **Vật phẩm 💪:** Mỗi lần nhặt cộng 50% sát thương cơ bản (18 HP) lên bot và Boss cho cả bom thường lẫn máy chích điện. Nâng cấp giữ qua màn Boss, đặt lại khi bắt đầu lượt mới và không tăng sát thương tự gây cho người chơi.
+- **Vạch máu:** Thanh máu bot và Boss chia theo sát thương bom hiện tại, tính từ máu tối đa; phần dư nhỏ hơn nằm bên trái. Khi nhặt 💪, các vạch cập nhật ngay; thanh Boss trên HUD chia theo tổng máu tối đa của các Boss.
 
 Các map Bomber được khai báo bằng ma trận `0` (đường) / `1` (tường đá) / `2` (nước), còn Hunt dùng `0` (đường) / `1` (tường) trong `index.html`; xem phần chỉnh bố cục map trong README để biết kích thước và các vị trí cần giữ thông thoáng. Shop vũ khí ở sảnh có bom thường và máy chích điện miễn phí cho Bomber, cùng sát thương và tầm nổ nhưng hiệu ứng khác nhau.
 

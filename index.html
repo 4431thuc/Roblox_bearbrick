@@ -337,7 +337,7 @@
         <div id="menu-dock" class="max-w-6xl w-full mx-auto pointer-events-none">
             <!-- Left Column (5 cols): Skin Shop (collapsed by default, expand on button click) -->
             <div class="menu-dock-column">
-                <div class="grid grid-cols-2 gap-2">
+                <div class="grid grid-cols-3 gap-2">
                     <button id="btn-toggle-background" type="button" aria-expanded="false" class="w-full glass-panel hover:bg-indigo-500/20 border border-indigo-400/30 text-indigo-200 text-xs font-bold px-3 py-2.5 rounded-xl flex items-center justify-between gap-2 transition active:scale-95 pointer-events-auto">
                         <span class="pointer-events-none">🌌 <span class="menu-long-label">Background</span><span class="menu-short-label">Nền</span></span>
                         <span id="background-toggle-icon" class="text-[10px] font-bold pointer-events-none">▼</span>
@@ -410,7 +410,7 @@
             <div class="menu-dock-column">
                 <!-- Toggle button: Chọn Game / Chế Độ Chơi -->
                 <button id="btn-toggle-game-modes" type="button" aria-expanded="false" class="w-full glass-panel hover:bg-cyan-500/20 border border-cyan-400/30 text-cyan-200 text-xs font-bold px-3 py-2.5 rounded-xl flex items-center justify-between gap-2 transition active:scale-95 pointer-events-auto">
-                    <span class="pointer-events-none">🎮 <span class="menu-long-label">Chế độ</span><span class="menu-short-label">Game</span></span>
+                    <span class="pointer-events-none">🎮 <span class="menu-long-label">CHƠI GAME 🎳</span><span class="menu-short-label">Game</span></span>
                     <span id="game-modes-toggle-icon" class="text-[10px] font-bold pointer-events-none">▼</span>
                 </button>
 
@@ -528,8 +528,9 @@
                             <span class="text-[9px] font-black tracking-wide text-rose-200">👑 BOSS</span>
                             <span id="bomber-boss-hp-text" class="text-[9px] font-black tabular-nums text-white">14 / 14 HP</span>
                         </div>
-                        <div class="h-2 rounded-full overflow-hidden bg-slate-800 border border-white/10">
+                        <div class="relative h-2 rounded-full overflow-hidden bg-slate-800 border border-white/10">
                             <div id="bomber-boss-hp-bar" class="h-full rounded-full bg-gradient-to-r from-rose-600 via-red-500 to-orange-400 transition-all duration-200" style="width:100%"></div>
+                            <div id="bomber-boss-hp-ticks" class="absolute inset-0 pointer-events-none"></div>
                         </div>
                     </div>
                 </div>
@@ -2812,6 +2813,7 @@
         const bomberUpgrade = { blastRange: 2, moveSpeed: 9.6, shieldHits: 0, bombCapacity: 2, damageBonus: 0 };
         const BOMBER_PLAYER_HALF = 1.92;
         const BOMBER_BLAST_DAMAGE = 36;
+        const BOMBER_BOSS_AOE_RADIUS = 14.8;
         const BOMBER_PLAYER_RENDER_OFFSET_Z = 0.18;
         let bomberShieldAura = null;
         let bomberPlayerHealthBar = null;
@@ -3964,7 +3966,7 @@
             });
         }
 
-        function createBomberHealthBar(ownerGroup, width, offsetY) {
+        function createBomberHealthBar(ownerGroup, width, offsetY, showDamageTicks = false) {
             const group = new THREE.Group();
             const height = 0.38;
             const background = new THREE.Mesh(
@@ -3979,8 +3981,18 @@
             background.renderOrder = 15;
             fill.renderOrder = 16;
             group.add(background, fill);
+            let ticks = null;
+            if (showDamageTicks) {
+                ticks = new THREE.LineSegments(
+                    new THREE.BufferGeometry(),
+                    new THREE.LineBasicMaterial({ color: 0x020617, depthTest: false, depthWrite: false, toneMapped: false })
+                );
+                ticks.position.z = 0.05;
+                ticks.renderOrder = 17;
+                group.add(ticks);
+            }
             worldGroup.add(group);
-            const bar = { group, fill, ownerGroup, width, offsetY };
+            const bar = { group, fill, ticks, ownerGroup, width, offsetY, maxHp: 0, tickDamage: 0 };
             bomberHealthBars.push(bar);
             updateBomberHealthBar(bar, ownerGroup === player.root ? state.hp : 1, ownerGroup === player.root ? state.maxHp : 1);
             return bar;
@@ -4020,6 +4032,22 @@
             bar.fill.scale.x = pct;
             bar.fill.position.x = -bar.width * (1 - pct) * 0.5;
             bar.fill.material.color.setHex(pct > 0.5 ? 0x22c55e : pct > 0.25 ? 0xfacc15 : 0xef4444);
+            updateBomberHealthBarTicks(bar, maxHp);
+        }
+
+        function updateBomberHealthBarTicks(bar, maxHp) {
+            if (!bar.ticks) return;
+            const damage = BOMBER_BLAST_DAMAGE + bomberUpgrade.damageBonus;
+            if (bar.maxHp === maxHp && bar.tickDamage === damage) return;
+            const points = [];
+            for (let hp = maxHp - damage; hp > 0; hp -= damage) {
+                const x = bar.width * (hp / maxHp - 0.5);
+                points.push(new THREE.Vector3(x, -0.19, 0), new THREE.Vector3(x, 0.19, 0));
+            }
+            bar.ticks.geometry.dispose();
+            bar.ticks.geometry = new THREE.BufferGeometry().setFromPoints(points);
+            bar.maxHp = maxHp;
+            bar.tickDamage = damage;
         }
 
         function removeBomberHealthBar(bar) {
@@ -4454,7 +4482,7 @@
                 attackDirection: null,
                 attackLength: 0
             };
-            entity.healthBar = createBomberHealthBar(group, isBoss ? 3.1 : 2.0, isBoss ? 5.1 : 3.85);
+            entity.healthBar = createBomberHealthBar(group, isBoss ? 3.1 : 2.0, isBoss ? 5.1 : 3.85, true);
             updateBomberHealthBar(entity.healthBar, entity.hp, entity.maxHp);
             return entity;
         }
@@ -5118,6 +5146,7 @@
                         showToast(`🛡️ Nhặt khiên! Đỡ được ${bomberUpgrade.shieldHits} đòn đánh.`);
                     } else if (item.type === 'damage') {
                         bomberUpgrade.damageBonus += BOMBER_BLAST_DAMAGE * 0.5;
+                        bomberHealthBars.forEach(bar => updateBomberHealthBarTicks(bar, bar.maxHp));
                         showToast(`💪 Tăng sát thương bom lên ${BOMBER_BLAST_DAMAGE + bomberUpgrade.damageBonus} HP với quái và Boss!`);
                     } else {
                         const old = bomberUpgrade.bombCapacity;
@@ -5467,7 +5496,9 @@
                 `BOMBER ADVENTURE • MAP ${state.bomberMapId === 'map2' ? '2' : '1'} • LV ${state.bomberMapLevel}⭐ • MÀN 2`;
             showToast(bossCount === 2
                 ? '👑👑 HAI BOSS XUẤT HIỆN Ở HAI GÓC! Né các đòn nổ lệch nhịp và phản công bằng bom!'
-                : '👑 BOSS XUẤT HIỆN! Né luồng nổ thẳng và vùng nổ quanh Boss; dùng bom để phản công!');
+                : state.bomberMapId === 'map2'
+                    ? '👑 BOSS XUẤT HIỆN! Né luồng nổ thẳng và các ô nổ ngẫu nhiên; dùng bom để phản công!'
+                    : '👑 BOSS XUẤT HIỆN! Né luồng nổ thẳng và vùng nổ quanh Boss; dùng bom để phản công!');
             updateObjectiveHUD();
         }
 
@@ -5673,15 +5704,47 @@
 
         function startBomberBossAoeWarning(boss) {
             const group = new THREE.Group();
+            if (state.bomberMapId === 'map2') {
+                const candidates = [[], []];
+                for (let row = 1; row < BOMBER_GRID_SIZE - 1; row++) {
+                    for (let col = 1; col < BOMBER_GRID_SIZE - 1; col++) {
+                        if (!bomberCellBlocked(col, row)) candidates[(col + row) % 2].push({ col, row });
+                    }
+                }
+                const available = candidates.filter(cells => cells.length >= 12);
+                if (!available.length) throw new Error('Bomber map 2 needs at least 12 separate empty path cells for the boss attack');
+                const cells = available[Math.floor(Math.random() * available.length)];
+                for (let i = cells.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [cells[i], cells[j]] = [cells[j], cells[i]];
+                }
+                boss.attackCells = cells.slice(0, 12).map(cell => ({ ...cell, ...bomberCellWorld(cell.col, cell.row) }));
+                boss.attackCells.forEach(cell => {
+                    const marker = new THREE.Mesh(
+                        new THREE.PlaneGeometry(3.72, 3.72),
+                        new THREE.MeshBasicMaterial({ color: 0xff354d, transparent: true, opacity: 0.42, side: THREE.DoubleSide, depthWrite: false })
+                    );
+                    marker.rotation.x = -Math.PI / 2;
+                    marker.position.set(cell.x, 0.14, cell.z);
+                    group.add(marker);
+                });
+                worldGroup.add(group);
+                boss.attackVisual = group;
+                boss.attackType = 'cells';
+                boss.attackPhase = 'warning';
+                boss.attackTimer = 1.3;
+                showToast('👑 BOSS: 12 ô sắp phát nổ! Né khỏi các ô màu đỏ!');
+                return;
+            }
             const disk = new THREE.Mesh(
-                new THREE.CircleGeometry(7.4, 48),
+                new THREE.CircleGeometry(BOMBER_BOSS_AOE_RADIUS, 48),
                 new THREE.MeshBasicMaterial({ color: 0xf97316, transparent: true, opacity: 0.20, side: THREE.DoubleSide, depthWrite: false })
             );
             disk.rotation.x = -Math.PI / 2;
             disk.position.y = 0.11;
             group.add(disk);
             const ring = new THREE.Mesh(
-                new THREE.RingGeometry(6.9, 7.35, 48),
+                new THREE.RingGeometry(BOMBER_BOSS_AOE_RADIUS - 0.5, BOMBER_BOSS_AOE_RADIUS - 0.05, 48),
                 new THREE.MeshBasicMaterial({ color: 0xff354d, transparent: true, opacity: 0.88, side: THREE.DoubleSide, depthWrite: false })
             );
             ring.rotation.x = -Math.PI / 2;
@@ -5698,14 +5761,39 @@
         }
 
         function spawnBomberBossLineFlash(origin, direction, length) {
-            const flash = new THREE.Mesh(
-                new THREE.BoxGeometry(3.7, 0.22, length),
-                new THREE.MeshBasicMaterial({ color: 0xff8a00, transparent: true, opacity: 0.9, depthWrite: false })
-            );
-            flash.position.set(origin.x + direction.x * length * 0.5, 0.27, origin.z + direction.z * length * 0.5);
-            flash.rotation.y = Math.atan2(direction.x, direction.z);
-            worldGroup.add(flash);
-            bomberEffects.push({ mesh: flash, life: 0.32, maxLife: 0.32 });
+            for (const [width, height, color, opacity] of [
+                [3.7, 0.28, 0xfb315f, 0.32],
+                [1.35, 0.38, 0xff527b, 0.65],
+                [0.42, 0.42, 0xffffff, 1]
+            ]) {
+                const beam = new THREE.Mesh(
+                    new THREE.BoxGeometry(width, height, length),
+                    new THREE.MeshBasicMaterial({ color, transparent: true, opacity, depthWrite: false })
+                );
+                beam.position.set(origin.x + direction.x * length * 0.5, 1.15, origin.z + direction.z * length * 0.5);
+                beam.rotation.y = Math.atan2(direction.x, direction.z);
+                worldGroup.add(beam);
+                bomberEffects.push({ mesh: beam, life: 0.4, maxLife: 0.4, opacity });
+            }
+        }
+
+        function spawnBomberBossElectricCell(cell) {
+            spawnBomberBlastTile(cell.col, cell.row, 'electric');
+            for (let i = 0; i < 3; i++) {
+                const start = new THREE.Vector3(cell.x + (Math.random() - 0.5) * 2, 3.2, cell.z + (Math.random() - 0.5) * 2);
+                const end = new THREE.Vector3(cell.x + (Math.random() - 0.5) * 3, 0.35, cell.z + (Math.random() - 0.5) * 3);
+                createLightningEffect(start, end, true);
+            }
+        }
+
+        function spawnBomberBossSmokeBurst(center) {
+            for (let i = 0; i < 24; i++) {
+                const angle = i * Math.PI * 2 / 24;
+                const direction = new THREE.Vector3(Math.cos(angle), 0, Math.sin(angle));
+                for (let j = 0; j < 4; j++) {
+                    spawnBomberSmokePuff(center, direction, BOMBER_BOSS_AOE_RADIUS * (0.25 + Math.random() * 0.75));
+                }
+            }
         }
 
         function updateBomberBossAbilities(boss, dt) {
@@ -5727,7 +5815,7 @@
             boss.attackTimer -= dt;
             if (boss.attackVisual) {
                 const pulse = 0.78 + Math.sin(performance.now() * 0.018) * 0.18;
-                boss.attackVisual.scale.set(1, 1, pulse);
+                if (boss.attackType === 'line') boss.attackVisual.scale.set(1, 1, pulse);
                 boss.attackVisual.children.forEach(child => {
                     if (child.material) child.material.opacity = (boss.attackType === 'line' ? 0.34 : 0.20) + Math.max(0, Math.sin(performance.now() * 0.02)) * 0.35;
                 });
@@ -5739,21 +5827,31 @@
                 const along = relative.dot(boss.attackDirection);
                 const across = Math.abs(relative.x * boss.attackDirection.z - relative.z * boss.attackDirection.x);
                 spawnBomberBossLineFlash(boss.attackOrigin, boss.attackDirection, boss.attackLength);
+                sound.playShoot();
                 if (along > 0.6 && along < boss.attackLength && across < 2.15) {
                     applyPlayerDamage(26, '💥 Boss phóng luồng nổ thẳng! Mất 26 HP!');
                 }
+            } else if (boss.attackType === 'cells') {
+                boss.attackCells.forEach(spawnBomberBossElectricCell);
+                sound.playLightning();
+                if (bomberBodyOverlapsBlast(state.pos, boss.attackCells, 1.45)) {
+                    applyPlayerDamage(30, '💥 Boss cho nổ các ô ngẫu nhiên! Mất 30 HP!');
+                }
+                boss.attackCells = null;
             } else {
                 const center = boss.attackOrigin;
                 const distance = Math.hypot(state.pos.x - center.x, state.pos.z - center.z);
                 const blast = new THREE.Mesh(
-                    new THREE.CylinderGeometry(7.4, 7.4, 0.22, 40),
+                    new THREE.CylinderGeometry(BOMBER_BOSS_AOE_RADIUS, BOMBER_BOSS_AOE_RADIUS, 0.22, 40),
                     new THREE.MeshBasicMaterial({ color: 0xff7a18, transparent: true, opacity: 0.85, depthWrite: false })
                 );
                 blast.position.set(center.x, 0.25, center.z);
                 worldGroup.add(blast);
                 bomberEffects.push({ mesh: blast, life: 0.34, maxLife: 0.34 });
+                spawnBomberBossSmokeBurst(center);
+                sound.playBombExplosion();
                 spawnImpactSparks(new THREE.Vector3(center.x, 1.2, center.z), 0xfb7185, 32);
-                if (distance <= 7.4) applyPlayerDamage(30, '💥 Boss phát nổ diện rộng! Mất 30 HP!');
+                if (distance <= BOMBER_BOSS_AOE_RADIUS) applyPlayerDamage(30, '💥 Boss phát nổ diện rộng! Mất 30 HP!');
             }
             disposeBomberBossWarning(boss);
             boss.attackPhase = 'idle';
@@ -6626,33 +6724,37 @@
             return false;
         }
 
-        function createLightningEffect(startPos, endPos) {
+        function makeLightningPoints(start, end, segments, jitterScale) {
+            const points = [start.clone()];
+            const dir = new THREE.Vector3().subVectors(end, start);
+            for (let i = 1; i < segments; i++) {
+                const t = i / segments;
+                const pt = start.clone().addScaledVector(dir, t);
+                const envelope = Math.sin(t * Math.PI);
+                pt.x += (Math.random() - 0.5) * jitterScale * envelope;
+                pt.y += (Math.random() - 0.5) * jitterScale * envelope;
+                pt.z += (Math.random() - 0.5) * jitterScale * envelope;
+                points.push(pt);
+            }
+            points.push(end.clone());
+            return points;
+        }
+
+        function createLightningEffect(startPos, endPos, flicker = false) {
             const group = new THREE.Group();
             const distance = startPos.distanceTo(endPos);
             const segments = Math.max(8, Math.min(28, Math.floor(distance * 0.85)));
-
-            const buildJaggedLine = (p1, p2, segCount, jitterScale, colorHex) => {
-                const points = [p1.clone()];
-                const dir = new THREE.Vector3().subVectors(p2, p1);
-                for (let i = 1; i < segCount; i++) {
-                    const t = i / segCount;
-                    const pt = p1.clone().addScaledVector(dir, t);
-                    const envelope = Math.sin(t * Math.PI);
-                    pt.x += (Math.random() - 0.5) * jitterScale * envelope;
-                    pt.y += (Math.random() - 0.5) * jitterScale * envelope;
-                    pt.z += (Math.random() - 0.5) * jitterScale * envelope;
-                    points.push(pt);
-                }
-                points.push(p2.clone());
-                const geo = new THREE.BufferGeometry().setFromPoints(points);
+            const buildJaggedLine = (jitterScale, colorHex) => {
+                const geo = new THREE.BufferGeometry().setFromPoints(makeLightningPoints(startPos, endPos, segments, jitterScale));
                 const mat = new THREE.LineBasicMaterial({ color: colorHex, transparent: true, opacity: 1.0 });
                 return new THREE.Line(geo, mat);
             };
 
-            group.add(buildJaggedLine(startPos, endPos, segments, 0.85, 0xffffff));
-            group.add(buildJaggedLine(startPos, endPos, segments, 1.25, 0xa855f7));
+            group.add(buildJaggedLine(0.85, 0xffffff));
+            group.add(buildJaggedLine(1.25, 0xa855f7));
             scene.add(group);
-            lightningBolts.push({ group, life: 0.24 });
+            const maxLife = flicker ? 0.55 : 0.24;
+            lightningBolts.push({ group, life: maxLife, maxLife, flicker, startPos: startPos.clone(), endPos: endPos.clone(), segments, flickerTimer: 0 });
         }
 
         let lastShotTime = 0;
@@ -6803,9 +6905,18 @@
             for (let i = lightningBolts.length - 1; i >= 0; i--) {
                 const lb = lightningBolts[i];
                 lb.life -= dt;
-                lb.group.children.forEach(line => {
-                    line.material.opacity = Math.max(0, lb.life / 0.24);
+                if (lb.flicker) lb.flickerTimer -= dt;
+                lb.group.children.forEach((line, index) => {
+                    if (lb.flicker && lb.flickerTimer <= 0) {
+                        const points = makeLightningPoints(lb.startPos, lb.endPos, lb.segments, index === 0 ? 0.85 : 1.25);
+                        const positions = line.geometry.getAttribute('position');
+                        points.forEach((point, i) => positions.setXYZ(i, point.x, point.y, point.z));
+                        positions.needsUpdate = true;
+                        line.geometry.computeBoundingSphere();
+                    }
+                    line.material.opacity = Math.max(0, lb.life / lb.maxLife) * (lb.flicker && Math.random() < 0.3 ? 0.35 : 1);
                 });
+                if (lb.flicker && lb.flickerTimer <= 0) lb.flickerTimer = 0.055;
                 if (lb.life <= 0) {
                     lb.group.children.forEach(line => {
                         line.geometry.dispose();
@@ -7178,8 +7289,20 @@
                 const pct = maxHp > 0 ? Math.max(0, Math.min(100, currentHp / maxHp * 100)) : 0;
                 const hpText = document.getElementById('bomber-boss-hp-text');
                 const hpBar = document.getElementById('bomber-boss-hp-bar');
+                const hpTicks = document.getElementById('bomber-boss-hp-ticks');
                 if (hpText) hpText.textContent = `${count > 1 ? `${count} Boss • ` : ''}${currentHp} / ${maxHp} HP`;
                 if (hpBar) hpBar.style.width = `${pct}%`;
+                if (hpTicks) {
+                    const damage = BOMBER_BLAST_DAMAGE + bomberUpgrade.damageBonus;
+                    if (hpTicks.dataset.maxHp !== String(maxHp) || hpTicks.dataset.damage !== String(damage)) {
+                        const interval = damage / maxHp * 100;
+                        hpTicks.style.background = interval < 100
+                            ? `repeating-linear-gradient(to left, transparent 0, transparent calc(${interval}% - 1px), #020617 calc(${interval}% - 1px), #020617 ${interval}%)`
+                            : 'none';
+                        hpTicks.dataset.maxHp = maxHp;
+                        hpTicks.dataset.damage = damage;
+                    }
+                }
             }
         }
 
