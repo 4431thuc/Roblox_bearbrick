@@ -64,7 +64,9 @@ Hiện có **4 chế độ chính**:
 - **`climb`** (Leo thang): Leo platform, tránh chướng ngại vật và thu thập gem trên hai map.
 - **`hunt`** (Săn bia): Bắn và ném bom vào bia trong mê cung.
 - **`runner`** (Chạy tự động): Nhân vật chạy tự động về phía trước, người chơi đổi làn (A/D hoặc joystick) và nhảy (Space) để tránh chướng ngại vật.
-- **`bomber`** (Đặt bom): Di chuyển theo tâm lối với tốc độ mặc định 9.6, bom ban đầu nổ dài 2 ô theo bốn hướng; phá thùng để tìm nâng cấp. Bot đuổi theo nhân vật, lùi lại 3 ô rồi tìm đường khác nếu bị kẹt.
+- **`bomber`** (Đặt bom): Di chuyển theo tâm lối với tốc độ mặc định 9.6, bom ban đầu nổ dài 2 ô theo bốn hướng; phá thùng để tìm nâng cấp, gồm vật phẩm hồi 20% HP tối đa và khiên dạng vành cầu xoay quanh thân. Level 1 có 20 bot (36 HP mỗi bot) và Boss 300 HP. Mỗi chiến thắng tăng 1⭐; mỗi level thêm 2 bot và 18 HP/bot, tăng 100 HP/Boss. Từ Level 4 trở đi có 2 Boss ở hai góc đối diện, ra chiêu lệch nhịp. Bot đuổi theo nhân vật, lùi lại 3 ô rồi tìm đường khác nếu bị kẹt.
+
+Khi hoàn thành mục tiêu, Bearbrick nhảy mừng, chữ **VICTORY** bay lên cùng hiệu ứng pháo hoa trong 3 giây rồi mới hiện bảng kết quả. Khi thua ở Runner hoặc Bomber, chữ **LOSE** bay lên 2 giây trước bảng chơi lại/thoát; các thời điểm thắng/thua có âm báo riêng và Bomber có nhạc nền riêng.
 
 Bản đồ:
 - **Climb Map 1:** Tháp Không Gian, 18 tầng.

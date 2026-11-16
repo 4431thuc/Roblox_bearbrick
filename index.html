@@ -87,11 +87,51 @@
             20% { transform: scale(1); }
             100% { transform: scale(1.16); }
         }
+        @keyframes result-sequence-rise {
+            0% { opacity: 0; transform: translateY(28vh) scale(0.55) rotate(-8deg); }
+            12% { opacity: 1; transform: translateY(0) scale(1.08) rotate(2deg); }
+            28% { transform: translateY(-4vh) scale(1) rotate(-2deg); }
+            100% { opacity: 0; transform: translateY(-48vh) scale(1.35) rotate(5deg); }
+        }
+        @keyframes result-firework {
+            0% { opacity: 1; transform: translate(0, 0) scale(0.35); }
+            100% { opacity: 0; transform: translate(var(--burst-x), var(--burst-y)) scale(1); }
+        }
+        @keyframes result-confetti {
+            0% { opacity: 0; transform: translate3d(0, -8vh, 0) rotate(0); }
+            10% { opacity: 1; }
+            100% { opacity: 0; transform: translate3d(var(--confetti-drift), 110vh, 0) rotate(760deg); }
+        }
         .game-start-overlay-active {
             animation: game-start-fade 0.5s ease-out forwards;
         }
         .game-start-overlay-active #game-start-label {
             animation: game-start-scale 0.5s ease-out forwards;
+        }
+        #result-sequence-overlay {
+            z-index: 60;
+        }
+        #result-sequence-label {
+            animation: result-sequence-rise var(--result-duration, 3s) cubic-bezier(0.18, 0.72, 0.28, 1) forwards;
+            font-size: clamp(4rem, 16vw, 11rem);
+            line-height: 1;
+            text-shadow: 0 0 18px currentColor, 0 0 48px currentColor, 0 8px 18px rgba(0, 0, 0, 0.7);
+        }
+        .result-firework-particle {
+            position: absolute;
+            width: 0.55rem;
+            height: 0.55rem;
+            border-radius: 9999px;
+            animation: result-firework 1.15s ease-out forwards;
+            box-shadow: 0 0 12px currentColor;
+        }
+        .result-confetti-piece {
+            position: absolute;
+            top: -10vh;
+            width: 0.55rem;
+            height: 0.9rem;
+            border-radius: 2px;
+            animation: result-confetti 2.8s linear var(--confetti-delay) forwards;
         }
         @media (orientation: portrait) and (max-width: 768px) {
             #joystick-zone {
@@ -140,6 +180,10 @@
     <div id="canvas-container"></div>
     <div id="game-start-overlay" class="hidden fixed inset-0 z-50 flex items-center justify-center pointer-events-none">
         <div id="game-start-label" class="font-black italic tracking-[0.3em] text-7xl sm:text-9xl text-white drop-shadow-[0_0_30px_rgba(34,211,238,0.95)]">START</div>
+    </div>
+    <div id="result-sequence-overlay" class="hidden fixed inset-0 flex items-center justify-center overflow-hidden pointer-events-none">
+        <div id="result-sequence-effects" class="absolute inset-0 overflow-hidden"></div>
+        <div id="result-sequence-label" class="relative z-10 font-black italic tracking-tight text-amber-300">VICTORY</div>
     </div>
 
     <!-- ===================================================================== -->
@@ -655,7 +699,7 @@
 
             syncBackgroundMusic(theme, mode) {
                 this.musicTheme = theme === 'noel' ? 'noel' : 'galaxy';
-                this.musicMode = mode === 'playing' ? 'playing' : 'menu';
+                this.musicMode = mode === 'bomber' ? 'bomber' : mode === 'playing' ? 'playing' : 'menu';
                 const trackKey = `${this.musicTheme}:${this.musicMode}`;
                 if (!this.ctx || !this.musicBus) return;
 
@@ -690,8 +734,11 @@
                 if (!this.ctx || this.muted || this.musicTrackKey !== trackKey) return;
 
                 const isNoel = this.musicTheme === 'noel';
-                const isPlaying = this.musicMode === 'playing';
-                const bpm = isPlaying
+                const isBomber = this.musicMode === 'bomber';
+                const isPlaying = this.musicMode !== 'menu';
+                const bpm = isBomber
+                    ? 128
+                    : isPlaying
                     ? (isNoel ? 126 : 116)
                     : (isNoel ? 82 : 68);
                 const beat = 60 / bpm;
@@ -699,17 +746,20 @@
                 const now = this.ctx.currentTime + 0.025;
                 const galaxyLobby = [0, 3, 7, 10, 7, 5, 3, 5];
                 const galaxyGame = [0, 3, 5, 7, 10, 7, 5, 12, 10, 7, 5, 3, 7, 10, 12, 7];
+                const bomberGame = [0, 3, 5, 10, 7, 5, 2, 3, 0, 3, 7, 10, 5, 3, 2, 7];
                 const noelLobby = [0, 4, 7, 9, 7, 4, 2, 4];
                 const noelGame = [0, 4, 7, 9, 11, 9, 7, 4, 2, 4, 7, 11, 9, 7, 4, 2];
-                const phrase = isNoel
-                    ? (isPlaying ? noelGame : noelLobby)
-                    : (isPlaying ? galaxyGame : galaxyLobby);
+                const phrase = isBomber
+                    ? bomberGame
+                    : isNoel
+                        ? (isPlaying ? noelGame : noelLobby)
+                        : (isPlaying ? galaxyGame : galaxyLobby);
                 const semitone = phrase[step % phrase.length];
-                const root = isNoel ? (isPlaying ? 164.81 : 130.81) : (isPlaying ? 146.83 : 196);
-                const leadOctave = isPlaying ? 2 : 1;
+                const root = isBomber ? 110 : isNoel ? (isPlaying ? 164.81 : 130.81) : (isPlaying ? 146.83 : 196);
+                const leadOctave = isBomber ? 2 : isPlaying ? 2 : 1;
                 const leadFrequency = root * Math.pow(2, (semitone + leadOctave * 12) / 12);
-                const leadType = isNoel ? 'triangle' : 'sine';
-                this.playMusicNote(leadFrequency, now, beat * (isPlaying ? 0.72 : 1.25), leadType, isPlaying ? 0.105 : 0.055);
+                const leadType = isBomber ? 'square' : isNoel ? 'triangle' : 'sine';
+                this.playMusicNote(leadFrequency, now, beat * (isPlaying ? 0.72 : 1.25), leadType, isBomber ? 0.055 : isPlaying ? 0.105 : 0.055);
 
                 if (step % 4 === 0) {
                     const chordShift = Math.floor(step / 8) % 2 === 0 ? 0 : (isNoel ? 5 : 3);
@@ -1045,6 +1095,27 @@
                 osc.stop(now + 0.32);
             }
 
+            playLose() {
+                if (this.muted) return;
+                this.init();
+                if (!this.ctx) return;
+                const now = this.ctx.currentTime;
+                [196, 155.56, 116.54].forEach((frequency, index) => {
+                    const start = now + index * 0.16;
+                    const oscillator = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    oscillator.type = 'triangle';
+                    oscillator.frequency.setValueAtTime(frequency, start);
+                    oscillator.frequency.exponentialRampToValueAtTime(frequency * 0.72, start + 0.28);
+                    gain.gain.setValueAtTime(0.25, start);
+                    gain.gain.exponentialRampToValueAtTime(0.008, start + 0.32);
+                    oscillator.connect(gain);
+                    gain.connect(this.masterGain);
+                    oscillator.start(start);
+                    oscillator.stop(start + 0.34);
+                });
+            }
+
             playVictory() {
                 if (this.muted) return;
                 this.init();
@@ -1064,6 +1135,51 @@
                     osc.start(t);
                     osc.stop(t + 0.46);
                 });
+            }
+
+            playGameVictory() {
+                this.playVictory();
+                if (this.muted || !this.ctx) return;
+                const now = this.ctx.currentTime;
+                [0, 0.18, 0.36].forEach((delay, index) => {
+                    const oscillator = this.ctx.createOscillator();
+                    const filter = this.ctx.createBiquadFilter();
+                    const gain = this.ctx.createGain();
+                    const start = now + delay;
+                    oscillator.type = 'sawtooth';
+                    oscillator.frequency.setValueAtTime(280 + index * 35, start);
+                    oscillator.frequency.exponentialRampToValueAtTime(520 + index * 45, start + 0.48);
+                    filter.type = 'bandpass';
+                    filter.frequency.setValueAtTime(820, start);
+                    filter.Q.value = 0.8;
+                    gain.gain.setValueAtTime(0.0001, start);
+                    gain.gain.linearRampToValueAtTime(0.055, start + 0.12);
+                    gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.72);
+                    oscillator.connect(filter);
+                    filter.connect(gain);
+                    gain.connect(this.masterGain);
+                    oscillator.start(start);
+                    oscillator.stop(start + 0.74);
+                });
+                const crackleDuration = 0.48;
+                const crackleBuffer = this.ctx.createBuffer(1, Math.floor(this.ctx.sampleRate * crackleDuration), this.ctx.sampleRate);
+                const crackleData = crackleBuffer.getChannelData(0);
+                for (let i = 0; i < crackleData.length; i++) {
+                    crackleData[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / crackleData.length, 1.4);
+                }
+                const crackle = this.ctx.createBufferSource();
+                const crackleFilter = this.ctx.createBiquadFilter();
+                const crackleGain = this.ctx.createGain();
+                crackle.buffer = crackleBuffer;
+                crackleFilter.type = 'highpass';
+                crackleFilter.frequency.setValueAtTime(1250, now);
+                crackleGain.gain.setValueAtTime(0.16, now + 0.14);
+                crackleGain.gain.exponentialRampToValueAtTime(0.001, now + crackleDuration);
+                crackle.connect(crackleFilter);
+                crackleFilter.connect(crackleGain);
+                crackleGain.connect(this.masterGain);
+                crackle.start(now + 0.14);
+                crackle.stop(now + crackleDuration);
             }
         }
 
@@ -2727,6 +2843,7 @@
         const bomberStoneWallMaterial = new THREE.MeshStandardMaterial({ map: bomberStoneTexture, roughness: 0.94, metalness: 0.04 });
         const bomberStoneCapMaterial = new THREE.MeshStandardMaterial({ map: bomberStoneTexture, color: 0xaab4bd, roughness: 0.9, metalness: 0.03 });
         let bomberBoss = null;
+        let bomberBossExtra = null;
         let bomberNextStageTimer = 0;
         let runnerNextSpawnZ = -28;
 
@@ -2793,6 +2910,7 @@
             bomberHardCells.clear();
             bomberSoftByCell.clear();
             bomberBoss = null;
+            bomberBossExtra = null;
             bomberNextStageTimer = 0;
             runnerNextSpawnZ = -28;
 
@@ -3640,8 +3758,7 @@
             document.getElementById('result-title').className = 'text-2xl font-black text-emerald-300 tracking-tight';
             document.getElementById('result-desc').textContent = `${reason} Bạn đã chạy ${distance} m và nhặt được ${reward} Gem.`;
             document.getElementById('result-stats').textContent = `Quãng đường: ${distance} m • Gem nhận: +${reward} 💎 • Tốc độ cuối: ${state.runnerSpeed.toFixed(1)}`;
-            document.getElementById('result-modal').classList.remove('hidden');
-            sound.playDamage();
+            beginResultPresentation('lose', 2000);
         }
 
         function updateRunnerPhysics(dt) {
@@ -4186,6 +4303,8 @@
             group.scale.setScalar(isBoss ? 1.12 : 1.20);
             worldGroup.add(group);
 
+            const level = Math.max(1, state.bomberMapLevel);
+            const maxHp = isBoss ? 300 + (level - 1) * 100 : 36 + (level - 1) * 18;
             const entity = {
                 group, col, row, targetCell: null,
                 pathHistory: [{ col, row }],
@@ -4196,8 +4315,8 @@
                 movePause: Math.random() * 0.35,
                 touchCooldown: 0,
                 attackAnimTimer: 0,
-                hp: isBoss ? 14 : 1,
-                maxHp: isBoss ? 14 : 1,
+                hp: maxHp,
+                maxHp,
                 isBoss,
                 damageFlash: 0,
                 attackTimer: isBoss ? 4.8 : 0,
@@ -4323,7 +4442,7 @@
         }
 
         function spawnBomberStageOneEnemies(fallbackCells) {
-            state.bomberEnemiesTotal = 20;
+            state.bomberEnemiesTotal = 20 + (Math.max(1, state.bomberMapLevel) - 1) * 2;
             bomberEnemies.length = 0;
             const addInitialEnemy = cell => {
                 const enemy = createBomberMonster(cell.col, cell.row, false);
@@ -4363,13 +4482,14 @@
             player.root.scale.setScalar(1.95);
             state.bomberStage = 1;
             state.bomberKills = 0;
-            state.bomberEnemiesTotal = 20;
+            state.bomberEnemiesTotal = 20 + (Math.max(1, state.bomberMapLevel) - 1) * 2;
             state.bomberTransitioning = false;
             state.bomberTransitionTimer = 0;
             state.bomberBombCooldown = 0;
             state.bomberTimeRemaining = 120;
             state.bomberLastDisplayedTime = -1;
             bomberBoss = null;
+            bomberBossExtra = null;
             bomberNextStageTimer = 0;
             const playerSpawn = bomberCellWorld(1, 11);
             state.pos.set(playerSpawn.x, 0.5, playerSpawn.z);
@@ -4388,7 +4508,7 @@
             updateBomberStageHUD();
         }
 
-        function findBomberNextCell(startCol, startRow, targetCol, targetRow) {
+        function findBomberNextCell(startCol, startRow, targetCol, targetRow, movingEntity = null) {
             if (startCol === targetCol && startRow === targetRow) return null;
             const startKey = bomberCellKey(startCol, startRow);
             const targetKey = bomberCellKey(targetCol, targetRow);
@@ -4404,6 +4524,7 @@
                     const key = bomberCellKey(nc, nr);
                     if (cameFrom.has(key) || nc <= 0 || nr <= 0 || nc >= BOMBER_GRID_SIZE - 1 || nr >= BOMBER_GRID_SIZE - 1 || bomberCellBlocked(nc, nr)) continue;
                     if (bomberBombs.some(b => b.col === nc && b.row === nr)) continue;
+                    if ([bomberBoss, bomberBossExtra].some(boss => boss && boss !== movingEntity && !boss.dying && boss.col === nc && boss.row === nr)) continue;
                     cameFrom.set(key, bomberCellKey(col, row));
                     queue.push([nc, nr]);
                 }
@@ -4424,27 +4545,31 @@
                 if (bomberCellBlocked(cell.col, cell.row)) return false;
                 if (bomberBombs.some(bomb => bomb.col === cell.col && bomb.row === cell.row)) return false;
                 if (bomberEnemies.some(other => other !== entity && !other.dying && other.col === cell.col && other.row === cell.row)) return false;
-                return !bomberBoss || bomberBoss === entity || bomberBoss.dying ||
+                const primaryIsFree = !bomberBoss || bomberBoss === entity || bomberBoss.dying ||
                     bomberBoss.col !== cell.col || bomberBoss.row !== cell.row;
+                const secondaryIsFree = !bomberBossExtra || bomberBossExtra === entity || bomberBossExtra.dying ||
+                    bomberBossExtra.col !== cell.col || bomberBossExtra.row !== cell.row;
+                return primaryIsFree && secondaryIsFree;
             };
             const history = entity.pathHistory;
             if (history.length >= 4) {
                 for (let back = 3; back >= 1; back--) {
                     const cell = history[history.length - 1 - back];
-                    if (isAvailable(cell) && findBomberNextCell(entity.col, entity.row, cell.col, cell.row)) return cell;
+                    if (isAvailable(cell) && findBomberNextCell(entity.col, entity.row, cell.col, cell.row, entity)) return cell;
                 }
             }
 
             const recent = new Set(history.slice(-4).map(cell => bomberCellKey(cell.col, cell.row)));
             const reachable = getBomberReachableCells(entity.col, entity.row);
             const currentPlayerCell = bomberWorldToCell(state.pos.x, state.pos.z);
-            let candidates = reachable.filter(cell => cell.distance === 3 && isAvailable(cell) &&
+            const hasRoute = cell => findBomberNextCell(entity.col, entity.row, cell.col, cell.row, entity) !== null;
+            let candidates = reachable.filter(cell => cell.distance === 3 && isAvailable(cell) && hasRoute(cell) &&
                 !recent.has(bomberCellKey(cell.col, cell.row)));
             if (!candidates.length) {
-                candidates = reachable.filter(cell => cell.distance === 2 && isAvailable(cell) &&
+                candidates = reachable.filter(cell => cell.distance === 2 && isAvailable(cell) && hasRoute(cell) &&
                     !recent.has(bomberCellKey(cell.col, cell.row)));
             }
-            if (!candidates.length) candidates = reachable.filter(cell => cell.distance > 0 && cell.distance <= 3 && isAvailable(cell));
+            if (!candidates.length) candidates = reachable.filter(cell => cell.distance > 0 && cell.distance <= 3 && isAvailable(cell) && hasRoute(cell));
             candidates.sort((a, b) => {
                 const distanceA = Math.abs(a.col - currentPlayerCell.col) + Math.abs(a.row - currentPlayerCell.row);
                 const distanceB = Math.abs(b.col - currentPlayerCell.col) + Math.abs(b.row - currentPlayerCell.row);
@@ -4580,10 +4705,9 @@
                 if (enemyIndex >= 0) bomberEnemies.splice(enemyIndex, 1);
                 bomberDeaths.splice(i, 1);
 
-                if (bomberBoss === entity) {
-                    bomberBoss = null;
-                    completeBomberMap1();
-                }
+                if (bomberBoss === entity) bomberBoss = null;
+                if (bomberBossExtra === entity) bomberBossExtra = null;
+                if (!bomberBoss && !bomberBossExtra && state.bomberStage === 2) completeBomberMap1();
             }
         }
 
@@ -4680,20 +4804,20 @@
             const bossIsTelegraphing = isBoss && entity.attackPhase && entity.attackPhase !== 'idle';
             if (!bossIsTelegraphing && !entity.targetCell && entity.movePause <= 0) {
                 if (entity.isRetreating && entity.retreatTarget) {
-                    entity.targetCell = findBomberNextCell(entity.col, entity.row, entity.retreatTarget.col, entity.retreatTarget.row);
+                    entity.targetCell = findBomberNextCell(entity.col, entity.row, entity.retreatTarget.col, entity.retreatTarget.row, entity);
                     if (!entity.targetCell) {
                         entity.isRetreating = false;
                         entity.retreatTarget = null;
                         entity.movePause = 0.3;
                     }
                 } else {
-                    entity.targetCell = findBomberNextCell(entity.col, entity.row, playerCell.col, playerCell.row);
+                    entity.targetCell = findBomberNextCell(entity.col, entity.row, playerCell.col, playerCell.row, entity);
                     if (!entity.targetCell) {
                         const retreatTarget = chooseBomberRetreatCell(entity);
                         if (retreatTarget) {
                             entity.isRetreating = true;
                             entity.retreatTarget = retreatTarget;
-                            entity.targetCell = findBomberNextCell(entity.col, entity.row, retreatTarget.col, retreatTarget.row);
+                            entity.targetCell = findBomberNextCell(entity.col, entity.row, retreatTarget.col, retreatTarget.row, entity);
                         }
                         if (!entity.targetCell) entity.movePause = 0.45;
                     }
@@ -4789,6 +4913,7 @@
                 { type: 'flame', emoji: '🔥', color: '#f97316' },
                 { type: 'speed', emoji: '👟', color: '#eab308' },
                 { type: 'shield', emoji: '🛡️', color: '#06b6d4' },
+                { type: 'health', emoji: '💚', color: '#22c55e' },
                 { type: 'capacity', emoji: '💣', color: '#ef4444' }
             ];
             const itemType = options[Math.floor(Math.random() * options.length)];
@@ -4813,10 +4938,10 @@
             if (bomberUpgrade.shieldHits > 0) {
                 if (!bomberShieldAura && player && player.root) {
                     bomberShieldAura = new THREE.Mesh(
-                        new THREE.SphereGeometry(1.55, 20, 14),
-                        new THREE.MeshBasicMaterial({ color: 0x67e8f9, wireframe: true, transparent: true, opacity: 0.42, depthWrite: false })
+                        new THREE.SphereGeometry(1.2, 28, 16, 0, Math.PI * 2, Math.PI / 4, Math.PI / 2),
+                        new THREE.MeshBasicMaterial({ color: 0x67e8f9, wireframe: true, transparent: true, opacity: 0.48, depthWrite: false })
                     );
-                    bomberShieldAura.position.y = 1.85;
+                    bomberShieldAura.position.y = 1.65;
                     player.root.add(bomberShieldAura);
                 }
                 if (bomberShieldAura) bomberShieldAura.visible = true;
@@ -4844,6 +4969,16 @@
                         const old = bomberUpgrade.moveSpeed;
                         bomberUpgrade.moveSpeed = Math.min(13.5, bomberUpgrade.moveSpeed + 1.25);
                         showToast(bomberUpgrade.moveSpeed > old ? `👟 Tăng tốc chạy: ${bomberUpgrade.moveSpeed.toFixed(1)}!` : '👟 Tốc độ đã đạt tối đa!');
+                    } else if (item.type === 'health') {
+                        const previousHp = state.hp;
+                        state.hp = Math.min(state.maxHp, state.hp + state.maxHp * 0.2);
+                        const restoredHp = state.hp - previousHp;
+                        updateHealthHUD();
+                        updateBomberHealthBar(bomberPlayerHealthBar, state.hp, state.maxHp);
+                        sound.playStarCollect();
+                        showToast(restoredHp > 0
+                            ? `💚 Hồi ${Math.ceil(restoredHp)} HP!`
+                            : '💚 Máu đã đầy!');
                     } else if (item.type === 'shield') {
                         bomberUpgrade.shieldHits = Math.min(2, bomberUpgrade.shieldHits + 1);
                         syncBomberShieldVisual();
@@ -5029,7 +5164,7 @@
                 const hit = bomberBodyOverlapsBlast(enemy.group.position, blastWorld, halfSize);
                 if (hit) {
                     const previousHp = enemy.hp;
-                    enemy.hp = Math.max(0, enemy.hp - 1);
+                    enemy.hp = Math.max(0, enemy.hp - BOMBER_BLAST_DAMAGE);
                     const damage = previousHp - enemy.hp;
                     updateBomberHealthBar(enemy.healthBar, enemy.hp, enemy.maxHp);
                     showBomberDamagePopup(enemy.group.position.clone().add(new THREE.Vector3(0, enemy.isBoss ? 5.8 : 4.3, 0)), damage, '#fca5a5');
@@ -5044,25 +5179,23 @@
                 }
             }
 
-            if (bomberBoss && !bomberBoss.dying) {
-                const hit = bomberBodyOverlapsBlast(bomberBoss.group.position, blastWorld, 1.5);
-                if (hit) {
-                    const previousHp = bomberBoss.hp;
-                    bomberBoss.hp = Math.max(0, bomberBoss.hp - 2);
-                    const damage = previousHp - bomberBoss.hp;
-                    bomberBoss.damageFlash = 0.36;
-                    updateBomberHealthBar(bomberBoss.healthBar, bomberBoss.hp, bomberBoss.maxHp);
-                    showBomberDamagePopup(bomberBoss.group.position.clone().add(new THREE.Vector3(0, 5.1, 0)), damage, '#fda4af');
-                    spawnImpactSparks(bomberBoss.group.position.clone().add(new THREE.Vector3(0, 2.5, 0)), 0xc084fc, 26);
-                    sound.playHit(bomberBoss.hp <= 0);
-                    showToast(`💥 Boss trúng bom! Còn ${bomberBoss.hp}/${bomberBoss.maxHp} HP`);
-                    if (bomberBoss.hp <= 0) {
-                        disposeBomberBossWarning(bomberBoss);
-                        spawnImpactSparks(bomberBoss.group.position.clone().add(new THREE.Vector3(0, 2, 0)), 0xfacc15, 40);
-                        startBomberEntityDeath(bomberBoss);
-                    }
+            [bomberBoss, bomberBossExtra].forEach(boss => {
+                if (!boss || boss.dying || !bomberBodyOverlapsBlast(boss.group.position, blastWorld, 1.5)) return;
+                const previousHp = boss.hp;
+                boss.hp = Math.max(0, boss.hp - BOMBER_BLAST_DAMAGE);
+                const damage = previousHp - boss.hp;
+                boss.damageFlash = 0.36;
+                updateBomberHealthBar(boss.healthBar, boss.hp, boss.maxHp);
+                showBomberDamagePopup(boss.group.position.clone().add(new THREE.Vector3(0, 5.1, 0)), damage, '#fda4af');
+                spawnImpactSparks(boss.group.position.clone().add(new THREE.Vector3(0, 2.5, 0)), 0xc084fc, 26);
+                sound.playHit(boss.hp <= 0);
+                showToast(`💥 Boss trúng bom! Còn ${boss.hp}/${boss.maxHp} HP`);
+                if (boss.hp <= 0) {
+                    disposeBomberBossWarning(boss);
+                    spawnImpactSparks(boss.group.position.clone().add(new THREE.Vector3(0, 2, 0)), 0xfacc15, 40);
+                    startBomberEntityDeath(boss);
                 }
-            }
+            });
 
             const playerPosition = { x: state.pos.x, z: state.pos.z };
             const playerHit = bomberBodyOverlapsBlast(playerPosition, blastWorld, 1.45);
@@ -5137,12 +5270,25 @@
                 worldGroup.remove(b.group);
             });
             bomberBombs.length = 0;
-            const spawn = createBomberMonster(11, 1, true);
-            spawn.hp = 14;
-            spawn.maxHp = 14;
-            bomberBoss = spawn;
-            document.getElementById('hud-mode-title').textContent = 'BOMBER ADVENTURE • MAP 1 • MÀN 2';
-            showToast('👑 BOSS XUẤT HIỆN! Né luồng nổ thẳng và vùng nổ quanh Boss; dùng bom để phản công!');
+            bomberBossExtra = null;
+            if (state.bomberMapLevel >= 4) {
+                const centerSpawn = bomberCellWorld(6, 5);
+                state.pos.set(centerSpawn.x, 0.5, centerSpawn.z);
+                state.vel.set(0, 0, 0);
+                player.root.position.set(state.pos.x, state.pos.y, state.pos.z + BOMBER_PLAYER_RENDER_OFFSET_Z);
+            }
+            bomberBoss = createBomberMonster(11, 1, true);
+            if (state.bomberMapLevel >= 4) {
+                bomberBossExtra = createBomberMonster(1, 11, true);
+                bomberBossExtra.attackTimer = 7.1;
+                bomberBossExtra.nextAttackType = 'aoe';
+            }
+            const bossCount = bomberBossExtra ? 2 : 1;
+            document.getElementById('hud-mode-title').textContent =
+                `BOMBER ADVENTURE • MAP 1 • LV ${state.bomberMapLevel}⭐ • MÀN 2`;
+            showToast(bossCount === 2
+                ? '👑👑 HAI BOSS XUẤT HIỆN Ở HAI GÓC! Né các đòn nổ lệch nhịp và phản công bằng bom!'
+                : '👑 BOSS XUẤT HIỆN! Né luồng nổ thẳng và vùng nổ quanh Boss; dùng bom để phản công!');
             updateObjectiveHUD();
         }
 
@@ -5153,22 +5299,24 @@
             if (bomberHud) bomberHud.classList.add('hidden');
             document.getElementById('bomber-time-progress-wrap').classList.add('hidden');
             document.getElementById('bomber-boss-health-wrap').classList.add('hidden');
+            const completedLevel = state.bomberMapLevel;
+            const defeatedBossCount = completedLevel >= 4 ? 2 : 1;
+            state.bomberMapLevel += 1;
             state.completedMaps.bomber_map1 = true;
             state.totalStarsAllTime += 10;
             state.totalTargetsAllTime += 5;
             if (document.pointerLockElement) document.exitPointerLock?.();
-            sound.playVictory();
             saveManager.saveNow(true);
             updateMenuStatsUI();
             const elapsedSec = Math.floor((performance.now() - state.matchStartTime) / 1000);
             const mins = String(Math.floor(elapsedSec / 60)).padStart(2, '0');
             const secs = String(elapsedSec % 60).padStart(2, '0');
             document.getElementById('result-emoji').textContent = '👑';
-            document.getElementById('result-title').textContent = 'CHIẾN THẮNG BOSS!';
+            document.getElementById('result-title').textContent = `CHIẾN THẮNG LEVEL ${completedLevel}!`;
             document.getElementById('result-title').className = 'text-2xl font-black text-amber-300 tracking-tight';
-            document.getElementById('result-desc').textContent = 'Bạn đã hạ đủ 20 quái nhỏ, sau đó đánh bại Boss ở màn 2. Map 1 đã hoàn thành!';
-            document.getElementById('result-stats').textContent = `Thời gian: ${mins}:${secs} • Thưởng: +10 💎 +5 🎯 • Quái nhỏ đã hạ: ${state.bomberKills}/20`;
-            document.getElementById('result-modal').classList.remove('hidden');
+            document.getElementById('result-desc').textContent = `Bạn đã hạ đủ ${state.bomberEnemiesTotal} quái nhỏ và ${defeatedBossCount} Boss. Bomber tăng lên Level ${state.bomberMapLevel}⭐!`;
+            document.getElementById('result-stats').textContent = `Thời gian: ${mins}:${secs} • Thưởng: +10 💎 +5 🎯 • Quái nhỏ đã hạ: ${state.bomberKills}/${state.bomberEnemiesTotal}`;
+            beginResultPresentation('victory', 3000);
         }
 
         function bomberIsBlockedAt(x, z, halfX = BOMBER_PLAYER_HALF, halfZ = BOMBER_PLAYER_HALF) {
@@ -5379,8 +5527,7 @@
             bomberEffects.push({ mesh: flash, life: 0.32, maxLife: 0.32 });
         }
 
-        function updateBomberBossAbilities(dt) {
-            const boss = bomberBoss;
+        function updateBomberBossAbilities(boss, dt) {
             if (!boss || boss.dying || state.bomberStage !== 2 || state.matchEnded) return;
             if (boss.attackPhase === 'idle') {
                 boss.attackTimer -= dt;
@@ -5437,6 +5584,10 @@
             if (bomberWaterWaves.length) updateBomberWater(time);
             if (bomberPlayerFootprint) {
                 bomberPlayerFootprint.position.set(state.pos.x, 0, state.pos.z + BOMBER_PLAYER_RENDER_OFFSET_Z);
+            }
+            if (bomberShieldAura && state.gameMode === 'bomber') {
+                bomberShieldAura.rotation.y += dt * 1.6;
+                bomberShieldAura.rotation.x = Math.sin(time * 1.4) * 0.08;
             }
             updateBomberSpawnFades(dt);
             if (bomberIntroActive) {
@@ -5521,7 +5672,8 @@
             // Each stage has its own two-minute countdown. The short inter-stage
             // transition is not charged against either stage's play time.
             const deathSequenceInProgress =
-                (state.bomberStage === 2 && bomberBoss && bomberBoss.dying) ||
+                (state.bomberStage === 2 && [bomberBoss, bomberBossExtra].filter(Boolean).length > 0 &&
+                    [bomberBoss, bomberBossExtra].filter(Boolean).every(boss => boss.dying)) ||
                 (state.bomberStage === 1 && state.bomberKills >= state.bomberEnemiesTotal);
             if (!state.bomberTransitioning && !deathSequenceInProgress) {
                 state.bomberTimeRemaining = Math.max(0, state.bomberTimeRemaining - dt);
@@ -5553,10 +5705,11 @@
                 refillBomberEnemies();
             }
             bomberEnemies.forEach(enemy => updateBomberChaser(enemy, dt, false));
-            if (bomberBoss) {
-                updateBomberBossAbilities(dt);
-                updateBomberChaser(bomberBoss, dt, true);
-            }
+            [bomberBoss, bomberBossExtra].forEach(boss => {
+                if (!boss) return;
+                updateBomberBossAbilities(boss, dt);
+                updateBomberChaser(boss, dt, true);
+            });
 
             startBomberStageTransitionIfReady();
 
@@ -6525,6 +6678,7 @@
             runnerCoinsCollected: 0,
             runnerSpeed: 17,
             runnerLaneCooldown: 0,
+            bomberMapLevel: 1,
             bomberStage: 1,
             bomberKills: 0,
             bomberEnemiesTotal: 20,
@@ -6701,6 +6855,14 @@
             if (text) text.textContent = `HP: ${Math.ceil(state.hp)}/${state.maxHp}`;
         }
 
+        function getBomberBossHealthTotals() {
+            const perBossMax = 300 + (Math.max(1, state.bomberMapLevel) - 1) * 100;
+            const count = state.bomberMapLevel >= 4 ? 2 : 1;
+            const currentHp = (bomberBoss ? Math.max(0, bomberBoss.hp) : 0) +
+                (bomberBossExtra ? Math.max(0, bomberBossExtra.hp) : 0);
+            return { currentHp, maxHp: perBossMax * count, count };
+        }
+
         function updateBomberStageHUD() {
             const panel = document.getElementById('bomber-stage-hud');
             const infoPanel = document.getElementById('objective-info-panel');
@@ -6737,12 +6899,11 @@
 
             if (bossWrap) bossWrap.classList.toggle('hidden', state.bomberStage !== 2);
             if (state.bomberStage === 2) {
-                const bossHp = bomberBoss ? Math.max(0, bomberBoss.hp) : 0;
-                const bossMax = bomberBoss ? bomberBoss.maxHp : 14;
-                const pct = bossMax > 0 ? Math.max(0, Math.min(100, bossHp / bossMax * 100)) : 0;
+                const { currentHp, maxHp, count } = getBomberBossHealthTotals();
+                const pct = maxHp > 0 ? Math.max(0, Math.min(100, currentHp / maxHp * 100)) : 0;
                 const hpText = document.getElementById('bomber-boss-hp-text');
                 const hpBar = document.getElementById('bomber-boss-hp-bar');
-                if (hpText) hpText.textContent = `${bossHp} / ${bossMax} HP`;
+                if (hpText) hpText.textContent = `${count > 1 ? `${count} Boss • ` : ''}${currentHp} / ${maxHp} HP`;
                 if (hpBar) hpBar.style.width = `${pct}%`;
             }
         }
@@ -6767,11 +6928,12 @@
                 updateBomberStageHUD();
                 if (state.bomberStage === 1) {
                     prim.textContent = `👾 ${state.bomberKills}/${state.bomberEnemiesTotal}`;
-                    sec.textContent = `MAP 1 • MÀN 1`;
+                    sec.textContent = `MAP 1 • LV ${state.bomberMapLevel}⭐ • MÀN 1`;
                     sub.innerHTML = `<span>🔥 ${bomberUpgrade.blastRange} ô • 👟 ${bomberUpgrade.moveSpeed.toFixed(1)} • 🛡️ ${bomberUpgrade.shieldHits} • 💣 x${bomberUpgrade.bombCapacity}</span>`;
                 } else {
-                    prim.textContent = `👑 ${bomberBoss ? bomberBoss.hp : 0}/${bomberBoss ? bomberBoss.maxHp : 14} HP`;
-                    sec.textContent = `MAP 1 • MÀN 2: BOSS`;
+                    const { currentHp, maxHp, count } = getBomberBossHealthTotals();
+                    prim.textContent = `👑 ${currentHp}/${maxHp} HP`;
+                    sec.textContent = `MAP 1 • LV ${state.bomberMapLevel}⭐ • ${count > 1 ? '2 BOSSES' : 'BOSS'}`;
                     sub.innerHTML = `<span>🔥 ${bomberUpgrade.blastRange} ô • 👟 ${bomberUpgrade.moveSpeed.toFixed(1)} • 🛡️ ${bomberUpgrade.shieldHits} • 💣 x${bomberUpgrade.bombCapacity}</span>`;
                 }
             } else {
@@ -6790,7 +6952,7 @@
             document.getElementById('menu-total-stars').textContent = state.totalStarsAllTime;
             document.getElementById('menu-total-targets').textContent = state.totalTargetsAllTime;
             const totalDifficultyStars = state.climbMapLevels.map1 + state.climbMapLevels.map2 +
-                state.huntMapLevels.map1 + state.huntMapLevels.map2 + (state.completedMaps.bomber_map1 ? 1 : 0);
+                state.huntMapLevels.map1 + state.huntMapLevels.map2 + Math.max(0, state.bomberMapLevel - 1);
             document.getElementById('menu-maps-cleared').textContent = `${totalDifficultyStars}⭐`;
 
             const climbMap1Level = Math.max(1, state.climbMapLevels.map1);
@@ -6806,7 +6968,13 @@
             document.getElementById('hunt-map2-progress').textContent =
                 `Độ khó ${huntMap2Level}⭐ • Hạ ${15 + (huntMap2Level - 1) * 5} bia • Bia di chuyển chậm`;
             const bomberProgress = document.getElementById('bomber-map1-progress');
-            if (bomberProgress) bomberProgress.textContent = state.completedMaps.bomber_map1 ? 'Đã hoàn thành • Thưởng 10 Gem + 5 mục tiêu' : '2 màn • Hạ 20 quái nhỏ → Hạ Boss';
+            const bomberLevel = Math.max(1, state.bomberMapLevel);
+            const bomberEnemyCount = 20 + (bomberLevel - 1) * 2;
+            const bomberBossHp = 300 + (bomberLevel - 1) * 100;
+            const bomberBossCount = bomberLevel >= 4 ? 2 : 1;
+            if (bomberProgress) {
+                bomberProgress.textContent = `Level ${bomberLevel}⭐ • Hạ ${bomberEnemyCount} quái → ${bomberBossCount} Boss (${bomberBossHp} HP mỗi con)`;
+            }
             renderSkinShopUI();
         }
 
@@ -6865,11 +7033,13 @@
             document.getElementById('result-stats').textContent = bomberTimedOut
                 ? `Hết giờ màn ${state.bomberStage} • Quái đã hạ: ${state.bomberKills}/20 • HP còn lại: ${Math.ceil(state.hp)}`
                 : `Thời gian sinh tồn: ${mins}:${secs}`;
-            if (state.gameMode === 'bomber' && state.hp <= 0) {
-                startBomberPlayerDeathAnimation();
-                bomberGameOverModalTimer = 0.9;
+            if (state.gameMode === 'bomber') {
+                if (state.hp <= 0) startBomberPlayerDeathAnimation();
+                bomberGameOverModalTimer = 0;
                 document.getElementById('result-modal').classList.add('hidden');
+                beginResultPresentation('lose', 2000);
             } else {
+                sound.playLose();
                 document.getElementById('result-modal').classList.remove('hidden');
             }
         }
@@ -6877,7 +7047,6 @@
         function completeCurrentMap() {
             if (state.matchEnded) return;
             state.matchEnded = true;
-            sound.playVictory();
             if (document.pointerLockElement) document.exitPointerLock?.();
             const xrayLayer = document.getElementById('xray-markers-layer');
             if (xrayLayer) xrayLayer.innerHTML = '';
@@ -6904,7 +7073,7 @@
                 ? `Chúc mừng! Bạn đã hoàn thành Map ${state.climbMapId === 'map1' ? '1' : '2'} độ khó ${state.climbLevel}⭐ với ${stars.length} Gem. Lần sau map này lên độ khó ${state.climbMapLevels[state.climbMapId]}⭐ và thêm 4 tầng!`
                 : `Xuất sắc! Bạn đã hoàn thành Map ${state.huntMapId === 'map1' ? '1' : '2'} độ khó ${state.huntLevel}⭐ với ${state.huntGoal} bia. Lần sau map này lên độ khó ${state.huntMapLevels[state.huntMapId]}⭐ và tăng thêm 5 bia!`;
             document.getElementById('result-stats').textContent = `Thời gian hoàn thành: ${mins}:${secs} • Kho: ${state.totalStarsAllTime} 💎 | ${state.totalTargetsAllTime} 🎯`;
-            document.getElementById('result-modal').classList.remove('hidden');
+            beginResultPresentation('victory', 3000);
         }
 
         function respawnPlayer(customMsg = '🐻 Đã hồi sinh tại điểm xuất phát!') {
@@ -7178,12 +7347,13 @@
 
             buildPayload() {
                 return {
-                    version: 8,
+                    version: 9,
                     game: 'Roblox Bearbrick 3D World',
                     savedAt: new Date().toISOString(),
                     backgroundTheme: state.backgroundTheme,
                     climbMapLevels: { ...state.climbMapLevels },
                     huntMapLevels: { ...state.huntMapLevels },
+                    bomberMapLevel: state.bomberMapLevel,
                     skin: state.skin || 'chrome',
                     unlockedSkins: Array.isArray(state.unlockedSkins) ? [...state.unlockedSkins] : [...DEFAULT_UNLOCKED_SKINS],
                     weaponMode: state.weaponMode || 'plasma',
@@ -7232,6 +7402,7 @@
                 const legacyClimbMap1Cleared = Boolean(data.completedMaps && data.completedMaps.climb_map1);
                 const legacyClimbMap2Cleared = Boolean(data.completedMaps && data.completedMaps.climb_map2);
                 const legacyHuntCleared = Boolean(data.completedMaps && data.completedMaps.hunt_mode);
+                const legacyBomberCleared = Boolean(data.completedMaps && data.completedMaps.bomber_map1);
                 const normalizeLevel = value => {
                     const level = Number(value);
                     return Number.isFinite(level) && level >= 1 ? Math.floor(level) : 1;
@@ -7255,6 +7426,9 @@
                 } else {
                     state.huntMapLevels = { map1: legacyHuntCleared ? 2 : 1, map2: 1 };
                 }
+                state.bomberMapLevel = data.bomberMapLevel !== undefined && data.bomberMapLevel !== null
+                    ? normalizeLevel(data.bomberMapLevel)
+                    : legacyBomberCleared ? 2 : 1;
 
                 const hasPaidVipUnlocks = Number(data.version) >= 5;
                 const savedUnlockedSkins = Array.isArray(data.unlockedSkins)
@@ -7280,12 +7454,12 @@
                     state.completedMaps.climb_map2 = Boolean(data.completedMaps.climb_map2) || state.climbMapLevels.map2 > 1;
                     state.completedMaps.hunt_mode = Boolean(data.completedMaps.hunt_mode) ||
                         state.huntMapLevels.map1 > 1 || state.huntMapLevels.map2 > 1;
-                    state.completedMaps.bomber_map1 = Boolean(data.completedMaps.bomber_map1);
+                    state.completedMaps.bomber_map1 = Boolean(data.completedMaps.bomber_map1) || state.bomberMapLevel > 1;
                 } else {
                     state.completedMaps.climb_map1 = state.climbMapLevels.map1 > 1;
                     state.completedMaps.climb_map2 = state.climbMapLevels.map2 > 1;
                     state.completedMaps.hunt_mode = state.huntMapLevels.map1 > 1 || state.huntMapLevels.map2 > 1;
-                    state.completedMaps.bomber_map1 = false;
+                    state.completedMaps.bomber_map1 = state.bomberMapLevel > 1;
                 }
                 if (this.menuSaveTimeEl) this.menuSaveTimeEl.textContent = this.formatTimeLabel(data.savedAt);
                 updateMenuStatsUI();
@@ -7351,6 +7525,7 @@
                 state.huntMapId = 'map1';
                 state.huntLevel = 1;
                 state.huntGoal = 15;
+                state.bomberMapLevel = 1;
                 state.unlockedSkins = [...DEFAULT_UNLOCKED_SKINS];
                 state.completedMaps = { climb_map1: false, climb_map2: false, hunt_mode: false, bomber_map1: false };
                 applySkinSelection('chrome', true);
@@ -7367,6 +7542,109 @@
         // SCREEN TRANSITIONS: MAIN MENU <-> GAMEPLAY
         // ==========================================
         let gameStartOverlayTimeout = null;
+        let resultSequenceTimeout = null;
+        let resultEffectTimeouts = [];
+        let resultPresentation = null;
+
+        function clearResultPresentation() {
+            if (resultSequenceTimeout !== null) clearTimeout(resultSequenceTimeout);
+            resultSequenceTimeout = null;
+            resultEffectTimeouts.forEach(timeout => clearTimeout(timeout));
+            resultEffectTimeouts = [];
+            const overlay = document.getElementById('result-sequence-overlay');
+            const effects = document.getElementById('result-sequence-effects');
+            if (overlay) overlay.classList.add('hidden');
+            if (effects) effects.innerHTML = '';
+            if (resultPresentation) player.root.position.copy(state.pos);
+            resultPresentation = null;
+        }
+
+        function launchResultFirework() {
+            const effects = document.getElementById('result-sequence-effects');
+            if (!effects) return;
+            const centerX = 12 + Math.random() * 76;
+            const centerY = 12 + Math.random() * 36;
+            const colors = ['#facc15', '#fb7185', '#22d3ee', '#a78bfa', '#4ade80', '#ffffff'];
+            for (let i = 0; i < 18; i++) {
+                const particle = document.createElement('span');
+                const angle = (Math.PI * 2 * i) / 18;
+                const distance = 48 + Math.random() * 76;
+                particle.className = 'result-firework-particle';
+                particle.style.left = `${centerX}%`;
+                particle.style.top = `${centerY}%`;
+                particle.style.color = colors[i % colors.length];
+                particle.style.backgroundColor = colors[i % colors.length];
+                particle.style.setProperty('--burst-x', `${Math.cos(angle) * distance}px`);
+                particle.style.setProperty('--burst-y', `${Math.sin(angle) * distance}px`);
+                effects.appendChild(particle);
+                particle.addEventListener('animationend', () => particle.remove(), { once: true });
+            }
+        }
+
+        function showerResultConfetti() {
+            const effects = document.getElementById('result-sequence-effects');
+            if (!effects) return;
+            const colors = ['#facc15', '#fb7185', '#22d3ee', '#a78bfa', '#4ade80'];
+            for (let i = 0; i < 32; i++) {
+                const piece = document.createElement('span');
+                piece.className = 'result-confetti-piece';
+                piece.style.left = `${Math.random() * 100}%`;
+                piece.style.top = `${-15 + Math.random() * 25}vh`;
+                piece.style.backgroundColor = colors[i % colors.length];
+                piece.style.setProperty('--confetti-drift', `${Math.random() * 180 - 90}px`);
+                piece.style.setProperty('--confetti-delay', `${Math.random() * 0.6}s`);
+                effects.appendChild(piece);
+                piece.addEventListener('animationend', () => piece.remove(), { once: true });
+            }
+        }
+
+        function beginResultPresentation(type, durationMs) {
+            clearResultPresentation();
+            const overlay = document.getElementById('result-sequence-overlay');
+            const label = document.getElementById('result-sequence-label');
+            const effects = document.getElementById('result-sequence-effects');
+            if (!overlay || !label || !effects) {
+                throw new Error('Result sequence overlay is missing from the game page.');
+            }
+            resultPresentation = {
+                type,
+                startedAt: performance.now(),
+                durationMs,
+                baseY: player.root.position.y
+            };
+            const victory = type === 'victory';
+            label.textContent = victory ? 'VICTORY' : 'LOSE';
+            label.className = `relative z-10 font-black italic tracking-tight ${victory ? 'text-amber-300' : 'text-rose-400'}`;
+            label.style.setProperty('--result-duration', `${durationMs}ms`);
+            document.getElementById('result-modal').classList.add('hidden');
+            overlay.classList.remove('hidden');
+            void overlay.offsetWidth;
+            if (victory) {
+                sound.playGameVictory();
+                showerResultConfetti();
+                [0, 480, 960].forEach(delay => {
+                    resultEffectTimeouts.push(setTimeout(launchResultFirework, delay));
+                });
+            } else {
+                sound.playLose();
+            }
+            resultSequenceTimeout = setTimeout(() => {
+                resultSequenceTimeout = null;
+                resultEffectTimeouts.forEach(timeout => clearTimeout(timeout));
+                resultEffectTimeouts = [];
+                overlay.classList.add('hidden');
+                effects.innerHTML = '';
+                if (resultPresentation) player.root.position.copy(state.pos);
+                resultPresentation = null;
+                document.getElementById('result-modal').classList.remove('hidden');
+            }, durationMs);
+        }
+
+        function updateResultPresentation() {
+            if (!resultPresentation || resultPresentation.type !== 'victory') return;
+            const elapsed = (performance.now() - resultPresentation.startedAt) / 1000;
+            player.root.position.y = resultPresentation.baseY + Math.abs(Math.sin(elapsed * 8.5)) * 1.15;
+        }
 
         function showGameStartOverlay() {
             const overlay = document.getElementById('game-start-overlay');
@@ -7385,6 +7663,7 @@
         function enterMainMenu() {
             clearTimeout(gameStartOverlayTimeout);
             gameStartOverlayTimeout = null;
+            clearResultPresentation();
             const startOverlay = document.getElementById('game-start-overlay');
             startOverlay.classList.add('hidden');
             startOverlay.classList.remove('game-start-overlay-active');
@@ -7454,7 +7733,8 @@
         }
 
         function startGameMode(mode, mapId = 'map1') {
-            sound.syncBackgroundMusic(state.backgroundTheme, 'playing');
+            clearResultPresentation();
+            sound.syncBackgroundMusic(state.backgroundTheme, mode === 'bomber' ? 'bomber' : 'playing');
             sound.init();
             if (mode === 'bomber') {
                 if (document.pointerLockElement) document.exitPointerLock?.();
@@ -7555,7 +7835,7 @@
                 document.getElementById('touch-jump').classList.add('hidden');
                 document.getElementById('jump-controls-hint').classList.add('hidden');
                 document.getElementById('minimap-wrapper').classList.add('hidden');
-                titleEl.textContent = 'BOMBER ADVENTURE • MAP 1 • MÀN 1';
+                titleEl.textContent = `BOMBER ADVENTURE • MAP 1 • LV ${state.bomberMapLevel}⭐ • MÀN 1`;
                 showToast('💣 WASD / joystick di chuyển theo tâm lối • E / Space đặt bom • Phá thùng để tìm nâng cấp');
             } else {
                 player.setWeaponsEquipped(true);
@@ -8733,6 +9013,7 @@
                 updateDynamicObstacles(dt, elapsedTime);
                 const speed = updatePhysics(dt);
                 updateBomberVisuals(dt);
+                updateResultPresentation();
                 player.animate(
                     dt,
                     speed,
