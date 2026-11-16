@@ -78,6 +78,21 @@
         .touch-btn:active {
             transform: scale(0.92);
         }
+        @keyframes game-start-fade {
+            0%, 20% { opacity: 1; }
+            100% { opacity: 0; }
+        }
+        @keyframes game-start-scale {
+            0% { transform: scale(0.78); }
+            20% { transform: scale(1); }
+            100% { transform: scale(1.16); }
+        }
+        .game-start-overlay-active {
+            animation: game-start-fade 0.5s ease-out forwards;
+        }
+        .game-start-overlay-active #game-start-label {
+            animation: game-start-scale 0.5s ease-out forwards;
+        }
         @media (orientation: portrait) and (max-width: 768px) {
             #joystick-zone {
                 width: 7.5rem;
@@ -123,6 +138,9 @@
 
     <!-- 3D Viewport -->
     <div id="canvas-container"></div>
+    <div id="game-start-overlay" class="hidden fixed inset-0 z-50 flex items-center justify-center pointer-events-none">
+        <div id="game-start-label" class="font-black italic tracking-[0.3em] text-7xl sm:text-9xl text-white drop-shadow-[0_0_30px_rgba(34,211,238,0.95)]">START</div>
+    </div>
 
     <!-- ===================================================================== -->
     <!-- MAIN MENU OVERLAY (Interactive 3D Character Turntable + Mode Select)   -->
@@ -284,6 +302,40 @@
                         </div>
                     </div>
 
+                    <!-- Mode 3: Endless Runner -->
+                    <div class="bg-slate-900/60 rounded-xl p-3 border border-emerald-400/30">
+                        <div class="font-black text-sm text-emerald-300 flex items-center gap-1.5 mb-1.5">
+                            <span>🏃</span><span>Chế Độ 3: Đường Chạy Vô Tận (Endless Runner)</span>
+                        </div>
+                        <p class="text-[11px] text-slate-300 mb-2.5 leading-snug">
+                            Chạy tự động trên 3 làn đường, né chướng ngại vật, nhảy qua rào chắn và nhặt Gem. Tốc độ tăng dần theo quãng đường — va chạm là kết thúc lượt chơi!
+                        </p>
+                        <button id="btn-start-runner" type="button" class="w-full group bg-gradient-to-r from-emerald-600/30 to-cyan-500/25 hover:from-emerald-600/45 hover:to-cyan-500/40 border border-emerald-400/50 rounded-xl p-3 text-left transition active:scale-95 flex items-center justify-between">
+                            <div>
+                                <div class="font-extrabold text-xs text-white group-hover:text-emerald-200">🚄 Bắt đầu chạy vô tận</div>
+                                <div class="text-[10px] text-slate-300 mt-0.5">A / D hoặc joystick để đổi làn • Space / NHẢY để vượt rào</div>
+                            </div>
+                            <span class="text-2xl">🏁</span>
+                        </button>
+                    </div>
+
+                    <!-- Mode 4: Bomber Adventure -->
+                    <div class="bg-slate-900/60 rounded-xl p-3 border border-orange-400/35">
+                        <div class="font-black text-sm text-orange-300 flex items-center gap-1.5 mb-1.5">
+                            <span>💣</span><span>Chế Độ 4: Bomber Adventure (Phong cách Boom Online)</span>
+                        </div>
+                        <p class="text-[11px] text-slate-300 mb-2.5 leading-snug">
+                            Map 1 gồm 2 màn: hạ 20 quái nhỏ bằng bom ở màn 1, sau đó đối đầu Boss ở màn 2. Bom nổ theo 4 hướng, hãy chạy khỏi vùng nổ!
+                        </p>
+                        <button id="btn-start-bomber-map1" type="button" class="w-full group bg-gradient-to-r from-orange-600/30 to-rose-500/25 hover:from-orange-600/45 hover:to-rose-500/40 border border-orange-400/50 rounded-xl p-3 text-left transition active:scale-95 flex items-center justify-between">
+                            <div>
+                                <div class="font-extrabold text-xs text-white group-hover:text-orange-200">💣 Map 1: Đảo Bomber</div>
+                                <div id="bomber-map1-progress" class="text-[10px] text-slate-300 mt-0.5">2 màn • Hạ 20 quái nhỏ → Hạ Boss</div>
+                            </div>
+                            <span class="text-2xl">👾</span>
+                        </button>
+                    </div>
+
                     <!-- Mode 2: Target Hunt Maze Arena -->
                     <div class="bg-slate-900/60 rounded-xl p-3 border border-rose-400/30">
                         <div class="flex items-start justify-between gap-2 mb-2">
@@ -344,11 +396,28 @@
                     </div>
                 </button>
 
-                <!-- Secondary Live Stat Pill (Current Step / Regen Status / Active Targets) -->
-                <div class="glass-panel rounded-2xl px-3 py-2 text-white border border-white/15 hidden sm:flex flex-col justify-center">
-                    <div id="hud-secondary-stat" class="text-xs font-black text-cyan-300">Bậc: 0</div>
+                <!-- Secondary Live Stat Pill (Current Step / Bomber Timer / Active Targets) -->
+                <div id="objective-info-panel" class="glass-panel rounded-2xl px-3 py-2 text-white border border-white/15 hidden flex flex-col justify-center sm:flex max-w-[min(42vw,360px)] max-sm:fixed max-sm:top-[82px] max-sm:left-1/2 max-sm:-translate-x-1/2 max-sm:w-[min(92vw,360px)] max-sm:max-w-none max-sm:z-20">
+                    <div class="flex items-center justify-between gap-3">
+                        <div id="hud-secondary-stat" class="text-xs font-black text-cyan-300">Bậc: 0</div>
+                        <div id="bomber-stage-hud" class="hidden min-w-[164px] flex-1">
+                            <div id="bomber-timer" class="text-sm font-black tabular-nums tracking-wide text-emerald-300 text-right">02:00</div>
+                        </div>
+                    </div>
                     <div id="hud-sub-stat" class="text-[10px] text-slate-300 flex gap-2 mt-0.5">
                         <span>Cao nhất: Bậc 0</span>
+                    </div>
+                    <div id="bomber-time-progress-wrap" class="hidden mt-1.5 h-1.5 rounded-full overflow-hidden bg-slate-950/80 border border-white/10">
+                        <div id="bomber-time-progress" class="h-full rounded-full bg-emerald-400 transition-[width] duration-300" style="width:100%"></div>
+                    </div>
+                    <div id="bomber-boss-health-wrap" class="hidden mt-1.5 rounded-lg bg-slate-950/65 border border-rose-400/30 px-2 py-1.5">
+                        <div class="flex items-center justify-between gap-2 mb-1">
+                            <span class="text-[9px] font-black tracking-wide text-rose-200">👑 BOSS</span>
+                            <span id="bomber-boss-hp-text" class="text-[9px] font-black tabular-nums text-white">14 / 14 HP</span>
+                        </div>
+                        <div class="h-2 rounded-full overflow-hidden bg-slate-800 border border-white/10">
+                            <div id="bomber-boss-hp-bar" class="h-full rounded-full bg-gradient-to-r from-rose-600 via-red-500 to-orange-400 transition-all duration-200" style="width:100%"></div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -442,11 +511,12 @@
             </div>
             <div id="desktop-controls-grid" class="grid grid-cols-2 gap-x-4 gap-y-1 text-slate-300 text-[11px]">
                 <div><span class="kbd">WASD</span> Di chuyển</div>
-                <div><span class="kbd">Space</span> Nhảy</div>
+                <div id="jump-controls-hint"><span class="kbd">Space</span> Nhảy</div>
                 <div class="combat-control-hint"><span class="kbd">F</span> / <span class="kbd">Chuột</span> Bắn súng</div>
                 <div class="combat-control-hint"><span class="kbd">Chuột phải</span> Ném bom dầu gội</div>
                 <div class="combat-control-hint"><span class="kbd">G / Q</span> Đổi loại súng</div>
                 <div><span class="kbd">R</span> Hồi sinh</div>
+                <div id="bomber-controls-hint" class="hidden"><span class="kbd">E / Space</span> Đặt bom</div>
             </div>
         </div>
 
@@ -466,6 +536,9 @@
                 <span>ĐỔI SÚNG</span>
             </button>
 
+            <button id="btn-place-bomber-bomb" type="button" class="hidden touch-btn bg-gradient-to-tr from-orange-600 to-rose-500 hover:from-orange-500 hover:to-rose-400 text-white px-4 py-3 rounded-full font-extrabold text-xs border-2 border-white/45 shadow-[0_0_24px_rgba(249,115,22,0.72)] flex items-center gap-2">
+                <span class="text-xl">💣</span><span>ĐẶT BOM <span class="hidden sm:inline">(E / Space)</span></span>
+            </button>
             <div id="action-buttons-row" class="flex items-end gap-2.5 sm:gap-3">
                 <button id="btn-bomb" type="button" class="touch-btn bg-gradient-to-tr from-teal-600 to-emerald-400 hover:from-teal-500 hover:to-emerald-300 text-white w-16 h-16 sm:w-20 sm:h-20 rounded-full flex flex-col items-center justify-center font-extrabold tracking-wide border-2 border-white/45 shadow-[0_0_22px_rgba(20,184,166,0.7)]">
                     <span class="text-base sm:text-xl leading-none">🧴</span>
@@ -1004,7 +1077,9 @@
         scene.background = new THREE.Color(0x0b132b);
         scene.fog = new THREE.FogExp2(0x132043, 0.0055);
 
-        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 700);
+        const perspectiveCamera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 700);
+        const bomberCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, 700);
+        let camera = perspectiveCamera;
 
         const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
         renderer.setSize(window.innerWidth, window.innerHeight);
@@ -2538,10 +2613,156 @@
         const christmasReindeers = [];
         const lobbyFlyingSaucers = [];
         const lobbyAliens = [];
+        const runnerObstacles = [];
+        const runnerCoins = [];
+        const bomberEnemies = [];
+        const bomberBombs = [];
+        const bomberBlocks = [];
+        const bomberEffects = [];
+        const bomberItems = [];
+        const bomberHealthBars = [];
+        const bomberDamagePopups = [];
+        const bomberDeaths = [];
+        const bomberSpawnFades = [];
+        const bomberUpgrade = { blastRange: 2, moveSpeed: 9.6, shieldHits: 0, bombCapacity: 1 };
+        const BOMBER_PLAYER_HALF = 1.92;
+        const BOMBER_BLAST_DAMAGE = 36;
+        const BOMBER_PLAYER_RENDER_OFFSET_Z = 0.18;
+        let bomberShieldAura = null;
+        let bomberPlayerHealthBar = null;
+        let bomberPlayerFootprint = null;
+        let bomberPlayerFlashTimer = 0;
+        let bomberPlayerDeathAnimation = null;
+        let bomberGameOverModalTimer = 0;
+        let bomberIntroElapsed = 1;
+        let bomberIntroActive = false;
+        const bomberHardCells = new Set();
+        const bomberSoftByCell = new Map();
+        const bomberWaterWaves = [];
+        const BOMBER_GRID_SIZE = 13;
+        const BOMBER_TILE = 4;
+        const BOMBER_ORIGIN = -24;
+        const bomberWaterCanvas = document.createElement('canvas');
+        bomberWaterCanvas.width = 256;
+        bomberWaterCanvas.height = 128;
+        const bomberWaterContext = bomberWaterCanvas.getContext('2d');
+        const waterGradient = bomberWaterContext.createLinearGradient(0, 0, 0, 128);
+        waterGradient.addColorStop(0, '#0b536a');
+        waterGradient.addColorStop(0.5, '#0b7188');
+        waterGradient.addColorStop(1, '#084b66');
+        bomberWaterContext.fillStyle = waterGradient;
+        bomberWaterContext.fillRect(0, 0, 256, 128);
+        bomberWaterContext.lineWidth = 2;
+        for (let row = 0; row < 8; row++) {
+            bomberWaterContext.beginPath();
+            for (let x = 0; x <= 256; x += 4) {
+                const y = row * 16 + 8 + Math.sin((x / 256) * Math.PI * 8 + row * 0.65) * 4;
+                if (x === 0) bomberWaterContext.moveTo(x, y);
+                else bomberWaterContext.lineTo(x, y);
+            }
+            bomberWaterContext.strokeStyle = row % 2 === 0 ? 'rgba(165, 243, 252, 0.34)' : 'rgba(34, 211, 238, 0.22)';
+            bomberWaterContext.stroke();
+        }
+        const bomberWaterTexture = new THREE.CanvasTexture(bomberWaterCanvas);
+        bomberWaterTexture.colorSpace = THREE.SRGBColorSpace;
+        bomberWaterTexture.wrapS = THREE.RepeatWrapping;
+        bomberWaterTexture.wrapT = THREE.RepeatWrapping;
+        bomberWaterTexture.repeat.set(5, 1.4);
+        const bomberWaterVerticalTexture = bomberWaterTexture.clone();
+        bomberWaterVerticalTexture.repeat.set(0.4, 11);
+        const bomberWaterHorizontalMaterial = new THREE.MeshStandardMaterial({
+            map: bomberWaterTexture,
+            color: 0xc3f6ff,
+            emissive: 0x064e63,
+            emissiveIntensity: 0.18,
+            roughness: 0.24,
+            metalness: 0.12
+        });
+        const bomberWaterVerticalMaterial = new THREE.MeshStandardMaterial({
+            map: bomberWaterVerticalTexture,
+            color: 0xc3f6ff,
+            emissive: 0x064e63,
+            emissiveIntensity: 0.18,
+            roughness: 0.24,
+            metalness: 0.12
+        });
+        const bomberWaterHorizontalGeometry = new THREE.PlaneGeometry(52, 4);
+        const bomberWaterVerticalGeometry = new THREE.PlaneGeometry(4, 44);
+        const bomberStoneCanvas = document.createElement('canvas');
+        bomberStoneCanvas.width = 128;
+        bomberStoneCanvas.height = 128;
+        const bomberStoneContext = bomberStoneCanvas.getContext('2d');
+        bomberStoneContext.fillStyle = '#727e8b';
+        bomberStoneContext.fillRect(0, 0, 128, 128);
+        bomberStoneContext.lineWidth = 3;
+        bomberStoneContext.strokeStyle = '#4b5662';
+        for (let row = 0; row < 4; row++) {
+            for (let col = 0; col < 4; col++) {
+                const offsetX = row % 2 ? 16 : 0;
+                const x = col * 40 + offsetX;
+                const y = row * 34;
+                bomberStoneContext.beginPath();
+                bomberStoneContext.moveTo(x, y);
+                bomberStoneContext.lineTo(x + 34, y + 3);
+                bomberStoneContext.lineTo(x + 38, y + 17);
+                bomberStoneContext.lineTo(x + 31, y + 33);
+                bomberStoneContext.stroke();
+            }
+        }
+        bomberStoneContext.lineWidth = 1;
+        bomberStoneContext.strokeStyle = 'rgba(219, 228, 236, 0.42)';
+        bomberStoneContext.beginPath();
+        bomberStoneContext.moveTo(12, 24);
+        bomberStoneContext.lineTo(24, 30);
+        bomberStoneContext.lineTo(20, 42);
+        bomberStoneContext.moveTo(78, 71);
+        bomberStoneContext.lineTo(91, 77);
+        bomberStoneContext.lineTo(86, 89);
+        bomberStoneContext.moveTo(44, 104);
+        bomberStoneContext.lineTo(57, 110);
+        bomberStoneContext.lineTo(53, 121);
+        bomberStoneContext.stroke();
+        const bomberStoneTexture = new THREE.CanvasTexture(bomberStoneCanvas);
+        bomberStoneTexture.colorSpace = THREE.SRGBColorSpace;
+        const bomberStoneWallMaterial = new THREE.MeshStandardMaterial({ map: bomberStoneTexture, roughness: 0.94, metalness: 0.04 });
+        const bomberStoneCapMaterial = new THREE.MeshStandardMaterial({ map: bomberStoneTexture, color: 0xaab4bd, roughness: 0.9, metalness: 0.03 });
+        let bomberBoss = null;
+        let bomberNextStageTimer = 0;
+        let runnerNextSpawnZ = -28;
 
         const MAP_BOUNDS = { halfSize: 50 };
 
         function clearWorld() {
+            bomberHealthBars.forEach(bar => disposeBomberOverlay(bar.group));
+            bomberHealthBars.length = 0;
+            bomberPlayerHealthBar = null;
+            if (bomberPlayerFootprint) {
+                disposeBomberOverlay(bomberPlayerFootprint);
+                bomberPlayerFootprint = null;
+            }
+            bomberDamagePopups.forEach(popup => disposeBomberOverlay(popup.sprite));
+            bomberDamagePopups.length = 0;
+            bomberBombs.forEach(disposeBomberBombWarning);
+            bomberDeaths.forEach(death => disposeBomberEntityVisuals(death.entity));
+            bomberDeaths.length = 0;
+            bomberSpawnFades.forEach(restoreBomberSpawnFade);
+            bomberSpawnFades.length = 0;
+            bomberIntroElapsed = 1;
+            bomberIntroActive = false;
+            restoreBomberPlayerDeathAnimation();
+            bomberPlayerFlashTimer = 0;
+            bomberGameOverModalTimer = 0;
+            bomberEffects.forEach(effect => {
+                worldGroup.remove(effect.mesh);
+                effect.mesh.geometry.dispose();
+                effect.mesh.material.dispose();
+            });
+            bomberEffects.length = 0;
+            bomberWaterWaves.forEach(wave => {
+                wave.line.geometry.dispose();
+                wave.line.material.dispose();
+            });
+            bomberWaterWaves.length = 0;
             while (worldGroup.children.length > 0) {
                 worldGroup.remove(worldGroup.children[0]);
             }
@@ -2558,6 +2779,22 @@
             christmasReindeers.length = 0;
             lobbyFlyingSaucers.length = 0;
             lobbyAliens.length = 0;
+            runnerObstacles.length = 0;
+            runnerCoins.length = 0;
+            bomberEnemies.length = 0;
+            bomberBombs.length = 0;
+            bomberBlocks.length = 0;
+            bomberItems.forEach(item => item.group.traverse(child => {
+                if (child.isSprite && child.material && child.material.map) child.material.map.dispose();
+                if (child.material) child.material.dispose();
+                if (child.geometry) child.geometry.dispose();
+            }));
+            bomberItems.length = 0;
+            bomberHardCells.clear();
+            bomberSoftByCell.clear();
+            bomberBoss = null;
+            bomberNextStageTimer = 0;
+            runnerNextSpawnZ = -28;
 
             bullets.forEach(b => scene.remove(b.mesh));
             bullets.length = 0;
@@ -2614,7 +2851,7 @@
         }
 
         function updateCameraOcclusion(targetFocus) {
-            if (state.gameMode !== 'hunt' || state.screen !== 'playing') return;
+            if ((state.gameMode !== 'hunt' && state.gameMode !== 'bomber') || state.screen !== 'playing') return;
 
             const direction = targetFocus.clone().sub(camera.position);
             const distance = direction.length();
@@ -3271,6 +3508,2062 @@
             state.vel.set(0, 0, 0);
             player.root.position.copy(state.pos);
             player.root.rotation.y = state.menuTurntableYaw;
+        }
+
+        // Mode 3: Three-lane endless runner inspired by classic subway runners
+        function buildRunnerWorld() {
+            clearWorld();
+            MAP_BOUNDS.halfSize = 18;
+
+            const floor = new THREE.Mesh(
+                new THREE.BoxGeometry(18, 1, 20000),
+                new THREE.MeshStandardMaterial({ color: 0x172033, roughness: 0.82 })
+            );
+            floor.position.set(0, -0.55, -9500);
+            floor.receiveShadow = true;
+            worldGroup.add(floor);
+
+            const road = new THREE.Mesh(
+                new THREE.BoxGeometry(11.5, 0.12, 20000),
+                new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.72 })
+            );
+            road.position.set(0, 0.02, -9500);
+            road.receiveShadow = true;
+            worldGroup.add(road);
+
+            // Neon lane markers and road edges
+            for (const x of [-1.92, 1.92]) {
+                const stripe = new THREE.Mesh(
+                    new THREE.BoxGeometry(0.075, 0.035, 20000),
+                    new THREE.MeshBasicMaterial({ color: 0x67e8f9 })
+                );
+                stripe.position.set(x, 0.105, -9500);
+                worldGroup.add(stripe);
+            }
+            for (const x of [-5.9, 5.9]) {
+                const edge = new THREE.Mesh(
+                    new THREE.BoxGeometry(0.22, 0.18, 20000),
+                    new THREE.MeshStandardMaterial({ color: 0x0ea5e9, emissive: 0x0369a1, emissiveIntensity: 0.6 })
+                );
+                edge.position.set(x, 0.12, -9500);
+                worldGroup.add(edge);
+            }
+
+            // Repeating side lights add a sense of speed and depth.
+            for (let z = 12; z > -19800; z -= 24) {
+                for (const side of [-1, 1]) {
+                    const post = new THREE.Group();
+                    const pole = new THREE.Mesh(
+                        new THREE.BoxGeometry(0.22, 4.2, 0.22),
+                        new THREE.MeshStandardMaterial({ color: 0x475569, metalness: 0.55, roughness: 0.4 })
+                    );
+                    pole.position.y = 2.1;
+                    post.add(pole);
+                    const lamp = new THREE.Mesh(
+                        new THREE.BoxGeometry(1.2, 0.18, 0.35),
+                        new THREE.MeshBasicMaterial({ color: side < 0 ? 0x22d3ee : 0xf472b6 })
+                    );
+                    lamp.position.set(-side * 0.5, 4.1, 0);
+                    post.add(lamp);
+                    post.position.set(side * 7.4, 0, z);
+                    worldGroup.add(post);
+                }
+            }
+
+            state.runnerLane = 1;
+            state.runnerDistance = 0;
+            state.runnerCoinsCollected = 0;
+            state.runnerSpeed = 17;
+            state.runnerLaneCooldown = 0;
+            state.pos.set(0, 0.5, 0);
+            state.vel.set(0, 0, 0);
+            runnerNextSpawnZ = -24;
+            for (let i = 0; i < 14; i++) spawnRunnerChunk();
+        }
+
+        function spawnRunnerChunk() {
+            const z = runnerNextSpawnZ;
+            runnerNextSpawnZ -= 24;
+            const lane = Math.floor(Math.random() * 3);
+            const x = (lane - 1) * 3.8;
+            const obstacleMat = new THREE.MeshStandardMaterial({
+                color: Math.random() > 0.5 ? 0xf97316 : 0xef4444,
+                roughness: 0.55,
+                metalness: 0.12
+            });
+            const obstacle = new THREE.Group();
+            const block = new THREE.Mesh(new THREE.BoxGeometry(2.35, 1.65, 0.9), obstacleMat);
+            block.position.y = 0.85;
+            block.castShadow = true;
+            obstacle.add(block);
+            const warning = new THREE.Mesh(
+                new THREE.BoxGeometry(2.45, 0.12, 1.0),
+                new THREE.MeshBasicMaterial({ color: 0xfacc15 })
+            );
+            warning.position.y = 1.72;
+            obstacle.add(warning);
+            obstacle.position.set(x, 0, z);
+            worldGroup.add(obstacle);
+            runnerObstacles.push({ group: obstacle, lane, hit: false });
+
+            // Coin trail in one of the other lanes, with occasional full rows.
+            const coinLane = Math.random() > 0.72 ? -1 : (lane + (Math.random() > 0.5 ? 1 : 2)) % 3;
+            const coinCount = Math.random() > 0.72 ? 5 : 3;
+            for (let i = 0; i < coinCount; i++) {
+                const coin = new THREE.Mesh(
+                    new THREE.TorusGeometry(0.48, 0.16, 8, 18),
+                    new THREE.MeshStandardMaterial({
+                        color: 0xfbbf24,
+                        emissive: 0xf59e0b,
+                        emissiveIntensity: 0.8,
+                        metalness: 0.65,
+                        roughness: 0.25
+                    })
+                );
+                coin.rotation.x = Math.PI / 2;
+                coin.position.set(coinLane === -1 ? (i % 3 - 1) * 3.8 : (coinLane - 1) * 3.8, 1.25, z - 5 - i * 2.2);
+                worldGroup.add(coin);
+                runnerCoins.push({ mesh: coin, collected: false });
+            }
+        }
+
+        function finishRunnerGame(reason = 'Bạn đã va chạm với chướng ngại vật!') {
+            if (state.matchEnded) return;
+            state.matchEnded = true;
+            state.isAimingBomb = false;
+            const distance = Math.floor(state.runnerDistance);
+            const reward = state.runnerCoinsCollected;
+            saveManager.scheduleSave(0);
+            updateMenuStatsUI();
+            document.getElementById('result-emoji').textContent = '🚄';
+            document.getElementById('result-title').textContent = 'KẾT THÚC ĐƯỜNG CHẠY!';
+            document.getElementById('result-title').className = 'text-2xl font-black text-emerald-300 tracking-tight';
+            document.getElementById('result-desc').textContent = `${reason} Bạn đã chạy ${distance} m và nhặt được ${reward} Gem.`;
+            document.getElementById('result-stats').textContent = `Quãng đường: ${distance} m • Gem nhận: +${reward} 💎 • Tốc độ cuối: ${state.runnerSpeed.toFixed(1)}`;
+            document.getElementById('result-modal').classList.remove('hidden');
+            sound.playDamage();
+        }
+
+        function updateRunnerPhysics(dt) {
+            state.runnerSpeed = Math.min(34, 17 + state.runnerDistance * 0.018);
+            state.runnerLaneCooldown = Math.max(0, state.runnerLaneCooldown - dt);
+            const laneInput = (state.keys.d ? 1 : 0) - (state.keys.a ? 1 : 0);
+            const stickInput = Math.abs(state.joyVec.x) > 0.62 ? Math.sign(state.joyVec.x) : 0;
+            const laneDirection = laneInput || stickInput;
+            if (laneDirection && state.runnerLaneCooldown <= 0) {
+                state.runnerLane = THREE.MathUtils.clamp(state.runnerLane + laneDirection, 0, 2);
+                state.runnerLaneCooldown = 0.22;
+            }
+
+            const targetX = (state.runnerLane - 1) * 3.8;
+            state.pos.x = THREE.MathUtils.lerp(state.pos.x, targetX, Math.min(1, dt * 13));
+            state.pos.z -= state.runnerSpeed * dt;
+            state.runnerDistance += state.runnerSpeed * dt;
+            state.vel.y -= GRAVITY * dt;
+            state.pos.y += state.vel.y * dt;
+            if (state.pos.y <= 0.5) {
+                state.pos.y = 0.5;
+                state.vel.y = 0;
+                state.isGrounded = true;
+            } else {
+                state.isGrounded = false;
+            }
+
+            // Spawn ahead and recycle passed objects to keep the run endless.
+            while (runnerNextSpawnZ > state.pos.z - 320) spawnRunnerChunk();
+            for (let i = runnerObstacles.length - 1; i >= 0; i--) {
+                const item = runnerObstacles[i];
+                if (!item.hit && Math.abs(item.group.position.z - state.pos.z) < 1.25 &&
+                    Math.abs(item.group.position.x - state.pos.x) < 1.45) {
+                    item.hit = true;
+                    if (state.pos.y < 1.85) {
+                        finishRunnerGame('Bạn đã đâm vào rào chắn!');
+                        break;
+                    }
+                }
+                if (item.group.position.z > state.pos.z + 12) {
+                    worldGroup.remove(item.group);
+                    runnerObstacles.splice(i, 1);
+                }
+            }
+
+            for (let i = runnerCoins.length - 1; i >= 0; i--) {
+                const item = runnerCoins[i];
+                item.mesh.rotation.y += dt * 4.5;
+                item.mesh.position.y = 1.25 + Math.sin(performance.now() * 0.004 + i) * 0.12;
+                if (!item.collected && Math.abs(item.mesh.position.z - state.pos.z) < 1.7 &&
+                    Math.abs(item.mesh.position.x - state.pos.x) < 1.55) {
+                    item.collected = true;
+                    state.runnerCoinsCollected++;
+                    state.totalStarsAllTime++;
+                    item.mesh.visible = false;
+                    sound.playStarCollect();
+                    updateObjectiveHUD();
+                    saveManager.scheduleSave();
+                }
+                if (item.mesh.position.z > state.pos.z + 12) {
+                    worldGroup.remove(item.mesh);
+                    runnerCoins.splice(i, 1);
+                }
+            }
+
+            if (Math.floor(state.runnerDistance) % 10 === 0) updateObjectiveHUD();
+            player.root.position.copy(state.pos);
+            player.root.rotation.y = THREE.MathUtils.lerp(player.root.rotation.y, 0, dt * 8);
+            return state.runnerSpeed;
+        }
+
+        // ==========================================
+        // MODE 4 - BOMBER ADVENTURE (MAP 1, TWO STAGES)
+        // Tile-grid Bomberman gameplay: destructible crates, cross-shaped bombs,
+        // chasing monsters and a final boss.
+        // ==========================================
+        function disposeBomberOverlay(object) {
+            object.traverse(child => {
+                if (child.geometry && !child.isSprite) child.geometry.dispose();
+                if (child.material) {
+                    if (Array.isArray(child.material)) child.material.forEach(material => material.dispose());
+                    else {
+                        if (child.material.map) child.material.map.dispose();
+                        child.material.dispose();
+                    }
+                }
+            });
+        }
+
+        function createBomberHealthBar(ownerGroup, width, offsetY) {
+            const group = new THREE.Group();
+            const height = 0.38;
+            const background = new THREE.Mesh(
+                new THREE.PlaneGeometry(width, height),
+                new THREE.MeshBasicMaterial({ color: 0x020617, side: THREE.DoubleSide, depthTest: false, depthWrite: false, toneMapped: false })
+            );
+            const fill = new THREE.Mesh(
+                new THREE.PlaneGeometry(width, height * 0.68),
+                new THREE.MeshBasicMaterial({ color: 0x22c55e, side: THREE.DoubleSide, depthTest: false, depthWrite: false, toneMapped: false })
+            );
+            fill.position.z = 0.025;
+            background.renderOrder = 15;
+            fill.renderOrder = 16;
+            group.add(background, fill);
+            worldGroup.add(group);
+            const bar = { group, fill, ownerGroup, width, offsetY };
+            bomberHealthBars.push(bar);
+            updateBomberHealthBar(bar, ownerGroup === player.root ? state.hp : 1, ownerGroup === player.root ? state.maxHp : 1);
+            return bar;
+        }
+
+        function createBomberPlayerFootprint() {
+            const group = new THREE.Group();
+            const size = 3.72;
+            const area = new THREE.Mesh(
+                new THREE.PlaneGeometry(size, size),
+                new THREE.MeshBasicMaterial({
+                    color: 0xfdba74,
+                    transparent: true,
+                    opacity: 0.4,
+                    side: THREE.DoubleSide,
+                    depthWrite: false
+                })
+            );
+            area.rotation.x = -Math.PI / 2;
+            area.position.y = 0.035;
+            group.add(area);
+
+            const outline = new THREE.LineSegments(
+                new THREE.EdgesGeometry(new THREE.PlaneGeometry(size, size)),
+                new THREE.LineBasicMaterial({ color: 0xffedd5, transparent: true, opacity: 0.9, depthWrite: false })
+            );
+            outline.rotation.x = -Math.PI / 2;
+            outline.position.y = 0.052;
+            group.add(outline);
+            worldGroup.add(group);
+            return group;
+        }
+
+        function updateBomberHealthBar(bar, hp, maxHp) {
+            if (!bar) return;
+            const pct = maxHp > 0 ? THREE.MathUtils.clamp(hp / maxHp, 0, 1) : 0;
+            bar.fill.scale.x = pct;
+            bar.fill.position.x = -bar.width * (1 - pct) * 0.5;
+            bar.fill.material.color.setHex(pct > 0.5 ? 0x22c55e : pct > 0.25 ? 0xfacc15 : 0xef4444);
+        }
+
+        function removeBomberHealthBar(bar) {
+            if (!bar) return;
+            worldGroup.remove(bar.group);
+            const index = bomberHealthBars.indexOf(bar);
+            if (index >= 0) bomberHealthBars.splice(index, 1);
+            if (bomberPlayerHealthBar === bar) bomberPlayerHealthBar = null;
+            disposeBomberOverlay(bar.group);
+        }
+
+        function showBomberDamagePopup(position, amount, color = '#fb7185', label = null) {
+            const canvas = document.createElement('canvas');
+            canvas.width = 256;
+            canvas.height = 80;
+            const context = canvas.getContext('2d');
+            context.font = '900 48px Inter, sans-serif';
+            context.textAlign = 'center';
+            context.textBaseline = 'middle';
+            context.lineJoin = 'round';
+            context.lineWidth = 9;
+            context.strokeStyle = 'rgba(15, 23, 42, 0.95)';
+            context.strokeText(label || `−${Math.ceil(amount)} HP`, 128, 40);
+            context.fillStyle = color;
+            context.fillText(label || `−${Math.ceil(amount)} HP`, 128, 40);
+
+            const sprite = new THREE.Sprite(new THREE.SpriteMaterial({
+                map: new THREE.CanvasTexture(canvas),
+                transparent: true,
+                depthTest: false,
+                depthWrite: false
+            }));
+            sprite.position.copy(position);
+            sprite.scale.set(3.2, 1, 1);
+            sprite.renderOrder = 20;
+            worldGroup.add(sprite);
+            bomberDamagePopups.push({ sprite, life: 0.9, duration: 0.9 });
+        }
+
+        function addBomberWaterWave(axis, centerX, centerZ, offset, length, phase) {
+            const segmentCount = 96;
+            const geometry = new THREE.BufferGeometry();
+            geometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array((segmentCount + 1) * 3), 3));
+            const line = new THREE.Line(geometry, new THREE.LineBasicMaterial({
+                color: 0xa5f3fc,
+                transparent: true,
+                opacity: 0.48,
+                depthWrite: false
+            }));
+            line.frustumCulled = false;
+            line.renderOrder = 2;
+            worldGroup.add(line);
+            bomberWaterWaves.push({ line, axis, centerX, centerZ, offset, length, phase, segmentCount });
+        }
+
+        function addBomberWaterRing() {
+            const addStrip = (geometry, material, x, z) => {
+                const mesh = new THREE.Mesh(geometry, material);
+                mesh.rotation.x = -Math.PI / 2;
+                mesh.position.set(x, 0.07, z);
+                worldGroup.add(mesh);
+            };
+            addStrip(bomberWaterHorizontalGeometry, bomberWaterHorizontalMaterial, 0, BOMBER_ORIGIN);
+            addStrip(bomberWaterHorizontalGeometry, bomberWaterHorizontalMaterial, 0, -BOMBER_ORIGIN);
+            addStrip(bomberWaterVerticalGeometry, bomberWaterVerticalMaterial, BOMBER_ORIGIN, 0);
+            addStrip(bomberWaterVerticalGeometry, bomberWaterVerticalMaterial, -BOMBER_ORIGIN, 0);
+
+            for (let i = 0; i < BOMBER_GRID_SIZE; i++) {
+                bomberHardCells.add(bomberCellKey(i, 0));
+                bomberHardCells.add(bomberCellKey(i, BOMBER_GRID_SIZE - 1));
+                if (i > 0 && i < BOMBER_GRID_SIZE - 1) {
+                    bomberHardCells.add(bomberCellKey(0, i));
+                    bomberHardCells.add(bomberCellKey(BOMBER_GRID_SIZE - 1, i));
+                }
+            }
+
+            const waveOffsets = [-1.12, -0.05, 1.02];
+            waveOffsets.forEach((offset, index) => {
+                addBomberWaterWave('x', 0, BOMBER_ORIGIN, offset, 50, index * 1.8);
+                addBomberWaterWave('x', 0, -BOMBER_ORIGIN, offset, 50, index * 1.8 + 0.8);
+                addBomberWaterWave('z', BOMBER_ORIGIN, 0, offset, 42, index * 1.8 + 1.4);
+                addBomberWaterWave('z', -BOMBER_ORIGIN, 0, offset, 42, index * 1.8 + 2.2);
+            });
+        }
+
+        function updateBomberWater(time) {
+            const flow = (time * 0.035) % 1;
+            bomberWaterTexture.offset.x = flow;
+            bomberWaterVerticalTexture.offset.y = flow;
+
+            bomberWaterWaves.forEach(wave => {
+                const positions = wave.line.geometry.attributes.position;
+                for (let i = 0; i <= wave.segmentCount; i++) {
+                    const along = (i / wave.segmentCount - 0.5) * wave.length;
+                    const ripple = Math.sin(along * 0.52 - time * 2.1 + wave.phase) * 0.18;
+                    const sway = wave.offset + ripple;
+                    const y = 0.105 + Math.sin(along * 0.68 - time * 2.6 + wave.phase) * 0.018;
+                    if (wave.axis === 'x') positions.setXYZ(i, wave.centerX + along, y, wave.centerZ + sway);
+                    else positions.setXYZ(i, wave.centerX + sway, y, wave.centerZ + along);
+                }
+                positions.needsUpdate = true;
+            });
+        }
+
+        function bomberCellKey(col, row) { return `${col},${row}`; }
+
+        function bomberCellWorld(col, row) {
+            return { x: BOMBER_ORIGIN + col * BOMBER_TILE, z: BOMBER_ORIGIN + row * BOMBER_TILE };
+        }
+
+        function bomberWorldToCell(x, z) {
+            return {
+                col: THREE.MathUtils.clamp(Math.round((x - BOMBER_ORIGIN) / BOMBER_TILE), 0, BOMBER_GRID_SIZE - 1),
+                row: THREE.MathUtils.clamp(Math.round((z - BOMBER_ORIGIN) / BOMBER_TILE), 0, BOMBER_GRID_SIZE - 1)
+            };
+        }
+
+        function bomberCellBlocked(col, row) {
+            if (col <= 0 || row <= 0 || col >= BOMBER_GRID_SIZE - 1 || row >= BOMBER_GRID_SIZE - 1) return true;
+            const key = bomberCellKey(col, row);
+            return bomberHardCells.has(key) || bomberSoftByCell.has(key);
+        }
+
+        function addBomberHardWall(col, row) {
+            const { x, z } = bomberCellWorld(col, row);
+            const wallHeight = 1.675;
+            const mesh = new THREE.Mesh(
+                new RoundedBoxGeometry(3.88, wallHeight, 3.88, 3, 0.12),
+                bomberStoneWallMaterial
+            );
+            mesh.position.set(x, wallHeight * 0.5, z);
+            mesh.castShadow = true;
+            mesh.receiveShadow = true;
+            worldGroup.add(mesh);
+
+            const cap = new THREE.Mesh(
+                new THREE.BoxGeometry(3.72, 0.07, 3.72),
+                bomberStoneCapMaterial
+            );
+            cap.position.set(x, wallHeight + 0.035, z);
+            cap.receiveShadow = true;
+            worldGroup.add(cap);
+
+            const wallHalf = 1.94;
+            const collider = { minX: x - wallHalf, maxX: x + wallHalf, minY: 0, maxY: wallHeight, minZ: z - wallHalf, maxZ: z + wallHalf, stepNumber: 0, cameraOccluder: mesh };
+            colliders.push(collider);
+            cameraOccluders.push(mesh);
+            bomberHardCells.add(bomberCellKey(col, row));
+            return mesh;
+        }
+
+        function addBomberSoftBlock(col, row, kind = 'wood') {
+            const { x, z } = bomberCellWorld(col, row);
+            const group = new THREE.Group();
+            let colliderHalf = 1.02;
+            let maxY = 2.75;
+
+            if (kind === 'barrel') {
+                const barrelMat = new THREE.MeshStandardMaterial({ color: 0x27657a, roughness: 0.42, metalness: 0.48 });
+                const bandMat = new THREE.MeshStandardMaterial({ color: 0xcbd5e1, roughness: 0.26, metalness: 0.82 });
+                const darkMetalMat = new THREE.MeshStandardMaterial({ color: 0x263746, roughness: 0.5, metalness: 0.64 });
+                const labelMat = new THREE.MeshStandardMaterial({ color: 0x0e7490, emissive: 0x083344, emissiveIntensity: 0.28, roughness: 0.42, metalness: 0.22 });
+                const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.91, 0.98, 2.5, 24), barrelMat);
+                barrel.position.y = 1.28;
+                barrel.castShadow = true;
+                barrel.receiveShadow = true;
+                group.add(barrel);
+                [0.3, 1.25, 2.25].forEach(y => {
+                    const band = new THREE.Mesh(new THREE.TorusGeometry(0.95, 0.085, 8, 24), bandMat);
+                    band.rotation.x = Math.PI / 2;
+                    band.position.y = y;
+                    group.add(band);
+                });
+                for (let i = 0; i < 8; i++) {
+                    const angle = (i / 8) * Math.PI * 2;
+                    const rib = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.035, 2.1, 6), darkMetalMat);
+                    rib.position.set(Math.sin(angle) * 0.91, 1.28, Math.cos(angle) * 0.91);
+                    group.add(rib);
+                }
+                const topRim = new THREE.Mesh(new THREE.CylinderGeometry(0.87, 0.94, 0.12, 24), bandMat);
+                topRim.position.y = 2.55;
+                group.add(topRim);
+                const lid = new THREE.Mesh(new THREE.CylinderGeometry(0.75, 0.75, 0.07, 24), darkMetalMat);
+                lid.position.y = 2.645;
+                group.add(lid);
+                const cap = new THREE.Mesh(new THREE.TorusGeometry(0.19, 0.035, 8, 18), bandMat);
+                cap.rotation.x = Math.PI / 2;
+                cap.position.set(0.38, 2.69, 0.28);
+                group.add(cap);
+                const label = new THREE.Mesh(new RoundedBoxGeometry(0.62, 0.46, 0.07, 3, 0.05), labelMat);
+                label.position.set(0, 1.3, 0.91);
+                group.add(label);
+                const droplet = new THREE.Mesh(
+                    new THREE.SphereGeometry(0.15, 12, 8),
+                    new THREE.MeshStandardMaterial({ color: 0x67e8f9, emissive: 0x0891b2, emissiveIntensity: 0.42, roughness: 0.24 })
+                );
+                droplet.position.set(0, 1.3, 0.96);
+                droplet.scale.set(0.72, 1.18, 0.42);
+                group.add(droplet);
+                for (const y of [0.3, 2.25]) {
+                    for (let i = 0; i < 6; i++) {
+                        const angle = (i / 6) * Math.PI * 2;
+                        const bolt = new THREE.Mesh(new THREE.SphereGeometry(0.055, 8, 6), darkMetalMat);
+                        bolt.position.set(Math.sin(angle) * 0.97, y, Math.cos(angle) * 0.97);
+                        group.add(bolt);
+                    }
+                }
+            } else if (kind === 'bush') {
+                const foliage = new THREE.Group();
+                const greens = [0x3f8f45, 0x58a84f, 0x78b957];
+                const leaves = [
+                    [-0.48, 0.58, 0, 1.1, 0],
+                    [0.48, 0.58, 0, 1.1, 1],
+                    [0, 1.28, -0.42, 1.0, 2],
+                    [0, 1.28, 0.42, 1.0, 1],
+                    [0, 1.98, 0, 0.88, 2]
+                ];
+                leaves.forEach(([lx, ly, lz, scale, colorIndex]) => {
+                    const leaf = new THREE.Mesh(
+                        new RoundedBoxGeometry(1.16, 0.9, 1.16, 2, 0.13),
+                        new THREE.MeshStandardMaterial({ color: greens[colorIndex], roughness: 0.92 })
+                    );
+                    leaf.position.set(lx, ly, lz);
+                    leaf.scale.set(scale, scale, scale);
+                    leaf.castShadow = true;
+                    leaf.receiveShadow = true;
+                    foliage.add(leaf);
+                });
+                group.add(foliage);
+                const stem = new THREE.Mesh(
+                    new RoundedBoxGeometry(0.3, 0.72, 0.3, 2, 0.06),
+                    new THREE.MeshStandardMaterial({ color: 0x795332, roughness: 1 })
+                );
+                stem.position.y = 0.38;
+                group.add(stem);
+                group.userData.swayGroup = foliage;
+                group.userData.swayPhase = Math.random() * Math.PI * 2;
+                colliderHalf = 1.05;
+                maxY = 2.55;
+            } else if (kind === 'metal') {
+                const metalMat = new THREE.MeshStandardMaterial({ color: 0x94a3b8, roughness: 0.35, metalness: 0.72 });
+                const darkMat = new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.55, metalness: 0.6 });
+                const body = new THREE.Mesh(new RoundedBoxGeometry(2.02, 2.55, 2.02, 3, 0.12), metalMat);
+                body.position.y = 1.28;
+                body.castShadow = true;
+                group.add(body);
+                for (const y of [0.35, 2.18]) {
+                    const band = new THREE.Mesh(new THREE.BoxGeometry(2.08, 0.14, 2.08), darkMat);
+                    band.position.y = y;
+                    group.add(band);
+                }
+                const topMark = new THREE.Mesh(new THREE.BoxGeometry(0.88, 0.08, 0.88), new THREE.MeshStandardMaterial({ color: 0xfacc15, emissive: 0x6b4a00, emissiveIntensity: 0.22 }));
+                topMark.position.y = 2.58;
+                group.add(topMark);
+            } else {
+                const wood = new THREE.MeshStandardMaterial({ color: 0xa96a37, roughness: 0.88 });
+                const trim = new THREE.MeshStandardMaterial({ color: 0xf5c66a, roughness: 0.55, metalness: 0.08 });
+                const body = new THREE.Mesh(new RoundedBoxGeometry(2.02, 2.55, 2.02, 3, 0.12), wood);
+                body.position.y = 1.28;
+                body.castShadow = true;
+                body.receiveShadow = true;
+                group.add(body);
+                for (const y of [0.42, 2.15]) {
+                    const band = new THREE.Mesh(new THREE.BoxGeometry(2.08, 0.15, 2.08), trim);
+                    band.position.y = y;
+                    group.add(band);
+                }
+                const crossMat = new THREE.MeshStandardMaterial({ color: 0x75411f, roughness: 0.95 });
+                const slashA = new THREE.Mesh(new THREE.BoxGeometry(0.14, 2.25, 2.04), crossMat);
+                const slashB = new THREE.Mesh(new THREE.BoxGeometry(2.04, 2.25, 0.14), crossMat);
+                slashA.position.y = 1.28;
+                slashB.position.y = 1.28;
+                group.add(slashA, slashB);
+            }
+
+            group.position.set(x, 0, z);
+            worldGroup.add(group);
+            const collider = { minX: x - colliderHalf, maxX: x + colliderHalf, minY: 0, maxY, minZ: z - colliderHalf, maxZ: z + colliderHalf, stepNumber: 0, cameraOccluder: group.children[0] };
+            colliders.push(collider);
+            cameraOccluders.push(collider.cameraOccluder);
+            const block = { group, col, row, collider, hp: 1, kind };
+            bomberBlocks.push(block);
+            bomberSoftByCell.set(bomberCellKey(col, row), block);
+            return block;
+        }
+
+        function buildBomberMap1() {
+            clearWorld();
+            MAP_BOUNDS.halfSize = 27;
+            const floor = new THREE.Mesh(
+                new THREE.BoxGeometry(52, 1, 52),
+                new THREE.MeshStandardMaterial({ color: 0xdde9bf, emissive: 0x28351b, emissiveIntensity: 0.12, roughness: 0.94 })
+            );
+            floor.position.set(0, -0.5, 0);
+            floor.receiveShadow = true;
+            worldGroup.add(floor);
+            colliders.push({ minX: -26, maxX: 26, minY: -1, maxY: 0, minZ: -26, maxZ: 26, stepNumber: 0 });
+
+            // Alternating tiles make the arena readable from the angled camera.
+            const tileGeo = new THREE.PlaneGeometry(3.94, 3.94);
+            const tileMats = [
+                new THREE.MeshBasicMaterial({ color: 0xe8f0d1 }),
+                new THREE.MeshBasicMaterial({ color: 0xd7e6b9 })
+            ];
+            for (let row = 0; row < BOMBER_GRID_SIZE; row++) {
+                for (let col = 0; col < BOMBER_GRID_SIZE; col++) {
+                    const tile = new THREE.Mesh(tileGeo, tileMats[(row + col) % 2]);
+                    tile.rotation.x = -Math.PI / 2;
+                    const pos = bomberCellWorld(col, row);
+                    tile.position.set(pos.x, 0.012, pos.z);
+                    worldGroup.add(tile);
+                }
+            }
+            const gridLines = new THREE.GridHelper(52, 13, 0x91a77c, 0xb7c9a0);
+            gridLines.position.y = 0.025;
+            worldGroup.add(gridLines);
+
+            addBomberWaterRing();
+            for (let row = 2; row < BOMBER_GRID_SIZE - 1; row += 2) {
+                for (let col = 2; col < BOMBER_GRID_SIZE - 1; col += 2) {
+                    // Keep one opening beside the spawn so the first bomb has a safe escape turn.
+                    if (col === 2 && row === 10) continue;
+                    addBomberHardWall(col, row);
+                }
+            }
+
+            const monsterCells = [
+                [11, 1], [11, 5], [9, 7], [7, 9],
+                [5, 11], [1, 7], [3, 5], [7, 3]
+            ];
+            const safeCells = new Set([[1, 11], [1, 10], [2, 11], ...monsterCells].map(([c, r]) => bomberCellKey(c, r)));
+            // A deliberately connected obstacle layout: keep the main corridors
+            // open so monsters can pathfind without destroying any boxes.
+            const crateCells = [
+                [1, 3], [1, 5], [1, 6], [1, 9], [2, 1], [2, 3],
+                [3, 1], [3, 2], [3, 3], [3, 4], [4, 3], [5, 1],
+                [5, 3], [5, 4], [5, 5], [5, 7], [5, 9], [6, 3],
+                [6, 7], [7, 1], [7, 2], [8, 3], [8, 7], [8, 9],
+                [9, 1], [9, 2], [9, 3], [9, 4], [9, 5], [10, 5],
+                [11, 8], [11, 9]
+            ];
+            const blockKinds = ['wood', 'barrel', 'bush', 'metal', 'wood', 'bush', 'barrel'];
+            crateCells.forEach(([col, row]) => {
+                const key = bomberCellKey(col, row);
+                if (!safeCells.has(key) && !bomberHardCells.has(key)) {
+                    const kind = blockKinds[(col * 3 + row * 5) % blockKinds.length];
+                    addBomberSoftBlock(col, row, kind);
+                }
+            });
+
+            // Neon corner lamps make the map readable without changing its routes.
+            for (const [col, row, color] of [[1, 1, 0x22d3ee], [11, 1, 0xf472b6], [1, 11, 0x34d399], [11, 11, 0xfbbf24]]) {
+                const { x, z } = bomberCellWorld(col, row);
+                const lamp = new THREE.Mesh(
+                    new THREE.CylinderGeometry(0.22, 0.3, 1.35, 10),
+                    new THREE.MeshStandardMaterial({ color, emissive: color, emissiveIntensity: 0.65 })
+                );
+                lamp.position.set(x, 0.68, z);
+                worldGroup.add(lamp);
+            }
+            spawnBomberStageOneEnemies(monsterCells);
+        }
+
+        function createBomberMonster(col, row, isBoss = false) {
+            const { x, z } = bomberCellWorld(col, row);
+            const group = new THREE.Group();
+            const bodyColor = isBoss ? 0x7c3aed : [0x22c55e, 0x06b6d4, 0xf97316, 0xec4899, 0x84cc16][Math.floor(Math.random() * 5)];
+            const bodyMat = new THREE.MeshStandardMaterial({ color: bodyColor, emissive: bodyColor, emissiveIntensity: isBoss ? 0.24 : 0.12, roughness: 0.48 });
+            const darkMat = new THREE.MeshStandardMaterial({ color: 0x172033, roughness: 0.52 });
+            const eyeMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+            const pupilMat = new THREE.MeshBasicMaterial({ color: 0x111827 });
+
+            const body = new THREE.Mesh(new RoundedBoxGeometry(isBoss ? 2.6 : 1.55, isBoss ? 2.7 : 1.75, isBoss ? 2.25 : 1.45, 4, 0.28), bodyMat);
+            body.position.y = isBoss ? 1.65 : 1.08;
+            body.castShadow = true;
+            group.add(body);
+
+            const head = new THREE.Mesh(new THREE.SphereGeometry(isBoss ? 1.15 : 0.72, 16, 12), bodyMat);
+            head.position.set(0, isBoss ? 3.0 : 2.05, 0.12);
+            group.add(head);
+            for (const side of [-1, 1]) {
+                const ear = new THREE.Mesh(new THREE.ConeGeometry(isBoss ? 0.5 : 0.34, isBoss ? 1.1 : 0.72, 8), darkMat);
+                ear.position.set(side * (isBoss ? 0.78 : 0.5), isBoss ? 3.92 : 2.62, 0.05);
+                ear.rotation.z = side * -0.18;
+                group.add(ear);
+                const eye = new THREE.Mesh(new THREE.SphereGeometry(isBoss ? 0.18 : 0.13, 10, 8), eyeMat);
+                eye.position.set(side * (isBoss ? 0.43 : 0.28), isBoss ? 3.02 : 2.12, isBoss ? 1.08 : 0.72);
+                group.add(eye);
+                const pupil = new THREE.Mesh(new THREE.SphereGeometry(isBoss ? 0.09 : 0.065, 8, 6), pupilMat);
+                pupil.position.set(side * (isBoss ? 0.43 : 0.28), isBoss ? 3.02 : 2.12, isBoss ? 1.23 : 0.84);
+                group.add(pupil);
+            }
+            const mouth = new THREE.Mesh(new THREE.BoxGeometry(isBoss ? 0.72 : 0.42, 0.12, 0.08), darkMat);
+            mouth.position.set(0, isBoss ? 2.55 : 1.72, isBoss ? 1.16 : 0.79);
+            group.add(mouth);
+            group.position.set(x, 0, z);
+            group.scale.setScalar(isBoss ? 1.12 : 1.20);
+            worldGroup.add(group);
+
+            const entity = {
+                group, col, row, targetCell: null,
+                pathHistory: [{ col, row }],
+                retreatTarget: null,
+                isRetreating: false,
+                walkPhase: Math.random() * Math.PI * 2,
+                speed: isBoss ? 2.05 : 2.15 + Math.random() * 0.25,
+                movePause: Math.random() * 0.35,
+                touchCooldown: 0,
+                attackAnimTimer: 0,
+                hp: isBoss ? 14 : 1,
+                maxHp: isBoss ? 14 : 1,
+                isBoss,
+                damageFlash: 0,
+                attackTimer: isBoss ? 4.8 : 0,
+                attackPhase: isBoss ? 'idle' : null,
+                nextAttackType: 'line',
+                attackVisual: null,
+                attackOrigin: null,
+                attackDirection: null,
+                attackLength: 0
+            };
+            entity.healthBar = createBomberHealthBar(group, isBoss ? 3.1 : 2.0, isBoss ? 5.1 : 3.85);
+            updateBomberHealthBar(entity.healthBar, entity.hp, entity.maxHp);
+            return entity;
+        }
+
+        function restoreBomberSpawnFade(fade) {
+            if (!fade) return;
+            fade.materials.forEach(({ material, opacity, transparent, depthWrite }) => {
+                material.opacity = opacity;
+                material.transparent = transparent;
+                material.depthWrite = depthWrite;
+                material.needsUpdate = true;
+            });
+            fade.group.visible = true;
+        }
+
+        function scheduleBomberSpawnFade(group, delay, duration) {
+            const materials = [];
+            const seenMaterials = new Set();
+            group.traverse(child => {
+                const childMaterials = Array.isArray(child.material) ? child.material : child.material ? [child.material] : [];
+                childMaterials.forEach(material => {
+                    if (seenMaterials.has(material)) return;
+                    seenMaterials.add(material);
+                    materials.push({
+                        material,
+                        opacity: material.opacity,
+                        transparent: material.transparent,
+                        depthWrite: material.depthWrite
+                    });
+                    material.transparent = true;
+                    material.depthWrite = false;
+                    material.opacity = 0;
+                    material.needsUpdate = true;
+                });
+            });
+            group.visible = false;
+            bomberSpawnFades.push({ group, materials, delay, duration, elapsed: 0 });
+        }
+
+        function updateBomberSpawnFades(dt) {
+            for (let i = bomberSpawnFades.length - 1; i >= 0; i--) {
+                const fade = bomberSpawnFades[i];
+                fade.elapsed += dt;
+                if (fade.elapsed < fade.delay) continue;
+                fade.group.visible = true;
+                const progress = THREE.MathUtils.clamp((fade.elapsed - fade.delay) / fade.duration, 0, 1);
+                fade.materials.forEach(({ material, opacity }) => {
+                    material.opacity = opacity * progress;
+                });
+                if (progress >= 1) {
+                    restoreBomberSpawnFade(fade);
+                    bomberSpawnFades.splice(i, 1);
+                }
+            }
+        }
+
+        function getBomberReachableCells(startCol, startRow) {
+            const queue = [[startCol, startRow, 0]];
+            const visited = new Map([[bomberCellKey(startCol, startRow), 0]]);
+            const dirs = [[1, 0], [-1, 0], [0, 1], [0, -1]];
+            for (let i = 0; i < queue.length; i++) {
+                const [col, row, distance] = queue[i];
+                for (const [dc, dr] of dirs) {
+                    const nc = col + dc, nr = row + dr;
+                    const key = bomberCellKey(nc, nr);
+                    if (nc <= 0 || nr <= 0 || nc >= BOMBER_GRID_SIZE - 1 || nr >= BOMBER_GRID_SIZE - 1) continue;
+                    if (visited.has(key) || bomberCellBlocked(nc, nr)) continue;
+                    if (bomberBombs.some(b => b.col === nc && b.row === nr)) continue;
+                    visited.set(key, distance + 1);
+                    queue.push([nc, nr, distance + 1]);
+                }
+            }
+            return [...visited.entries()].map(([key, distance]) => {
+                const [col, row] = key.split(',').map(Number);
+                return { col, row, distance };
+            });
+        }
+
+        function findBomberDistantSpawnCell(minDistance = 6) {
+            const playerCell = bomberWorldToCell(state.pos.x, state.pos.z);
+            const reachable = getBomberReachableCells(playerCell.col, playerCell.row);
+            const occupied = bomberEnemies.map(enemy => bomberWorldToCell(enemy.group.position.x, enemy.group.position.z));
+            const isFree = cell => {
+                if (cell.col === playerCell.col && cell.row === playerCell.row) return false;
+                if (bomberCellBlocked(cell.col, cell.row)) return false;
+                if (bomberBombs.some(b => b.col === cell.col && b.row === cell.row)) return false;
+                if (occupied.some(pos => Math.abs(pos.col - cell.col) + Math.abs(pos.row - cell.row) < 3)) return false;
+                const world = bomberCellWorld(cell.col, cell.row);
+                if (Math.hypot(world.x - state.pos.x, world.z - state.pos.z) < BOMBER_TILE * 2.7) return false;
+                return true;
+            };
+            let candidates = reachable.filter(cell => cell.distance >= minDistance && isFree(cell));
+            if (!candidates.length) candidates = reachable.filter(cell => cell.distance >= 4 && isFree(cell));
+            if (!candidates.length) candidates = reachable.filter(cell => cell.distance >= 2 && isFree(cell));
+            if (!candidates.length) return null;
+            candidates.sort((a, b) => b.distance - a.distance);
+            // Pick among the farthest cells, keeping each new monster apart from the others.
+            const pool = candidates.slice(0, Math.min(7, candidates.length));
+            const chosen = pool[Math.floor(Math.random() * pool.length)];
+            return { col: chosen.col, row: chosen.row };
+        }
+
+        function refillBomberEnemies() {
+            if (state.bomberStage !== 1 || state.matchEnded || state.bomberTransitioning) return;
+            const desired = Math.min(8, Math.max(0, state.bomberEnemiesTotal - state.bomberKills));
+            let safety = 0;
+            while (bomberEnemies.length < desired && safety++ < 8) {
+                const cell = findBomberDistantSpawnCell(6);
+                if (!cell) break;
+                bomberEnemies.push(createBomberMonster(cell.col, cell.row, false));
+            }
+        }
+
+        function spawnBomberStageOneEnemies(fallbackCells) {
+            state.bomberEnemiesTotal = 20;
+            bomberEnemies.length = 0;
+            const addInitialEnemy = cell => {
+                const enemy = createBomberMonster(cell.col, cell.row, false);
+                bomberEnemies.push(enemy);
+                const order = bomberEnemies.length - 1;
+                const delay = order < 4 ? 0 : 0.5 + (order - 4) * 0.1;
+                const duration = order < 4 ? 0.5 : 0.2;
+                scheduleBomberSpawnFade(enemy.group, delay, duration);
+                scheduleBomberSpawnFade(enemy.healthBar.group, delay, duration);
+            };
+            // The player starts at the south-west corner. Initial enemies are
+            // selected from reachable cells on the far side of the map.
+            for (let i = 0; i < 8; i++) {
+                let cell = findBomberDistantSpawnCell(6);
+                if (!cell) {
+                    const fallback = fallbackCells
+                        .map(([col, row]) => ({ col, row, ...bomberCellWorld(col, row) }))
+                        .filter(c => !bomberCellBlocked(c.col, c.row) && !bomberEnemies.some(e => e.col === c.col && e.row === c.row))
+                        .sort((a, b) => Math.hypot(b.x - state.pos.x, b.z - state.pos.z) - Math.hypot(a.x - state.pos.x, a.z - state.pos.z));
+                    if (!fallback.length) break;
+                    cell = { col: fallback[0].col, row: fallback[0].row };
+                }
+                addInitialEnemy(cell);
+            }
+        }
+
+        function startBomberGame() {
+            restoreBomberPlayerDeathAnimation();
+            bomberPlayerFlashTimer = 0;
+            bomberGameOverModalTimer = 0;
+            player.root.visible = true;
+            bomberUpgrade.blastRange = 2;
+            bomberUpgrade.moveSpeed = 9.6;
+            bomberUpgrade.shieldHits = 0;
+            bomberUpgrade.bombCapacity = 1;
+            syncBomberShieldVisual();
+            player.root.scale.setScalar(1.95);
+            state.bomberStage = 1;
+            state.bomberKills = 0;
+            state.bomberEnemiesTotal = 20;
+            state.bomberTransitioning = false;
+            state.bomberTransitionTimer = 0;
+            state.bomberBombCooldown = 0;
+            state.bomberTimeRemaining = 120;
+            state.bomberLastDisplayedTime = -1;
+            bomberBoss = null;
+            bomberNextStageTimer = 0;
+            const playerSpawn = bomberCellWorld(1, 11);
+            state.pos.set(playerSpawn.x, 0.5, playerSpawn.z);
+            buildBomberMap1();
+            bomberPlayerFootprint = createBomberPlayerFootprint();
+            bomberPlayerHealthBar = createBomberHealthBar(player.root, 2.8, 8.3);
+            bomberIntroElapsed = 0;
+            bomberIntroActive = true;
+            scheduleBomberSpawnFade(player.root, 0, 0.5);
+            scheduleBomberSpawnFade(bomberPlayerHealthBar.group, 0, 0.5);
+            state.vel.set(0, 0, 0);
+            state.camYaw = 0;
+            state.camPitch = 0.34;
+            state.rotationY = 0;
+            state.isGrounded = true;
+            updateBomberStageHUD();
+        }
+
+        function findBomberNextCell(startCol, startRow, targetCol, targetRow) {
+            if (startCol === targetCol && startRow === targetRow) return null;
+            const startKey = bomberCellKey(startCol, startRow);
+            const targetKey = bomberCellKey(targetCol, targetRow);
+            const queue = [[startCol, startRow]];
+            const cameFrom = new Map([[startKey, null]]);
+            const dirs = [[1, 0], [-1, 0], [0, 1], [0, -1]];
+            for (let index = 0; index < queue.length; index++) {
+                const [col, row] = queue[index];
+                if (bomberCellKey(col, row) === targetKey) break;
+                for (const [dc, dr] of dirs) {
+                    const nc = col + dc;
+                    const nr = row + dr;
+                    const key = bomberCellKey(nc, nr);
+                    if (cameFrom.has(key) || nc <= 0 || nr <= 0 || nc >= BOMBER_GRID_SIZE - 1 || nr >= BOMBER_GRID_SIZE - 1 || bomberCellBlocked(nc, nr)) continue;
+                    if (bomberBombs.some(b => b.col === nc && b.row === nr)) continue;
+                    cameFrom.set(key, bomberCellKey(col, row));
+                    queue.push([nc, nr]);
+                }
+            }
+            if (!cameFrom.has(targetKey)) return null;
+            let cursor = targetKey;
+            let previous = cameFrom.get(cursor);
+            while (previous && previous !== startKey) {
+                cursor = previous;
+                previous = cameFrom.get(cursor);
+            }
+            const [col, row] = cursor.split(',').map(Number);
+            return { col, row };
+        }
+
+        function chooseBomberRetreatCell(entity) {
+            const isAvailable = cell => {
+                if (bomberCellBlocked(cell.col, cell.row)) return false;
+                if (bomberBombs.some(bomb => bomb.col === cell.col && bomb.row === cell.row)) return false;
+                if (bomberEnemies.some(other => other !== entity && !other.dying && other.col === cell.col && other.row === cell.row)) return false;
+                return !bomberBoss || bomberBoss === entity || bomberBoss.dying ||
+                    bomberBoss.col !== cell.col || bomberBoss.row !== cell.row;
+            };
+            const history = entity.pathHistory;
+            if (history.length >= 4) {
+                for (let back = 3; back >= 1; back--) {
+                    const cell = history[history.length - 1 - back];
+                    if (isAvailable(cell) && findBomberNextCell(entity.col, entity.row, cell.col, cell.row)) return cell;
+                }
+            }
+
+            const recent = new Set(history.slice(-4).map(cell => bomberCellKey(cell.col, cell.row)));
+            const reachable = getBomberReachableCells(entity.col, entity.row);
+            const currentPlayerCell = bomberWorldToCell(state.pos.x, state.pos.z);
+            let candidates = reachable.filter(cell => cell.distance === 3 && isAvailable(cell) &&
+                !recent.has(bomberCellKey(cell.col, cell.row)));
+            if (!candidates.length) {
+                candidates = reachable.filter(cell => cell.distance === 2 && isAvailable(cell) &&
+                    !recent.has(bomberCellKey(cell.col, cell.row)));
+            }
+            if (!candidates.length) candidates = reachable.filter(cell => cell.distance > 0 && cell.distance <= 3 && isAvailable(cell));
+            candidates.sort((a, b) => {
+                const distanceA = Math.abs(a.col - currentPlayerCell.col) + Math.abs(a.row - currentPlayerCell.row);
+                const distanceB = Math.abs(b.col - currentPlayerCell.col) + Math.abs(b.row - currentPlayerCell.row);
+                return distanceB - distanceA || b.distance - a.distance;
+            });
+            return candidates[0] || null;
+        }
+
+        function spawnBomberMeleeEffect(entity, isBoss) {
+            const direction = new THREE.Vector3(
+                state.pos.x - entity.group.position.x,
+                0,
+                state.pos.z - entity.group.position.z
+            );
+            if (direction.lengthSq() < 0.01) {
+                direction.set(Math.sin(entity.group.rotation.y), 0, Math.cos(entity.group.rotation.y));
+            } else {
+                direction.normalize();
+            }
+
+            const color = isBoss ? 0xf97316 : 0xfb7185;
+            const position = new THREE.Vector3(
+                state.pos.x - direction.x * 0.55,
+                1.65,
+                state.pos.z - direction.z * 0.55
+            );
+            const slash = new THREE.Mesh(
+                new THREE.BoxGeometry(0.13, 0.16, isBoss ? 1.8 : 1.35),
+                new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.95, depthWrite: false })
+            );
+            slash.position.copy(position);
+            slash.rotation.y = Math.atan2(direction.x, direction.z);
+            worldGroup.add(slash);
+            bomberEffects.push({ mesh: slash, life: 0.2, maxLife: 0.2, opacity: 0.95 });
+
+            const impact = new THREE.Mesh(
+                new THREE.RingGeometry(0.3, isBoss ? 0.85 : 0.65, 24),
+                new THREE.MeshBasicMaterial({ color: 0xffe4e6, transparent: true, opacity: 0.82, side: THREE.DoubleSide, depthWrite: false })
+            );
+            impact.rotation.x = -Math.PI / 2;
+            impact.position.set(state.pos.x, 0.12, state.pos.z);
+            worldGroup.add(impact);
+            bomberEffects.push({ mesh: impact, life: 0.24, maxLife: 0.24, opacity: 0.82 });
+
+            spawnImpactSparks(new THREE.Vector3(state.pos.x, 1.2, state.pos.z), color, isBoss ? 15 : 9);
+        }
+
+        function disposeBomberEntityVisuals(entity) {
+            if (!entity) return;
+            disposeBomberBossWarning(entity);
+            worldGroup.remove(entity.group);
+            removeBomberHealthBar(entity.healthBar);
+            entity.healthBar = null;
+            entity.group.traverse(child => {
+                if (child.geometry) child.geometry.dispose();
+                if (child.material) {
+                    if (Array.isArray(child.material)) child.material.forEach(material => material.dispose());
+                    else {
+                        if (child.material.map) child.material.map.dispose();
+                        child.material.dispose();
+                    }
+                }
+            });
+        }
+
+        function startBomberEntityDeath(entity) {
+            if (!entity || entity.dying) return;
+            const materials = [];
+            const seenMaterials = new Set();
+            entity.group.traverse(child => {
+                const childMaterials = Array.isArray(child.material) ? child.material : child.material ? [child.material] : [];
+                childMaterials.forEach(material => {
+                    if (seenMaterials.has(material)) return;
+                    seenMaterials.add(material);
+                    materials.push({
+                        material,
+                        opacity: material.opacity,
+                        transparent: material.transparent,
+                        depthWrite: material.depthWrite
+                    });
+                    material.transparent = true;
+                    material.depthWrite = false;
+                    material.needsUpdate = true;
+                });
+            });
+            entity.dying = true;
+            entity.targetCell = null;
+            if (entity.healthBar) {
+                removeBomberHealthBar(entity.healthBar);
+                entity.healthBar = null;
+            }
+            bomberDeaths.push({
+                entity,
+                elapsed: 0,
+                duration: 0.82,
+                baseY: entity.group.position.y,
+                rotationX: entity.group.rotation.x,
+                rotationY: entity.group.rotation.y,
+                rotationZ: entity.group.rotation.z,
+                scale: entity.group.scale.clone(),
+                materials
+            });
+        }
+
+        function updateBomberDeathAnimations(dt) {
+            for (let i = bomberDeaths.length - 1; i >= 0; i--) {
+                const death = bomberDeaths[i];
+                death.elapsed += dt;
+                const progress = THREE.MathUtils.clamp(death.elapsed / death.duration, 0, 1);
+                const fade = THREE.MathUtils.clamp((death.elapsed - 0.2) / (death.duration - 0.2), 0, 1);
+                const wobble = 1 - fade;
+                const group = death.entity.group;
+                group.rotation.x = death.rotationX + Math.cos(death.elapsed * 31) * 0.16 * wobble;
+                group.rotation.y = death.rotationY + Math.sin(death.elapsed * 24) * 0.12 * wobble;
+                group.rotation.z = death.rotationZ + Math.sin(death.elapsed * 35) * 0.2 * wobble;
+                group.position.y = death.baseY + Math.abs(Math.sin(death.elapsed * 22)) * 0.12 * wobble;
+                group.scale.copy(death.scale).multiplyScalar(1 - fade * 0.24);
+                death.materials.forEach(({ material, opacity }) => {
+                    material.opacity = opacity * (1 - fade);
+                });
+
+                if (progress < 1) continue;
+
+                const entity = death.entity;
+                death.materials.forEach(({ material, opacity, transparent, depthWrite }) => {
+                    material.opacity = opacity;
+                    material.transparent = transparent;
+                    material.depthWrite = depthWrite;
+                    material.needsUpdate = true;
+                });
+                disposeBomberEntityVisuals(entity);
+                const enemyIndex = bomberEnemies.indexOf(entity);
+                if (enemyIndex >= 0) bomberEnemies.splice(enemyIndex, 1);
+                bomberDeaths.splice(i, 1);
+
+                if (bomberBoss === entity) {
+                    bomberBoss = null;
+                    completeBomberMap1();
+                }
+            }
+        }
+
+        function restoreBomberPlayerDeathAnimation() {
+            const death = bomberPlayerDeathAnimation;
+            if (!death) return;
+            death.materials.forEach(({ material, opacity, transparent, depthWrite }) => {
+                material.opacity = opacity;
+                material.transparent = transparent;
+                material.depthWrite = depthWrite;
+                material.needsUpdate = true;
+            });
+            player.root.position.copy(death.position);
+            player.root.rotation.copy(death.rotation);
+            player.root.scale.copy(death.scale);
+            player.root.visible = true;
+            bomberPlayerDeathAnimation = null;
+        }
+
+        function startBomberPlayerDeathAnimation() {
+            if (bomberPlayerDeathAnimation) return;
+            const materials = [];
+            const seenMaterials = new Set();
+            player.root.traverse(child => {
+                const childMaterials = Array.isArray(child.material) ? child.material : child.material ? [child.material] : [];
+                childMaterials.forEach(material => {
+                    if (seenMaterials.has(material)) return;
+                    seenMaterials.add(material);
+                    materials.push({
+                        material,
+                        opacity: material.opacity,
+                        transparent: material.transparent,
+                        depthWrite: material.depthWrite
+                    });
+                    material.transparent = true;
+                    material.depthWrite = false;
+                    material.needsUpdate = true;
+                });
+            });
+            bomberPlayerFlashTimer = 0;
+            player.root.visible = true;
+            bomberPlayerDeathAnimation = {
+                elapsed: 0,
+                duration: 0.82,
+                position: player.root.position.clone(),
+                rotation: player.root.rotation.clone(),
+                scale: player.root.scale.clone(),
+                materials
+            };
+        }
+
+        function updateBomberPlayerDeathAnimation(dt) {
+            const death = bomberPlayerDeathAnimation;
+            if (!death) return;
+            death.elapsed += dt;
+            const progress = THREE.MathUtils.clamp(death.elapsed / death.duration, 0, 1);
+            const fade = THREE.MathUtils.clamp((death.elapsed - 0.2) / (death.duration - 0.2), 0, 1);
+            const wobble = 1 - fade;
+            player.root.rotation.x = death.rotation.x + Math.cos(death.elapsed * 31) * 0.16 * wobble;
+            player.root.rotation.z = death.rotation.z + Math.sin(death.elapsed * 35) * 0.2 * wobble;
+            player.root.position.y = death.position.y + Math.abs(Math.sin(death.elapsed * 22)) * 0.12 * wobble;
+            player.root.scale.copy(death.scale).multiplyScalar(1 - fade * 0.24);
+            death.materials.forEach(({ material, opacity }) => {
+                material.opacity = opacity * (1 - fade);
+            });
+            if (progress >= 1) {
+                restoreBomberPlayerDeathAnimation();
+                player.root.visible = false;
+            }
+        }
+
+        function startBomberStageTransitionIfReady() {
+            if (state.bomberStage !== 1 || state.bomberTransitioning || state.matchEnded) return;
+            if (state.bomberKills < state.bomberEnemiesTotal || bomberEnemies.length > 0) return;
+            state.bomberTransitioning = true;
+            bomberNextStageTimer = 2.2;
+            showToast('🏆 Đã diệt hết quái nhỏ! Chuẩn bị bước vào màn Boss…');
+        }
+
+        function updateBomberChaser(entity, dt, isBoss = false) {
+            if (entity.dying) return;
+            entity.touchCooldown = Math.max(0, entity.touchCooldown - dt);
+            entity.movePause = Math.max(0, entity.movePause - dt);
+            entity.damageFlash = Math.max(0, entity.damageFlash - dt);
+            entity.attackAnimTimer = Math.max(0, entity.attackAnimTimer - dt);
+            if (entity.damageFlash > 0) entity.group.children.forEach(child => {
+                if (child.material && child.material.emissive) child.material.emissiveIntensity = 0.95;
+            });
+            else entity.group.children.forEach(child => {
+                if (child.material && child.material.emissive) child.material.emissiveIntensity = isBoss ? 0.24 : 0.12;
+            });
+
+            const playerCell = bomberWorldToCell(state.pos.x, state.pos.z);
+            const bossIsTelegraphing = isBoss && entity.attackPhase && entity.attackPhase !== 'idle';
+            if (!bossIsTelegraphing && !entity.targetCell && entity.movePause <= 0) {
+                if (entity.isRetreating && entity.retreatTarget) {
+                    entity.targetCell = findBomberNextCell(entity.col, entity.row, entity.retreatTarget.col, entity.retreatTarget.row);
+                    if (!entity.targetCell) {
+                        entity.isRetreating = false;
+                        entity.retreatTarget = null;
+                        entity.movePause = 0.3;
+                    }
+                } else {
+                    entity.targetCell = findBomberNextCell(entity.col, entity.row, playerCell.col, playerCell.row);
+                    if (!entity.targetCell) {
+                        const retreatTarget = chooseBomberRetreatCell(entity);
+                        if (retreatTarget) {
+                            entity.isRetreating = true;
+                            entity.retreatTarget = retreatTarget;
+                            entity.targetCell = findBomberNextCell(entity.col, entity.row, retreatTarget.col, retreatTarget.row);
+                        }
+                        if (!entity.targetCell) entity.movePause = 0.45;
+                    }
+                }
+            }
+            if (entity.targetCell && bomberBombs.some(bomb =>
+                bomb.col === entity.targetCell.col && bomb.row === entity.targetCell.row
+            )) {
+                entity.targetCell = null;
+                entity.movePause = 0;
+            }
+
+            let isMoving = false;
+            if (!bossIsTelegraphing && entity.targetCell) {
+                const target = bomberCellWorld(entity.targetCell.col, entity.targetCell.row);
+                const dx = target.x - entity.group.position.x;
+                const dz = target.z - entity.group.position.z;
+                const distance = Math.hypot(dx, dz);
+                const step = entity.speed * dt;
+                if (distance <= step + 0.06) {
+                    entity.group.position.x = target.x;
+                    entity.group.position.z = target.z;
+                    entity.col = entity.targetCell.col;
+                    entity.row = entity.targetCell.row;
+                    const reachedRetreat = entity.isRetreating && entity.retreatTarget &&
+                        entity.col === entity.retreatTarget.col && entity.row === entity.retreatTarget.row;
+                    if (reachedRetreat) {
+                        entity.isRetreating = false;
+                        entity.retreatTarget = null;
+                        entity.pathHistory = [{ col: entity.col, row: entity.row }];
+                    } else {
+                        const lastCell = entity.pathHistory[entity.pathHistory.length - 1];
+                        if (!lastCell || lastCell.col !== entity.col || lastCell.row !== entity.row) {
+                            entity.pathHistory.push({ col: entity.col, row: entity.row });
+                            if (entity.pathHistory.length > 12) entity.pathHistory.shift();
+                        }
+                    }
+                    entity.targetCell = null;
+                    entity.movePause = isBoss ? 0.16 : 0.1;
+                    isMoving = distance > 0.06;
+                } else {
+                    entity.group.position.x += dx / distance * step;
+                    entity.group.position.z += dz / distance * step;
+                    entity.group.rotation.y = Math.atan2(dx, dz);
+                    isMoving = true;
+                }
+            }
+            const bob = Math.sin(performance.now() * 0.005 + entity.col) * (isBoss ? 0.08 : 0.12);
+            if (isMoving) entity.walkPhase += dt * (isBoss ? 9 : 13);
+            const stride = isMoving ? Math.sin(entity.walkPhase) : 0;
+            const attackLean = entity.attackAnimTimer > 0
+                ? Math.sin((entity.attackAnimTimer / 0.24) * Math.PI) * 0.18
+                : 0;
+            const walkLean = isMoving ? stride * (isBoss ? 0.065 : 0.105) : 0;
+            entity.group.rotation.z = THREE.MathUtils.lerp(entity.group.rotation.z, walkLean + attackLean, Math.min(1, dt * 12));
+            entity.group.rotation.x = THREE.MathUtils.lerp(entity.group.rotation.x, isMoving ? Math.cos(entity.walkPhase) * 0.035 : 0, Math.min(1, dt * 10));
+            entity.group.position.y = bob + (isMoving ? Math.abs(stride) * (isBoss ? 0.09 : 0.13) : 0);
+
+            const distanceToPlayer = Math.hypot(entity.group.position.x - state.pos.x, entity.group.position.z - state.pos.z);
+            if (distanceToPlayer < (isBoss ? 2.25 : 1.45) && entity.touchCooldown <= 0) {
+                entity.touchCooldown = isBoss ? 1.0 : 1.15;
+                entity.attackAnimTimer = 0.24;
+                spawnBomberMeleeEffect(entity, isBoss);
+                applyPlayerDamage(isBoss ? 22 : 12, isBoss ? '👑 Boss va chạm! Mất 22 HP!' : '👾 Quái nhỏ tấn công! Mất 12 HP!');
+            }
+        }
+
+        function createBomberPickupSprite(emoji, tint) {
+            const canvas = document.createElement('canvas');
+            canvas.width = 128;
+            canvas.height = 128;
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, 128, 128);
+            ctx.fillStyle = 'rgba(255,255,255,0.96)';
+            ctx.beginPath();
+            ctx.arc(64, 64, 54, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.lineWidth = 7;
+            ctx.strokeStyle = tint;
+            ctx.stroke();
+            ctx.font = '76px system-ui, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(emoji, 64, 68);
+            const texture = new THREE.CanvasTexture(canvas);
+            texture.colorSpace = THREE.SRGBColorSpace;
+            return texture;
+        }
+
+        function spawnBomberItem(col, row) {
+            if (Math.random() > 0.46) return;
+            const options = [
+                { type: 'flame', emoji: '🔥', color: '#f97316' },
+                { type: 'speed', emoji: '👟', color: '#eab308' },
+                { type: 'shield', emoji: '🛡️', color: '#06b6d4' },
+                { type: 'capacity', emoji: '💣', color: '#ef4444' }
+            ];
+            const itemType = options[Math.floor(Math.random() * options.length)];
+            const { x, z } = bomberCellWorld(col, row);
+            const group = new THREE.Group();
+            const glow = new THREE.Mesh(
+                new THREE.CylinderGeometry(0.88, 1.0, 0.12, 24),
+                new THREE.MeshBasicMaterial({ color: itemType.color, transparent: true, opacity: 0.55 })
+            );
+            glow.position.y = 0.12;
+            group.add(glow);
+            const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: createBomberPickupSprite(itemType.emoji, itemType.color), transparent: true, depthWrite: false }));
+            sprite.position.y = 1.15;
+            sprite.scale.set(1.85, 1.85, 1);
+            group.add(sprite);
+            group.position.set(x, 0, z);
+            worldGroup.add(group);
+            bomberItems.push({ group, type: itemType.type, phase: Math.random() * Math.PI * 2 });
+        }
+
+        function syncBomberShieldVisual() {
+            if (bomberUpgrade.shieldHits > 0) {
+                if (!bomberShieldAura && player && player.root) {
+                    bomberShieldAura = new THREE.Mesh(
+                        new THREE.SphereGeometry(1.55, 20, 14),
+                        new THREE.MeshBasicMaterial({ color: 0x67e8f9, wireframe: true, transparent: true, opacity: 0.42, depthWrite: false })
+                    );
+                    bomberShieldAura.position.y = 1.85;
+                    player.root.add(bomberShieldAura);
+                }
+                if (bomberShieldAura) bomberShieldAura.visible = true;
+            } else if (bomberShieldAura) {
+                player.root.remove(bomberShieldAura);
+                bomberShieldAura.geometry.dispose();
+                bomberShieldAura.material.dispose();
+                bomberShieldAura = null;
+            }
+        }
+
+        function updateBomberPickups(dt) {
+            for (let i = bomberItems.length - 1; i >= 0; i--) {
+                const item = bomberItems[i];
+                item.phase += dt * 3.2;
+                item.group.position.y = 0.12 + Math.sin(item.phase) * 0.12;
+                item.group.rotation.y += dt * 0.8;
+                const itemPos = item.group.position;
+                if (Math.hypot(state.pos.x - itemPos.x, state.pos.z - itemPos.z) < 1.25) {
+                    if (item.type === 'flame') {
+                        const old = bomberUpgrade.blastRange;
+                        bomberUpgrade.blastRange = Math.min(7, bomberUpgrade.blastRange + 1);
+                        showToast(bomberUpgrade.blastRange > old ? `🔥 Tăng tầm bom lên ${bomberUpgrade.blastRange} ô!` : '🔥 Tầm bom đã đạt tối đa!');
+                    } else if (item.type === 'speed') {
+                        const old = bomberUpgrade.moveSpeed;
+                        bomberUpgrade.moveSpeed = Math.min(13.5, bomberUpgrade.moveSpeed + 1.25);
+                        showToast(bomberUpgrade.moveSpeed > old ? `👟 Tăng tốc chạy: ${bomberUpgrade.moveSpeed.toFixed(1)}!` : '👟 Tốc độ đã đạt tối đa!');
+                    } else if (item.type === 'shield') {
+                        bomberUpgrade.shieldHits = Math.min(2, bomberUpgrade.shieldHits + 1);
+                        syncBomberShieldVisual();
+                        showToast(`🛡️ Nhặt khiên! Đỡ được ${bomberUpgrade.shieldHits} đòn đánh.`);
+                    } else {
+                        const old = bomberUpgrade.bombCapacity;
+                        bomberUpgrade.bombCapacity = Math.min(5, bomberUpgrade.bombCapacity + 1);
+                        showToast(bomberUpgrade.bombCapacity > old ? `💣 Tăng số bom đặt liên tiếp: ${bomberUpgrade.bombCapacity} quả!` : '💣 Số bom đồng thời đã đạt tối đa!');
+                    }
+                    worldGroup.remove(item.group);
+                    item.group.traverse(child => {
+                        if (child.isSprite && child.material.map) child.material.map.dispose();
+                        if (child.material) child.material.dispose();
+                        if (child.geometry) child.geometry.dispose();
+                    });
+                    bomberItems.splice(i, 1);
+                    updateObjectiveHUD();
+                }
+            }
+        }
+
+        function removeBomberSoftBlock(block, dropItem = false) {
+            if (!block) return;
+            worldGroup.remove(block.group);
+            const colliderIndex = colliders.indexOf(block.collider);
+            if (colliderIndex >= 0) colliders.splice(colliderIndex, 1);
+            const occluderIndex = cameraOccluders.indexOf(block.collider.cameraOccluder);
+            if (occluderIndex >= 0) cameraOccluders.splice(occluderIndex, 1);
+            bomberSoftByCell.delete(bomberCellKey(block.col, block.row));
+            const index = bomberBlocks.indexOf(block);
+            if (index >= 0) bomberBlocks.splice(index, 1);
+            if (dropItem) spawnBomberItem(block.col, block.row);
+        }
+
+        function spawnBomberBlastTile(col, row) {
+            const { x, z } = bomberCellWorld(col, row);
+            const mesh = new THREE.Mesh(
+                new THREE.BoxGeometry(3.72, 0.3, 3.72),
+                new THREE.MeshBasicMaterial({ color: 0xff8a00, transparent: true, opacity: 0.92 })
+            );
+            mesh.position.set(x, 0.22, z);
+            worldGroup.add(mesh);
+            bomberEffects.push({ mesh, life: 0.34, maxLife: 0.34 });
+        }
+
+        function disposeBomberBombWarning(bomb) {
+            if (!bomb || !bomb.warningMarkers) return;
+            bomb.warningMarkers.forEach(marker => {
+                worldGroup.remove(marker);
+                marker.geometry.dispose();
+                marker.material.dispose();
+            });
+            bomb.warningMarkers.length = 0;
+            bomb.warningSignature = '';
+        }
+
+        function getBomberBlastCells(bomb) {
+            const cells = [{ col: bomb.col, row: bomb.row }];
+            const directions = [[1, 0], [-1, 0], [0, 1], [0, -1]];
+            for (const [dc, dr] of directions) {
+                for (let distance = 1; distance <= bomberUpgrade.blastRange; distance++) {
+                    const col = bomb.col + dc * distance;
+                    const row = bomb.row + dr * distance;
+                    if (col <= 0 || row <= 0 || col >= BOMBER_GRID_SIZE - 1 || row >= BOMBER_GRID_SIZE - 1) break;
+                    const key = bomberCellKey(col, row);
+                    if (bomberHardCells.has(key)) break;
+                    cells.push({ col, row });
+                    if (bomberSoftByCell.has(key)) break;
+                }
+            }
+            return cells;
+        }
+
+        function updateBomberBombWarning(bomb) {
+            if (bomb.fuse > 0.5 || bomb.fuse <= 0) {
+                disposeBomberBombWarning(bomb);
+                return;
+            }
+
+            const cells = getBomberBlastCells(bomb);
+            const signature = cells.map(cell => bomberCellKey(cell.col, cell.row)).join('|');
+            if (signature !== bomb.warningSignature) {
+                disposeBomberBombWarning(bomb);
+                cells.forEach(cell => {
+                    const { x, z } = bomberCellWorld(cell.col, cell.row);
+                    const marker = new THREE.Mesh(
+                        new THREE.PlaneGeometry(3.82, 3.82),
+                        new THREE.MeshBasicMaterial({ color: 0xf97316, transparent: true, opacity: 0.2, depthWrite: false, side: THREE.DoubleSide })
+                    );
+                    marker.rotation.x = -Math.PI / 2;
+                    marker.position.set(x, 0.055, z);
+                    marker.renderOrder = 2;
+                    worldGroup.add(marker);
+                    bomb.warningMarkers.push(marker);
+                });
+                bomb.warningSignature = signature;
+            }
+
+            const pulse = (Math.sin(performance.now() * 0.045) + 1) * 0.5;
+            bomb.warningMarkers.forEach(marker => {
+                marker.material.color.setHex(pulse > 0.52 ? 0xf97316 : 0xfef08a);
+                marker.material.opacity = 0.18 + pulse * 0.48;
+                const scale = 0.98 + pulse * 0.025;
+                marker.scale.set(scale, scale, 1);
+            });
+        }
+
+        function spawnBomberSmokePuff(origin, direction, travelDistance) {
+            const smokeColors = [0x64748b, 0x94a3b8, 0x475569];
+            const mesh = new THREE.Mesh(
+                new THREE.SphereGeometry(0.3 + Math.random() * 0.16, 8, 6),
+                new THREE.MeshBasicMaterial({
+                    color: smokeColors[Math.floor(Math.random() * smokeColors.length)],
+                    transparent: true,
+                    opacity: 0.72,
+                    depthWrite: false
+                })
+            );
+            const side = new THREE.Vector3(-direction.z, 0, direction.x);
+            const sideVelocity = (Math.random() - 0.5) * 3;
+            const launchDuration = 0.18;
+            const velocity = direction.clone().multiplyScalar(travelDistance / launchDuration);
+            velocity.addScaledVector(side, sideVelocity);
+            velocity.y = 1.6 + Math.random() * 1.8;
+            mesh.position.set(origin.x + direction.x * 0.08, 0.34, origin.z + direction.z * 0.08);
+            mesh.scale.setScalar(0.8 + Math.random() * 0.55);
+            worldGroup.add(mesh);
+            bomberEffects.push({ mesh, life: 0.46, maxLife: 0.46, velocity, launchRemaining: launchDuration, opacity: 0.72 });
+        }
+
+        function spawnBomberSmokeBurst(bomb, blastCells) {
+            const origin = bomberCellWorld(bomb.col, bomb.row);
+            for (const cell of blastCells) {
+                const dx = cell.col - bomb.col;
+                const dz = cell.row - bomb.row;
+                if (dx === 0 && dz === 0) {
+                    [[1, 0], [-1, 0], [0, 1], [0, -1]].forEach(([x, z]) => {
+                        spawnBomberSmokePuff(origin, new THREE.Vector3(x, 0, z), BOMBER_TILE * 0.7);
+                    });
+                    continue;
+                }
+                const direction = new THREE.Vector3(dx, 0, dz).normalize();
+                spawnBomberSmokePuff(origin, direction, Math.hypot(dx, dz) * BOMBER_TILE);
+            }
+        }
+
+        function bomberBodyOverlapsBlast(position, blastCells, halfWidth, halfDepth = halfWidth) {
+            const blastHalf = 1.86;
+            let overlapArea = 0;
+            blastCells.forEach(cell => {
+                const overlapX = Math.max(0, Math.min(position.x + halfWidth, cell.x + blastHalf) - Math.max(position.x - halfWidth, cell.x - blastHalf));
+                const overlapZ = Math.max(0, Math.min(position.z + halfDepth, cell.z + blastHalf) - Math.max(position.z - halfDepth, cell.z - blastHalf));
+                overlapArea += overlapX * overlapZ;
+            });
+            const bodyArea = halfWidth * halfDepth * 4;
+            return overlapArea >= bodyArea / 3;
+        }
+
+        function explodeBomberBomb(bombIndex) {
+            const bomb = bomberBombs[bombIndex];
+            if (!bomb) return;
+            disposeBomberBombWarning(bomb);
+            worldGroup.remove(bomb.group);
+            bomberBombs.splice(bombIndex, 1);
+            sound.playBombExplosion();
+
+            const blastCells = getBomberBlastCells(bomb);
+            blastCells.slice(1).forEach(cell => {
+                const softBlock = bomberSoftByCell.get(bomberCellKey(cell.col, cell.row));
+                if (!softBlock) return;
+                removeBomberSoftBlock(softBlock, true);
+                const position = bomberCellWorld(cell.col, cell.row);
+                spawnImpactSparks(new THREE.Vector3(position.x, 1.4, position.z), 0xf59e0b, 12);
+            });
+            blastCells.forEach(cell => spawnBomberBlastTile(cell.col, cell.row));
+            const blastWorld = blastCells.map(cell => ({ ...cell, ...bomberCellWorld(cell.col, cell.row) }));
+            spawnBomberSmokeBurst(bomb, blastCells);
+
+            for (let i = bomberEnemies.length - 1; i >= 0; i--) {
+                const enemy = bomberEnemies[i];
+                if (enemy.dying) continue;
+                const halfSize = enemy.isBoss ? 1.5 : 0.93;
+                const hit = bomberBodyOverlapsBlast(enemy.group.position, blastWorld, halfSize);
+                if (hit) {
+                    const previousHp = enemy.hp;
+                    enemy.hp = Math.max(0, enemy.hp - 1);
+                    const damage = previousHp - enemy.hp;
+                    updateBomberHealthBar(enemy.healthBar, enemy.hp, enemy.maxHp);
+                    showBomberDamagePopup(enemy.group.position.clone().add(new THREE.Vector3(0, enemy.isBoss ? 5.8 : 4.3, 0)), damage, '#fca5a5');
+                    spawnImpactSparks(enemy.group.position.clone().add(new THREE.Vector3(0, 1.2, 0)), 0x86efac, enemy.hp <= 0 ? 22 : 10);
+                    sound.playHit(enemy.hp <= 0);
+                    if (enemy.hp <= 0) {
+                        startBomberEntityDeath(enemy);
+                        state.bomberKills++;
+                    } else {
+                        enemy.damageFlash = 0.36;
+                    }
+                }
+            }
+
+            if (bomberBoss && !bomberBoss.dying) {
+                const hit = bomberBodyOverlapsBlast(bomberBoss.group.position, blastWorld, 1.5);
+                if (hit) {
+                    const previousHp = bomberBoss.hp;
+                    bomberBoss.hp = Math.max(0, bomberBoss.hp - 2);
+                    const damage = previousHp - bomberBoss.hp;
+                    bomberBoss.damageFlash = 0.36;
+                    updateBomberHealthBar(bomberBoss.healthBar, bomberBoss.hp, bomberBoss.maxHp);
+                    showBomberDamagePopup(bomberBoss.group.position.clone().add(new THREE.Vector3(0, 5.1, 0)), damage, '#fda4af');
+                    spawnImpactSparks(bomberBoss.group.position.clone().add(new THREE.Vector3(0, 2.5, 0)), 0xc084fc, 26);
+                    sound.playHit(bomberBoss.hp <= 0);
+                    showToast(`💥 Boss trúng bom! Còn ${bomberBoss.hp}/${bomberBoss.maxHp} HP`);
+                    if (bomberBoss.hp <= 0) {
+                        disposeBomberBossWarning(bomberBoss);
+                        spawnImpactSparks(bomberBoss.group.position.clone().add(new THREE.Vector3(0, 2, 0)), 0xfacc15, 40);
+                        startBomberEntityDeath(bomberBoss);
+                    }
+                }
+            }
+
+            const playerPosition = { x: state.pos.x, z: state.pos.z };
+            const playerHit = bomberBodyOverlapsBlast(playerPosition, blastWorld, 1.45);
+            if (playerHit) applyPlayerDamage(BOMBER_BLAST_DAMAGE, `💥 Bạn đứng trong vùng nổ! Mất ${BOMBER_BLAST_DAMAGE} HP!`);
+
+            // Bombs touching the blast are chain-detonated on the next update tick.
+            bomberBombs.forEach(other => {
+                if (blastCells.some(cell => cell.col === other.col && cell.row === other.row)) other.fuse = Math.min(other.fuse, 0.04);
+            });
+            updateObjectiveHUD();
+
+            if (state.bomberStage === 1 && state.bomberKills < state.bomberEnemiesTotal) refillBomberEnemies();
+            startBomberStageTransitionIfReady();
+        }
+
+        function placeBomberBomb() {
+            if (state.screen !== 'playing' || state.matchEnded || state.isPaused || state.gameMode !== 'bomber') return;
+            if (bomberBombs.length >= bomberUpgrade.bombCapacity) {
+                showToast(`💣 Bạn chỉ có thể đặt tối đa ${bomberUpgrade.bombCapacity} bom cùng lúc!`);
+                return;
+            }
+            let { col, row } = bomberWorldToCell(state.pos.x, state.pos.z);
+            if (bomberCellBlocked(col, row)) {
+                const nearby = [[col - 1, row], [col + 1, row], [col, row - 1], [col, row + 1]]
+                    .filter(([c, r]) => !bomberCellBlocked(c, r))
+                    .map(([c, r]) => ({ col: c, row: r, ...bomberCellWorld(c, r) }))
+                    .sort((a, b) => Math.hypot(a.x - state.pos.x, a.z - state.pos.z) - Math.hypot(b.x - state.pos.x, b.z - state.pos.z));
+                if (!nearby.length || Math.hypot(nearby[0].x - state.pos.x, nearby[0].z - state.pos.z) > BOMBER_TILE * 0.78) return;
+                col = nearby[0].col;
+                row = nearby[0].row;
+            }
+            if (bomberBombs.some(bomb => bomb.col === col && bomb.row === row)) {
+                showToast('💣 Ô này đã có bom, hãy di chuyển sang ô khác!');
+                return;
+            }
+            const cell = bomberCellWorld(col, row);
+            const group = new THREE.Group();
+            const shell = new THREE.Mesh(
+                new THREE.SphereGeometry(1.12, 20, 16),
+                new THREE.MeshStandardMaterial({ color: 0x111827, metalness: 0.55, roughness: 0.3, emissive: 0x7c2d12, emissiveIntensity: 0.32 })
+            );
+            shell.position.y = 0.9;
+            shell.castShadow = true;
+            group.add(shell);
+            const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.28, 0.28, 10), new THREE.MeshStandardMaterial({ color: 0xf59e0b, metalness: 0.5 }));
+            cap.position.y = 1.62;
+            group.add(cap);
+            const fuse = new THREE.Mesh(new THREE.ConeGeometry(0.15, 0.38, 8), new THREE.MeshBasicMaterial({ color: 0xfef08a }));
+            fuse.position.set(0.13, 1.93, 0);
+            group.add(fuse);
+            const ring = new THREE.Mesh(new THREE.TorusGeometry(1.30, 0.09, 8, 28), new THREE.MeshBasicMaterial({ color: 0xfb923c, transparent: true, opacity: 0.85 }));
+            ring.rotation.x = Math.PI / 2;
+            ring.position.y = 0.1;
+            group.add(ring);
+            group.position.set(cell.x, 0, cell.z);
+            worldGroup.add(group);
+            bomberBombs.push({ group, col, row, fuse: 2.35, phase: 0, warningMarkers: [], warningSignature: '' });
+            sound.playThrow();
+            showToast(`💣 Đã đặt bom! Chạy khỏi vùng nổ ${bomberUpgrade.blastRange} ô!`);
+            updateObjectiveHUD();
+        }
+
+        function startBomberStageTwo() {
+            if (state.matchEnded || state.bomberStage !== 1) return;
+            state.bomberStage = 2;
+            state.bomberTransitioning = false;
+            state.bomberTimeRemaining = 120;
+            state.bomberLastDisplayedTime = -1;
+            bomberNextStageTimer = 0;
+            bomberBombs.forEach(b => {
+                disposeBomberBombWarning(b);
+                worldGroup.remove(b.group);
+            });
+            bomberBombs.length = 0;
+            const spawn = createBomberMonster(11, 1, true);
+            spawn.hp = 14;
+            spawn.maxHp = 14;
+            bomberBoss = spawn;
+            document.getElementById('hud-mode-title').textContent = 'BOMBER ADVENTURE • MAP 1 • MÀN 2';
+            showToast('👑 BOSS XUẤT HIỆN! Né luồng nổ thẳng và vùng nổ quanh Boss; dùng bom để phản công!');
+            updateObjectiveHUD();
+        }
+
+        function completeBomberMap1() {
+            if (state.matchEnded) return;
+            state.matchEnded = true;
+            const bomberHud = document.getElementById('bomber-stage-hud');
+            if (bomberHud) bomberHud.classList.add('hidden');
+            document.getElementById('bomber-time-progress-wrap').classList.add('hidden');
+            document.getElementById('bomber-boss-health-wrap').classList.add('hidden');
+            state.completedMaps.bomber_map1 = true;
+            state.totalStarsAllTime += 10;
+            state.totalTargetsAllTime += 5;
+            if (document.pointerLockElement) document.exitPointerLock?.();
+            sound.playVictory();
+            saveManager.saveNow(true);
+            updateMenuStatsUI();
+            const elapsedSec = Math.floor((performance.now() - state.matchStartTime) / 1000);
+            const mins = String(Math.floor(elapsedSec / 60)).padStart(2, '0');
+            const secs = String(elapsedSec % 60).padStart(2, '0');
+            document.getElementById('result-emoji').textContent = '👑';
+            document.getElementById('result-title').textContent = 'CHIẾN THẮNG BOSS!';
+            document.getElementById('result-title').className = 'text-2xl font-black text-amber-300 tracking-tight';
+            document.getElementById('result-desc').textContent = 'Bạn đã hạ đủ 20 quái nhỏ, sau đó đánh bại Boss ở màn 2. Map 1 đã hoàn thành!';
+            document.getElementById('result-stats').textContent = `Thời gian: ${mins}:${secs} • Thưởng: +10 💎 +5 🎯 • Quái nhỏ đã hạ: ${state.bomberKills}/20`;
+            document.getElementById('result-modal').classList.remove('hidden');
+        }
+
+        function bomberIsBlockedAt(x, z, halfX = BOMBER_PLAYER_HALF, halfZ = BOMBER_PLAYER_HALF) {
+            // Grid-aligned AABB collision: the enlarged character is treated as a
+            // square footprint. This removes the rounded-corner sliding that let
+            // the player drift off the corridor center when pushing into a wall.
+            const check = (key) => {
+                const [col, row] = key.split(',').map(Number);
+                const center = bomberCellWorld(col, row);
+                const obstacleHalf = bomberHardCells.has(key) ? 1.94 : 1.02;
+                const overlapX = Math.abs(x - center.x) < obstacleHalf + halfX - 0.015;
+                const overlapZ = Math.abs(z - center.z) < obstacleHalf + halfZ - 0.015;
+                return overlapX && overlapZ;
+            };
+            for (const key of bomberHardCells) if (check(key)) return true;
+            for (const key of bomberSoftByCell.keys()) if (check(key)) return true;
+            return false;
+        }
+
+        function bomberLaneOverlapRatio(position, laneCenter) {
+            const laneHalf = BOMBER_TILE * 0.5;
+            const bodyMin = position - BOMBER_PLAYER_HALF;
+            const bodyMax = position + BOMBER_PLAYER_HALF;
+            const overlap = Math.max(0, Math.min(bodyMax, laneCenter + laneHalf) - Math.max(bodyMin, laneCenter - laneHalf));
+            return overlap / (BOMBER_PLAYER_HALF * 2);
+        }
+
+        function moveBomberAxis(axis, amount) {
+            if (Math.abs(amount) < 0.0001) return;
+            const start = state.pos[axis];
+            const otherAxis = axis === 'x' ? 'z' : 'x';
+            const other = state.pos[otherAxis];
+            const target = start + amount;
+            const isBlocked = value => axis === 'x'
+                ? bomberIsBlockedAt(value, other)
+                : bomberIsBlockedAt(other, value);
+            if (!isBlocked(target)) {
+                state.pos[axis] = target;
+                return;
+            }
+            let low = 0;
+            let high = 1;
+            for (let i = 0; i < 10; i++) {
+                const mid = (low + high) * 0.5;
+                if (isBlocked(start + amount * mid)) high = mid;
+                else low = mid;
+            }
+            state.pos[axis] = start + amount * low;
+        }
+
+        function updateBomberPlayerPhysics(dt) {
+            if (bomberIntroActive) {
+                state.vel.set(0, 0, 0);
+                player.root.position.set(state.pos.x, state.pos.y, state.pos.z + BOMBER_PLAYER_RENDER_OFFSET_Z);
+                player.root.rotation.y = state.rotationY;
+                return 0;
+            }
+
+            const inputX = (state.keys.d ? 1 : 0) - (state.keys.a ? 1 : 0) + state.joyVec.x;
+            const inputZ = (state.keys.s ? 1 : 0) - (state.keys.w ? 1 : 0) + state.joyVec.y;
+            let moveX = 0;
+            let moveZ = 0;
+
+            // Strict four-direction input. Never apply movement on two axes at once.
+            if (Math.abs(inputX) > 0.16 || Math.abs(inputZ) > 0.16) {
+                if (Math.abs(inputX) > Math.abs(inputZ)) moveX = Math.sign(inputX);
+                else moveZ = Math.sign(inputZ);
+            }
+
+            const speed = bomberUpgrade.moveSpeed;
+            const beforeX = state.pos.x;
+            const beforeZ = state.pos.z;
+            const snapSpeed = Math.max(speed * 1.6, 11);
+            const centerTolerance = 0.025;
+
+            if (moveX !== 0) {
+                // Horizontal travel is only allowed on the exact centerline of a row.
+                const row = THREE.MathUtils.clamp(Math.round((state.pos.z - BOMBER_ORIGIN) / BOMBER_TILE), 1, BOMBER_GRID_SIZE - 2);
+                const centerZ = bomberCellWorld(1, row).z;
+                const offsetZ = centerZ - state.pos.z;
+                if (Math.abs(offsetZ) > centerTolerance) {
+                    const alignStep = Math.sign(offsetZ) * Math.min(Math.abs(offsetZ), snapSpeed * dt);
+                    const nextZ = state.pos.z + alignStep;
+                    const enteredLane = bomberLaneOverlapRatio(state.pos.z, centerZ) >= 0.75;
+                    const alignHalfZ = enteredLane ? BOMBER_PLAYER_HALF * 0.25 : BOMBER_PLAYER_HALF;
+                    // If a block prevents centering, don't let horizontal input
+                    // produce a diagonal scrape along its corner.
+                    if (!bomberIsBlockedAt(state.pos.x, nextZ, BOMBER_PLAYER_HALF, alignHalfZ)) state.pos.z = nextZ;
+                } else {
+                    state.pos.z = centerZ;
+                    moveBomberAxis('x', moveX * speed * dt);
+                }
+            } else if (moveZ !== 0) {
+                // Vertical travel is only allowed on the exact centerline of a column.
+                const col = THREE.MathUtils.clamp(Math.round((state.pos.x - BOMBER_ORIGIN) / BOMBER_TILE), 1, BOMBER_GRID_SIZE - 2);
+                const centerX = bomberCellWorld(col, 1).x;
+                const offsetX = centerX - state.pos.x;
+                if (Math.abs(offsetX) > centerTolerance) {
+                    const alignStep = Math.sign(offsetX) * Math.min(Math.abs(offsetX), snapSpeed * dt);
+                    const nextX = state.pos.x + alignStep;
+                    const enteredLane = bomberLaneOverlapRatio(state.pos.x, centerX) >= 0.75;
+                    const alignHalfX = enteredLane ? BOMBER_PLAYER_HALF * 0.25 : BOMBER_PLAYER_HALF;
+                    if (!bomberIsBlockedAt(nextX, state.pos.z, alignHalfX, BOMBER_PLAYER_HALF)) state.pos.x = nextX;
+                } else {
+                    state.pos.x = centerX;
+                    moveBomberAxis('z', moveZ * speed * dt);
+                }
+            }
+
+            state.pos.y = 0.5;
+            state.vel.set((state.pos.x - beforeX) / Math.max(dt, 0.0001), 0, (state.pos.z - beforeZ) / Math.max(dt, 0.0001));
+            const horizontalSpeed = Math.hypot(state.vel.x, state.vel.z);
+            if (horizontalSpeed > 0.1) {
+                const targetAngle = Math.atan2(-state.vel.x, -state.vel.z);
+                let diff = targetAngle - state.rotationY;
+                while (diff < -Math.PI) diff += Math.PI * 2;
+                while (diff > Math.PI) diff -= Math.PI * 2;
+                state.rotationY += diff * (1 - Math.exp(-72 * dt));
+            }
+
+            updateBomberWorld(dt);
+            player.root.position.set(state.pos.x, state.pos.y, state.pos.z + BOMBER_PLAYER_RENDER_OFFSET_Z);
+            player.root.rotation.y = state.rotationY;
+            return horizontalSpeed;
+        }
+
+        function disposeBomberBossWarning(boss) {
+            if (!boss || !boss.attackVisual) return;
+            worldGroup.remove(boss.attackVisual);
+            boss.attackVisual.traverse(child => {
+                if (child.geometry) child.geometry.dispose();
+                if (child.material) {
+                    if (Array.isArray(child.material)) child.material.forEach(m => m.dispose());
+                    else child.material.dispose();
+                }
+            });
+            boss.attackVisual = null;
+        }
+
+        function startBomberBossLineWarning(boss) {
+            const origin = new THREE.Vector3(boss.group.position.x, 0.18, boss.group.position.z);
+            const playerDir = new THREE.Vector3(state.pos.x - origin.x, 0, state.pos.z - origin.z);
+            if (playerDir.lengthSq() < 0.01) playerDir.set(1, 0, 0);
+            playerDir.normalize();
+            const edge = 21.6;
+            const tx = Math.abs(playerDir.x) < 0.0001 ? Infinity : (playerDir.x > 0 ? edge - origin.x : -edge - origin.x) / playerDir.x;
+            const tz = Math.abs(playerDir.z) < 0.0001 ? Infinity : (playerDir.z > 0 ? edge - origin.z : -edge - origin.z) / playerDir.z;
+            const length = Math.max(4, Math.min(60, tx > 0 ? tx : Infinity, tz > 0 ? tz : Infinity));
+            const group = new THREE.Group();
+            const beam = new THREE.Mesh(
+                new THREE.BoxGeometry(3.4, 0.14, length),
+                new THREE.MeshBasicMaterial({ color: 0xfb315f, transparent: true, opacity: 0.42, depthWrite: false })
+            );
+            beam.position.set(0, 0, 0);
+            group.add(beam);
+            const core = new THREE.Mesh(
+                new THREE.BoxGeometry(0.34, 0.18, length),
+                new THREE.MeshBasicMaterial({ color: 0xffd2dc, transparent: true, opacity: 0.62, depthWrite: false })
+            );
+            group.add(core);
+            group.position.set(origin.x + playerDir.x * length * 0.5, 0.2, origin.z + playerDir.z * length * 0.5);
+            group.rotation.y = Math.atan2(playerDir.x, playerDir.z);
+            worldGroup.add(group);
+            boss.attackOrigin = origin.clone();
+            boss.attackDirection = playerDir.clone();
+            boss.attackLength = length;
+            boss.attackVisual = group;
+            boss.attackType = 'line';
+            boss.attackPhase = 'warning';
+            boss.attackTimer = 1.15;
+            showToast('👑 BOSS: Sắp phóng luồng nổ thẳng! Né khỏi đường màu đỏ!');
+        }
+
+        function startBomberBossAoeWarning(boss) {
+            const group = new THREE.Group();
+            const disk = new THREE.Mesh(
+                new THREE.CircleGeometry(7.4, 48),
+                new THREE.MeshBasicMaterial({ color: 0xf97316, transparent: true, opacity: 0.20, side: THREE.DoubleSide, depthWrite: false })
+            );
+            disk.rotation.x = -Math.PI / 2;
+            disk.position.y = 0.11;
+            group.add(disk);
+            const ring = new THREE.Mesh(
+                new THREE.RingGeometry(6.9, 7.35, 48),
+                new THREE.MeshBasicMaterial({ color: 0xff354d, transparent: true, opacity: 0.88, side: THREE.DoubleSide, depthWrite: false })
+            );
+            ring.rotation.x = -Math.PI / 2;
+            ring.position.y = 0.16;
+            group.add(ring);
+            group.position.set(boss.group.position.x, 0, boss.group.position.z);
+            worldGroup.add(group);
+            boss.attackOrigin = new THREE.Vector3(boss.group.position.x, 0, boss.group.position.z);
+            boss.attackVisual = group;
+            boss.attackType = 'aoe';
+            boss.attackPhase = 'warning';
+            boss.attackTimer = 1.3;
+            showToast('👑 BOSS: Sắp phát nổ diện rộng! Lùi xa khỏi vùng đỏ!');
+        }
+
+        function spawnBomberBossLineFlash(origin, direction, length) {
+            const flash = new THREE.Mesh(
+                new THREE.BoxGeometry(3.7, 0.22, length),
+                new THREE.MeshBasicMaterial({ color: 0xff8a00, transparent: true, opacity: 0.9, depthWrite: false })
+            );
+            flash.position.set(origin.x + direction.x * length * 0.5, 0.27, origin.z + direction.z * length * 0.5);
+            flash.rotation.y = Math.atan2(direction.x, direction.z);
+            worldGroup.add(flash);
+            bomberEffects.push({ mesh: flash, life: 0.32, maxLife: 0.32 });
+        }
+
+        function updateBomberBossAbilities(dt) {
+            const boss = bomberBoss;
+            if (!boss || boss.dying || state.bomberStage !== 2 || state.matchEnded) return;
+            if (boss.attackPhase === 'idle') {
+                boss.attackTimer -= dt;
+                if (boss.attackTimer <= 0) {
+                    if (boss.nextAttackType === 'line') {
+                        startBomberBossLineWarning(boss);
+                        boss.nextAttackType = 'aoe';
+                    } else {
+                        startBomberBossAoeWarning(boss);
+                        boss.nextAttackType = 'line';
+                    }
+                }
+                return;
+            }
+
+            boss.attackTimer -= dt;
+            if (boss.attackVisual) {
+                const pulse = 0.78 + Math.sin(performance.now() * 0.018) * 0.18;
+                boss.attackVisual.scale.set(1, 1, pulse);
+                boss.attackVisual.children.forEach(child => {
+                    if (child.material) child.material.opacity = (boss.attackType === 'line' ? 0.34 : 0.20) + Math.max(0, Math.sin(performance.now() * 0.02)) * 0.35;
+                });
+            }
+            if (boss.attackTimer > 0) return;
+
+            if (boss.attackType === 'line') {
+                const relative = new THREE.Vector3(state.pos.x - boss.attackOrigin.x, 0, state.pos.z - boss.attackOrigin.z);
+                const along = relative.dot(boss.attackDirection);
+                const across = Math.abs(relative.x * boss.attackDirection.z - relative.z * boss.attackDirection.x);
+                spawnBomberBossLineFlash(boss.attackOrigin, boss.attackDirection, boss.attackLength);
+                if (along > 0.6 && along < boss.attackLength && across < 2.15) {
+                    applyPlayerDamage(26, '💥 Boss phóng luồng nổ thẳng! Mất 26 HP!');
+                }
+            } else {
+                const center = boss.attackOrigin;
+                const distance = Math.hypot(state.pos.x - center.x, state.pos.z - center.z);
+                const blast = new THREE.Mesh(
+                    new THREE.CylinderGeometry(7.4, 7.4, 0.22, 40),
+                    new THREE.MeshBasicMaterial({ color: 0xff7a18, transparent: true, opacity: 0.85, depthWrite: false })
+                );
+                blast.position.set(center.x, 0.25, center.z);
+                worldGroup.add(blast);
+                bomberEffects.push({ mesh: blast, life: 0.34, maxLife: 0.34 });
+                spawnImpactSparks(new THREE.Vector3(center.x, 1.2, center.z), 0xfb7185, 32);
+                if (distance <= 7.4) applyPlayerDamage(30, '💥 Boss phát nổ diện rộng! Mất 30 HP!');
+            }
+            disposeBomberBossWarning(boss);
+            boss.attackPhase = 'idle';
+            boss.attackTimer = 3.4;
+        }
+
+        function updateBomberVisuals(dt) {
+            const time = performance.now() * 0.001;
+            if (bomberWaterWaves.length) updateBomberWater(time);
+            if (bomberPlayerFootprint) {
+                bomberPlayerFootprint.position.set(state.pos.x, 0, state.pos.z + BOMBER_PLAYER_RENDER_OFFSET_Z);
+            }
+            updateBomberSpawnFades(dt);
+            if (bomberIntroActive) {
+                bomberIntroElapsed += dt;
+                if (bomberIntroElapsed >= 1) {
+                    bomberIntroElapsed = 1;
+                    bomberIntroActive = false;
+                }
+            }
+            updateBomberDeathAnimations(dt);
+            for (const block of bomberBlocks) {
+                const foliage = block.group.userData.swayGroup;
+                if (!foliage) continue;
+                const phase = block.group.userData.swayPhase;
+                foliage.rotation.z = Math.sin(time * 1.7 + phase) * 0.035;
+                foliage.rotation.x = Math.cos(time * 1.3 + phase) * 0.025;
+            }
+
+            for (let i = bomberEffects.length - 1; i >= 0; i--) {
+                const effect = bomberEffects[i];
+                effect.life -= dt;
+                if (effect.velocity) {
+                    const travelTime = Math.min(dt, effect.launchRemaining);
+                    if (travelTime > 0) {
+                        effect.mesh.position.addScaledVector(effect.velocity, travelTime);
+                        effect.launchRemaining -= travelTime;
+                    }
+                    if (effect.launchRemaining <= 0) {
+                        effect.velocity.set(0, 0.65, 0);
+                        effect.mesh.position.y += dt * 0.65;
+                    }
+                    effect.mesh.scale.addScalar(dt * 0.8);
+                }
+                const opacity = effect.opacity !== undefined ? effect.opacity : 0.92;
+                effect.mesh.material.opacity = Math.max(0, effect.life / effect.maxLife) * opacity;
+                if (effect.life <= 0) {
+                    worldGroup.remove(effect.mesh);
+                    effect.mesh.geometry.dispose();
+                    effect.mesh.material.dispose();
+                    bomberEffects.splice(i, 1);
+                }
+            }
+
+            updateBomberPlayerDeathAnimation(dt);
+            if (state.gameMode === 'bomber' && !bomberPlayerDeathAnimation && !state.matchEnded) {
+                if (bomberPlayerFlashTimer > 0) {
+                    bomberPlayerFlashTimer = Math.max(0, bomberPlayerFlashTimer - dt);
+                    player.root.visible = Math.floor(bomberPlayerFlashTimer * 16) % 2 === 0;
+                } else {
+                    player.root.visible = true;
+                }
+            }
+            if (bomberGameOverModalTimer > 0) {
+                bomberGameOverModalTimer = Math.max(0, bomberGameOverModalTimer - dt);
+                if (bomberGameOverModalTimer === 0) {
+                    document.getElementById('result-modal').classList.remove('hidden');
+                }
+            }
+
+            for (const bar of bomberHealthBars) {
+                const owner = bar.ownerGroup.position;
+                bar.group.position.set(owner.x, owner.y + bar.offsetY, owner.z + 0.18);
+                bar.group.quaternion.copy(bomberCamera.quaternion);
+            }
+
+            for (let i = bomberDamagePopups.length - 1; i >= 0; i--) {
+                const popup = bomberDamagePopups[i];
+                popup.life -= dt;
+                popup.sprite.position.y += dt * 1.15;
+                popup.sprite.material.opacity = Math.max(0, popup.life / popup.duration);
+                if (popup.life <= 0) {
+                    worldGroup.remove(popup.sprite);
+                    disposeBomberOverlay(popup.sprite);
+                    bomberDamagePopups.splice(i, 1);
+                }
+            }
+        }
+
+        function updateBomberWorld(dt) {
+            if (state.gameMode !== 'bomber' || state.screen !== 'playing' || state.matchEnded) return;
+
+            // Each stage has its own two-minute countdown. The short inter-stage
+            // transition is not charged against either stage's play time.
+            const deathSequenceInProgress =
+                (state.bomberStage === 2 && bomberBoss && bomberBoss.dying) ||
+                (state.bomberStage === 1 && state.bomberKills >= state.bomberEnemiesTotal);
+            if (!state.bomberTransitioning && !deathSequenceInProgress) {
+                state.bomberTimeRemaining = Math.max(0, state.bomberTimeRemaining - dt);
+                const shownSecond = Math.ceil(state.bomberTimeRemaining);
+                if (shownSecond !== state.bomberLastDisplayedTime) {
+                    state.bomberLastDisplayedTime = shownSecond;
+                    updateBomberStageHUD();
+                }
+                if (state.bomberTimeRemaining <= 0) {
+                    triggerGameOver();
+                    return;
+                }
+            }
+
+            updateBomberPickups(dt);
+            for (let i = bomberBombs.length - 1; i >= 0; i--) {
+                const bomb = bomberBombs[i];
+                bomb.fuse -= dt;
+                bomb.phase += dt * 14;
+                updateBomberBombWarning(bomb);
+                const pulse = 1 + Math.max(0, Math.sin(bomb.phase)) * 0.1;
+                bomb.group.scale.setScalar(pulse);
+                bomb.group.rotation.y += dt * 1.8;
+                if (bomb.group.children[2]) bomb.group.children[2].material.color.setHex(Math.sin(bomb.phase * 1.7) > 0 ? 0xffffff : 0xf97316);
+                if (bomb.fuse <= 0) explodeBomberBomb(i);
+            }
+
+            if (state.bomberStage === 1 && !state.bomberTransitioning && bomberEnemies.length < Math.min(8, state.bomberEnemiesTotal - state.bomberKills)) {
+                refillBomberEnemies();
+            }
+            bomberEnemies.forEach(enemy => updateBomberChaser(enemy, dt, false));
+            if (bomberBoss) {
+                updateBomberBossAbilities(dt);
+                updateBomberChaser(bomberBoss, dt, true);
+            }
+
+            startBomberStageTransitionIfReady();
+
+            if (state.bomberTransitioning) {
+                bomberNextStageTimer -= dt;
+                if (bomberNextStageTimer <= 0) startBomberStageTwo();
+            }
         }
 
         // Mode 1 - Map 1: Rainbow Sky Tower (18 Steps, Water Pool +5 HP/s, Rolling Rails, 4-Blade Sweepers, 12 Gems)
@@ -4226,7 +6519,20 @@
         // ==========================================
         const state = {
             screen: 'menu', // 'menu' | 'playing'
-            gameMode: 'climb', // 'climb' | 'hunt'
+            gameMode: 'climb', // 'climb' | 'hunt' | 'runner'
+            runnerLane: 1,
+            runnerDistance: 0,
+            runnerCoinsCollected: 0,
+            runnerSpeed: 17,
+            runnerLaneCooldown: 0,
+            bomberStage: 1,
+            bomberKills: 0,
+            bomberEnemiesTotal: 20,
+            bomberTransitioning: false,
+            bomberTransitionTimer: 0,
+            bomberBombCooldown: 0,
+            bomberTimeRemaining: 120,
+            bomberLastDisplayedTime: -1,
             climbMapId: 'map1',
             climbLevel: 1,
             climbMapLevels: { map1: 1, map2: 1 },
@@ -4268,7 +6574,8 @@
             completedMaps: {
                 climb_map1: false,
                 climb_map2: false,
-                hunt_mode: false
+                hunt_mode: false,
+                bomber_map1: false
             },
 
             keys: { w: false, a: false, s: false, d: false, space: false },
@@ -4394,6 +6701,52 @@
             if (text) text.textContent = `HP: ${Math.ceil(state.hp)}/${state.maxHp}`;
         }
 
+        function updateBomberStageHUD() {
+            const panel = document.getElementById('bomber-stage-hud');
+            const infoPanel = document.getElementById('objective-info-panel');
+            const progressWrap = document.getElementById('bomber-time-progress-wrap');
+            if (!panel) return;
+            const active = state.gameMode === 'bomber' && state.screen === 'playing' && !state.matchEnded;
+            if (infoPanel) infoPanel.classList.toggle('hidden', !active);
+            panel.classList.toggle('hidden', !active);
+            if (progressWrap) progressWrap.classList.toggle('hidden', !active);
+            if (!active) return;
+
+            const timer = document.getElementById('bomber-timer');
+            const progress = document.getElementById('bomber-time-progress');
+            const bossWrap = document.getElementById('bomber-boss-health-wrap');
+
+            const seconds = Math.max(0, Math.ceil(state.bomberTimeRemaining));
+            const mm = String(Math.floor(seconds / 60)).padStart(2, '0');
+            const ss = String(seconds % 60).padStart(2, '0');
+            if (timer) {
+                timer.textContent = `${mm}:${ss}`;
+                timer.className = seconds <= 20
+                    ? 'text-sm font-black tabular-nums tracking-wide text-rose-300 animate-pulse text-right'
+                    : seconds <= 60
+                        ? 'text-sm font-black tabular-nums tracking-wide text-amber-300 text-right'
+                        : 'text-sm font-black tabular-nums tracking-wide text-emerald-300 text-right';
+            }
+            if (progress) {
+                const pct = Math.max(0, Math.min(100, state.bomberTimeRemaining / 120 * 100));
+                progress.style.width = `${pct}%`;
+                progress.className = `h-full rounded-full transition-[width] duration-300 ${
+                    seconds <= 20 ? 'bg-rose-500 animate-pulse' : seconds <= 60 ? 'bg-amber-400' : 'bg-emerald-400'
+                }`;
+            }
+
+            if (bossWrap) bossWrap.classList.toggle('hidden', state.bomberStage !== 2);
+            if (state.bomberStage === 2) {
+                const bossHp = bomberBoss ? Math.max(0, bomberBoss.hp) : 0;
+                const bossMax = bomberBoss ? bomberBoss.maxHp : 14;
+                const pct = bossMax > 0 ? Math.max(0, Math.min(100, bossHp / bossMax * 100)) : 0;
+                const hpText = document.getElementById('bomber-boss-hp-text');
+                const hpBar = document.getElementById('bomber-boss-hp-bar');
+                if (hpText) hpText.textContent = `${bossHp} / ${bossMax} HP`;
+                if (hpBar) hpBar.style.width = `${pct}%`;
+            }
+        }
+
         function updateObjectiveHUD() {
             const prim = document.getElementById('hud-primary-stat');
             const sec = document.getElementById('hud-secondary-stat');
@@ -4406,6 +6759,21 @@
                 sub.innerHTML = state.inWaterPool
                     ? `<span class="text-cyan-300 font-bold">💧 Trong Hồ Nước (+5 HP/s)</span>`
                     : `<span>Đứng im: +2 HP/s • Hồ: +5 HP/s</span>`;
+            } else if (state.gameMode === 'runner') {
+                prim.textContent = `💎 ${state.runnerCoinsCollected}`;
+                sec.textContent = `🏃 ${Math.floor(state.runnerDistance)} m`;
+                sub.innerHTML = `<span>Làn ${state.runnerLane + 1}/3</span><span>Tốc độ ${state.runnerSpeed.toFixed(0)}</span>`;
+            } else if (state.gameMode === 'bomber') {
+                updateBomberStageHUD();
+                if (state.bomberStage === 1) {
+                    prim.textContent = `👾 ${state.bomberKills}/${state.bomberEnemiesTotal}`;
+                    sec.textContent = `MAP 1 • MÀN 1`;
+                    sub.innerHTML = `<span>🔥 ${bomberUpgrade.blastRange} ô • 👟 ${bomberUpgrade.moveSpeed.toFixed(1)} • 🛡️ ${bomberUpgrade.shieldHits} • 💣 x${bomberUpgrade.bombCapacity}</span>`;
+                } else {
+                    prim.textContent = `👑 ${bomberBoss ? bomberBoss.hp : 0}/${bomberBoss ? bomberBoss.maxHp : 14} HP`;
+                    sec.textContent = `MAP 1 • MÀN 2: BOSS`;
+                    sub.innerHTML = `<span>🔥 ${bomberUpgrade.blastRange} ô • 👟 ${bomberUpgrade.moveSpeed.toFixed(1)} • 🛡️ ${bomberUpgrade.shieldHits} • 💣 x${bomberUpgrade.bombCapacity}</span>`;
+                }
             } else {
                 prim.textContent = `🎯 ${state.huntDestroyed}/${state.huntGoal}`;
                 sec.textContent = `Đang có: ${targets.length} bia`;
@@ -4422,7 +6790,7 @@
             document.getElementById('menu-total-stars').textContent = state.totalStarsAllTime;
             document.getElementById('menu-total-targets').textContent = state.totalTargetsAllTime;
             const totalDifficultyStars = state.climbMapLevels.map1 + state.climbMapLevels.map2 +
-                state.huntMapLevels.map1 + state.huntMapLevels.map2;
+                state.huntMapLevels.map1 + state.huntMapLevels.map2 + (state.completedMaps.bomber_map1 ? 1 : 0);
             document.getElementById('menu-maps-cleared').textContent = `${totalDifficultyStars}⭐`;
 
             const climbMap1Level = Math.max(1, state.climbMapLevels.map1);
@@ -4437,12 +6805,29 @@
                 `Độ khó ${huntMap1Level}⭐ • Hạ ${15 + (huntMap1Level - 1) * 5} bia`;
             document.getElementById('hunt-map2-progress').textContent =
                 `Độ khó ${huntMap2Level}⭐ • Hạ ${15 + (huntMap2Level - 1) * 5} bia • Bia di chuyển chậm`;
+            const bomberProgress = document.getElementById('bomber-map1-progress');
+            if (bomberProgress) bomberProgress.textContent = state.completedMaps.bomber_map1 ? 'Đã hoàn thành • Thưởng 10 Gem + 5 mục tiêu' : '2 màn • Hạ 20 quái nhỏ → Hạ Boss';
             renderSkinShopUI();
         }
 
         function applyPlayerDamage(amount, reasonMsg) {
             if (state.matchEnded || state.isDevMode) return;
+            if (state.gameMode === 'bomber' && bomberUpgrade.shieldHits > 0) {
+                bomberUpgrade.shieldHits = Math.max(0, bomberUpgrade.shieldHits - 1);
+                syncBomberShieldVisual();
+                sound.playDamage();
+                showToast('🛡️ Khiên đã hấp thụ đòn đánh!');
+                updateObjectiveHUD();
+                return;
+            }
+            const previousHp = state.hp;
             state.hp = Math.max(0, state.hp - amount);
+            const actualDamage = previousHp - state.hp;
+            if (state.gameMode === 'bomber' && actualDamage > 0) {
+                bomberPlayerFlashTimer = 0.75;
+                updateBomberHealthBar(bomberPlayerHealthBar, state.hp, state.maxHp);
+                showBomberDamagePopup(player.root.position.clone().add(new THREE.Vector3(0, 9.3, 0)), actualDamage);
+            }
             sound.playDamage();
             updateHealthHUD();
             if (reasonMsg) showToast(reasonMsg);
@@ -4454,6 +6839,10 @@
 
         function triggerGameOver() {
             state.matchEnded = true;
+            const bomberHud = document.getElementById('bomber-stage-hud');
+            if (bomberHud) bomberHud.classList.add('hidden');
+            document.getElementById('bomber-time-progress-wrap').classList.add('hidden');
+            document.getElementById('bomber-boss-health-wrap').classList.add('hidden');
             if (document.pointerLockElement) document.exitPointerLock?.();
             const xrayLayer = document.getElementById('xray-markers-layer');
             if (xrayLayer) xrayLayer.innerHTML = '';
@@ -4462,14 +6851,27 @@
             const mins = String(Math.floor(elapsedSec / 60)).padStart(2, '0');
             const secs = String(elapsedSec % 60).padStart(2, '0');
 
-            document.getElementById('result-emoji').textContent = '💀';
-            document.getElementById('result-title').textContent = 'HẾT MÁU! THẤT BẠI';
+            const bomberTimedOut = state.gameMode === 'bomber' && state.bomberTimeRemaining <= 0;
+            document.getElementById('result-emoji').textContent = bomberTimedOut ? '⏰' : '💀';
+            document.getElementById('result-title').textContent = bomberTimedOut ? 'HẾT GIỜ! THẤT BẠI' : 'HẾT MÁU! THẤT BẠI';
             document.getElementById('result-title').className = 'text-2xl font-black text-rose-400 tracking-tight';
-            document.getElementById('result-desc').textContent = state.gameMode === 'climb'
-                ? 'Bạn đã bị rớt quá nhiều bậc hoặc va chạm chướng ngại vật quá mạnh!'
-                : 'Các bia mục tiêu phát nổ đã làm cạn thanh máu của bạn!';
-            document.getElementById('result-stats').textContent = `Thời gian sinh tồn: ${mins}:${secs}`;
-            document.getElementById('result-modal').classList.remove('hidden');
+            document.getElementById('result-desc').textContent = bomberTimedOut
+                ? `Bạn đã hết 2 phút ở màn ${state.bomberStage} mà chưa hoàn thành mục tiêu. Hãy thử lại và quản lý thời gian đặt bom tốt hơn!`
+                : state.gameMode === 'climb'
+                    ? 'Bạn đã bị rớt quá nhiều bậc hoặc va chạm chướng ngại vật quá mạnh!'
+                    : state.gameMode === 'bomber'
+                        ? `Bạn đã thất bại ở màn ${state.bomberStage}. Hãy đặt bom rồi lập tức chạy khỏi vùng nổ!`
+                        : 'Các bia mục tiêu phát nổ đã làm cạn thanh máu của bạn!';
+            document.getElementById('result-stats').textContent = bomberTimedOut
+                ? `Hết giờ màn ${state.bomberStage} • Quái đã hạ: ${state.bomberKills}/20 • HP còn lại: ${Math.ceil(state.hp)}`
+                : `Thời gian sinh tồn: ${mins}:${secs}`;
+            if (state.gameMode === 'bomber' && state.hp <= 0) {
+                startBomberPlayerDeathAnimation();
+                bomberGameOverModalTimer = 0.9;
+                document.getElementById('result-modal').classList.add('hidden');
+            } else {
+                document.getElementById('result-modal').classList.remove('hidden');
+            }
         }
 
         function completeCurrentMap() {
@@ -4506,6 +6908,14 @@
         }
 
         function respawnPlayer(customMsg = '🐻 Đã hồi sinh tại điểm xuất phát!') {
+            if (state.gameMode === 'runner') {
+                startGameMode('runner');
+                return;
+            }
+            if (state.gameMode === 'bomber') {
+                startGameMode('bomber', 'map1');
+                return;
+            }
             if (state.gameMode === 'climb') {
                 state.pos.set(0, 0.5, state.climbMapId === 'map1' ? 34 : 36);
             } else {
@@ -4870,10 +7280,12 @@
                     state.completedMaps.climb_map2 = Boolean(data.completedMaps.climb_map2) || state.climbMapLevels.map2 > 1;
                     state.completedMaps.hunt_mode = Boolean(data.completedMaps.hunt_mode) ||
                         state.huntMapLevels.map1 > 1 || state.huntMapLevels.map2 > 1;
+                    state.completedMaps.bomber_map1 = Boolean(data.completedMaps.bomber_map1);
                 } else {
                     state.completedMaps.climb_map1 = state.climbMapLevels.map1 > 1;
                     state.completedMaps.climb_map2 = state.climbMapLevels.map2 > 1;
                     state.completedMaps.hunt_mode = state.huntMapLevels.map1 > 1 || state.huntMapLevels.map2 > 1;
+                    state.completedMaps.bomber_map1 = false;
                 }
                 if (this.menuSaveTimeEl) this.menuSaveTimeEl.textContent = this.formatTimeLabel(data.savedAt);
                 updateMenuStatsUI();
@@ -4940,7 +7352,7 @@
                 state.huntLevel = 1;
                 state.huntGoal = 15;
                 state.unlockedSkins = [...DEFAULT_UNLOCKED_SKINS];
-                state.completedMaps = { climb_map1: false, climb_map2: false, hunt_mode: false };
+                state.completedMaps = { climb_map1: false, climb_map2: false, hunt_mode: false, bomber_map1: false };
                 applySkinSelection('chrome', true);
                 setWeaponMode('plasma', true);
                 updateMenuStatsUI();
@@ -4954,11 +7366,43 @@
         // ==========================================
         // SCREEN TRANSITIONS: MAIN MENU <-> GAMEPLAY
         // ==========================================
+        let gameStartOverlayTimeout = null;
+
+        function showGameStartOverlay() {
+            const overlay = document.getElementById('game-start-overlay');
+            if (!overlay) return;
+            clearTimeout(gameStartOverlayTimeout);
+            overlay.classList.remove('hidden', 'game-start-overlay-active');
+            void overlay.offsetWidth;
+            overlay.classList.add('game-start-overlay-active');
+            gameStartOverlayTimeout = setTimeout(() => {
+                overlay.classList.add('hidden');
+                overlay.classList.remove('game-start-overlay-active');
+                gameStartOverlayTimeout = null;
+            }, 500);
+        }
+
         function enterMainMenu() {
+            clearTimeout(gameStartOverlayTimeout);
+            gameStartOverlayTimeout = null;
+            const startOverlay = document.getElementById('game-start-overlay');
+            startOverlay.classList.add('hidden');
+            startOverlay.classList.remove('game-start-overlay-active');
+            restoreBomberPlayerDeathAnimation();
+            bomberPlayerFlashTimer = 0;
+            bomberGameOverModalTimer = 0;
+            player.root.scale.setScalar(1);
+            if (bomberShieldAura) {
+                player.root.remove(bomberShieldAura);
+                bomberShieldAura.geometry.dispose();
+                bomberShieldAura.material.dispose();
+                bomberShieldAura = null;
+            }
             if (document.pointerLockElement) {
                 document.exitPointerLock?.();
             }
             state.screen = 'menu';
+            camera = perspectiveCamera;
             sound.syncBackgroundMusic(state.backgroundTheme, 'menu');
             state.matchEnded = false;
             state.isPaused = false;
@@ -4975,6 +7419,14 @@
             document.getElementById('result-modal').classList.add('hidden');
             document.getElementById('exit-confirm-modal').classList.add('hidden');
             document.getElementById('gameplay-hud').classList.add('hidden');
+            document.getElementById('minimap-wrapper').classList.remove('hidden');
+            document.getElementById('btn-place-bomber-bomb').classList.add('hidden');
+            document.getElementById('bomber-controls-hint').classList.add('hidden');
+            document.getElementById('bomber-stage-hud').classList.add('hidden');
+            document.getElementById('bomber-time-progress-wrap').classList.add('hidden');
+            document.getElementById('bomber-boss-health-wrap').classList.add('hidden');
+            document.getElementById('touch-jump').classList.remove('hidden');
+            document.getElementById('jump-controls-hint').classList.remove('hidden');
             document.getElementById('main-menu-overlay').classList.remove('hidden');
 
             buildMenuShowcaseWorld();
@@ -4991,20 +7443,45 @@
             document.querySelectorAll('.combat-control-hint').forEach(el => {
                 el.classList.toggle('hidden', !visible);
             });
+            const bomberButton = document.getElementById('btn-place-bomber-bomb');
+            if (bomberButton) bomberButton.classList.toggle('hidden', state.gameMode !== 'bomber');
+            const bomberHint = document.getElementById('bomber-controls-hint');
+            if (bomberHint) bomberHint.classList.toggle('hidden', state.gameMode !== 'bomber');
+            const jumpButton = document.getElementById('touch-jump');
+            if (jumpButton) jumpButton.classList.toggle('hidden', state.gameMode === 'bomber');
+            const jumpHint = document.getElementById('jump-controls-hint');
+            if (jumpHint) jumpHint.classList.toggle('hidden', state.gameMode === 'bomber');
         }
 
         function startGameMode(mode, mapId = 'map1') {
             sound.syncBackgroundMusic(state.backgroundTheme, 'playing');
             sound.init();
-            domElem.requestPointerLock?.();
+            if (mode === 'bomber') {
+                if (document.pointerLockElement) document.exitPointerLock?.();
+            } else {
+                domElem.requestPointerLock?.();
+            }
             state.screen = 'playing';
             state.gameMode = mode;
+            camera = mode === 'bomber' ? bomberCamera : perspectiveCamera;
+            const pointerLockButton = document.getElementById('btn-pointer-lock');
+            pointerLockButton.classList.add('hidden');
+            pointerLockButton.classList.toggle('md:flex', mode !== 'bomber');
+            if (mode !== 'bomber') {
+                player.root.scale.setScalar(1);
+                if (bomberShieldAura) {
+                    player.root.remove(bomberShieldAura);
+                    bomberShieldAura.geometry.dispose();
+                    bomberShieldAura.material.dispose();
+                    bomberShieldAura = null;
+                }
+            }
             state.isDevMode = false;
             updateDeveloperModeBadge();
             if (mode === 'climb') {
                 state.climbMapId = mapId;
                 state.climbLevel = state.climbMapLevels[mapId] || 1;
-            } else {
+            } else if (mode === 'hunt') {
                 state.huntMapId = mapId === 'map2' ? 'map2' : 'map1';
                 state.huntLevel = state.huntMapLevels[state.huntMapId] || 1;
             }
@@ -5022,6 +7499,11 @@
             state.maxHp = 100;
             state.score = 0;
             state.huntDestroyed = 0;
+            state.runnerLane = 1;
+            state.runnerDistance = 0;
+            state.runnerCoinsCollected = 0;
+            state.runnerSpeed = 17;
+            state.runnerLaneCooldown = 0;
             state.huntGoal = 15;
             state.highestGroundedY = 0;
             state.currentStep = 0;
@@ -5030,8 +7512,13 @@
             document.getElementById('main-menu-overlay').classList.add('hidden');
             document.getElementById('result-modal').classList.add('hidden');
             document.getElementById('gameplay-hud').classList.remove('hidden');
+            document.getElementById('objective-info-panel').classList.toggle('hidden', mode !== 'bomber');
+            document.getElementById('bomber-stage-hud').classList.toggle('hidden', mode !== 'bomber');
+            document.getElementById('bomber-time-progress-wrap').classList.toggle('hidden', mode !== 'bomber');
+            if (mode !== 'bomber') document.getElementById('bomber-boss-health-wrap').classList.add('hidden');
 
             const titleEl = document.getElementById('hud-mode-title');
+            document.getElementById('minimap-wrapper').classList.toggle('hidden', mode === 'runner' || mode === 'bomber');
             if (mode === 'climb') {
                 player.setWeaponsEquipped(false);
                 setCombatUIVisible(false);
@@ -5048,6 +7535,28 @@
                 state.camYaw = 0;
                 state.rotationY = 0;
                 showToast(`🏔️ Độ khó ${state.climbLevel}⭐ • Nhặt đủ ${stars.length} 💎!`);
+            } else if (mode === 'runner') {
+                player.setWeaponsEquipped(false);
+                setCombatUIVisible(false);
+                buildRunnerWorld();
+                state.pos.set(0, 0.5, 0);
+                state.camYaw = 0;
+                state.camPitch = 0.12;
+                state.rotationY = 0;
+                document.getElementById('minimap-wrapper').classList.add('hidden');
+                showToast('🏃 Chạy tự động! A/D hoặc joystick đổi làn • Space để nhảy');
+            } else if (mode === 'bomber') {
+                player.setWeaponsEquipped(false);
+                setCombatUIVisible(false);
+                startBomberGame();
+                setCombatUIVisible(false);
+                document.getElementById('btn-place-bomber-bomb').classList.remove('hidden');
+                document.getElementById('bomber-controls-hint').classList.remove('hidden');
+                document.getElementById('touch-jump').classList.add('hidden');
+                document.getElementById('jump-controls-hint').classList.add('hidden');
+                document.getElementById('minimap-wrapper').classList.add('hidden');
+                titleEl.textContent = 'BOMBER ADVENTURE • MAP 1 • MÀN 1';
+                showToast('💣 WASD / joystick di chuyển theo tâm lối • E / Space đặt bom • Phá thùng để tìm nâng cấp');
             } else {
                 player.setWeaponsEquipped(true);
                 setCombatUIVisible(true);
@@ -5066,12 +7575,17 @@
 
             state.vel.set(0, 0, 0);
             state.highestGroundedY = state.pos.y;
-            player.root.position.copy(state.pos);
+            if (mode === 'bomber') {
+                player.root.position.set(state.pos.x, state.pos.y, state.pos.z + BOMBER_PLAYER_RENDER_OFFSET_Z);
+            } else {
+                player.root.position.copy(state.pos);
+            }
             player.root.rotation.y = state.rotationY;
 
             updateHealthHUD();
             updateObjectiveHUD();
             renderSkinShopUI();
+            showGameStartOverlay();
         }
 
         function pauseForExitConfirmation() {
@@ -5146,12 +7660,15 @@
             if (code === 'KeyD' || code === 'ArrowRight') state.keys.d = true;
             if (code === 'Space') {
                 state.keys.space = true;
-                if (state.isGrounded) {
+                if (state.gameMode === 'bomber') {
+                    if (!e.repeat) placeBomberBomb();
+                } else if (state.isGrounded) {
                     state.vel.y = JUMP_FORCE;
                     state.isGrounded = false;
                     sound.playJump();
                 }
             }
+            if (code === 'KeyE' && state.gameMode === 'bomber' && !e.repeat) placeBomberBomb();
             if (code === 'KeyF' && state.gameMode === 'hunt') shootLaser();
             if (code === 'KeyG' && !e.repeat && state.gameMode === 'hunt') setWeaponMode(state.weaponMode === 'plasma' ? 'lightning' : 'plasma');
             if (code === 'KeyQ' && state.gameMode === 'hunt') setWeaponMode(state.weaponMode === 'plasma' ? 'lightning' : 'plasma');
@@ -5384,6 +7901,8 @@
         document.getElementById('btn-start-climb-2').addEventListener('click', () => startGameMode('climb', 'map2'));
         document.getElementById('btn-start-hunt-map1').addEventListener('click', () => startGameMode('hunt', 'map1'));
         document.getElementById('btn-start-hunt-map2').addEventListener('click', () => startGameMode('hunt', 'map2'));
+        document.getElementById('btn-start-runner').addEventListener('click', () => startGameMode('runner'));
+        document.getElementById('btn-start-bomber-map1').addEventListener('click', () => startGameMode('bomber', 'map1'));
         document.getElementById('btn-back-menu').addEventListener('click', pauseForExitConfirmation);
         document.getElementById('btn-exit-cancel').addEventListener('click', resumeFromExitConfirmation);
         document.getElementById('btn-exit-confirm').addEventListener('click', enterMainMenu);
@@ -5413,6 +7932,12 @@
         const btnFire = document.getElementById('btn-fire');
         btnFire.addEventListener('mousedown', (e) => { e.stopPropagation(); shootLaser(); });
         btnFire.addEventListener('touchstart', (e) => { e.preventDefault(); e.stopPropagation(); shootLaser(); });
+
+        document.getElementById('btn-place-bomber-bomb').addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            placeBomberBomb();
+        });
 
         const btnBomb = document.getElementById('btn-bomb');
         const startAimBomb = (e) => { e.preventDefault(); e.stopPropagation(); sound.init(); state.isAimingBomb = true; };
@@ -5669,6 +8194,8 @@
             if (state.matchEnded) {
                 return 0;
             }
+            if (state.gameMode === 'runner') return updateRunnerPhysics(dt);
+            if (state.gameMode === 'bomber') return updateBomberPlayerPhysics(dt);
 
             if (state.isGrounded && state.standingOnBox && (state.standingOnBox.deltaX || state.standingOnBox.deltaZ)) {
                 state.pos.x += state.standingOnBox.deltaX || 0;
@@ -5871,7 +8398,7 @@
                 player.root.visible = false;
             } else {
                 player.root.visible = true;
-                if ((state.gameMode === 'hunt' && (state.aimHoldTimer > 0 || state.isAimingBomb)) || document.pointerLockElement === renderer.domElement) {
+                if (((state.gameMode === 'hunt' && (state.aimHoldTimer > 0 || state.isAimingBomb)) || state.gameMode === 'bomber') || document.pointerLockElement === renderer.domElement) {
                     const targetAngle = state.camYaw;
                     let diff = targetAngle - state.rotationY;
                     while (diff < -Math.PI) diff += Math.PI * 2;
@@ -5882,7 +8409,7 @@
                     let diff = targetAngle - state.rotationY;
                     while (diff < -Math.PI) diff += Math.PI * 2;
                     while (diff > Math.PI) diff -= Math.PI * 2;
-                    state.rotationY += diff * Math.min(1, dt * 14);
+                    state.rotationY += diff * (1 - Math.exp(-56 * dt));
                 }
             }
 
@@ -5896,19 +8423,47 @@
                 state.aimPitch = THREE.MathUtils.lerp(state.aimPitch, -state.camPitch * 0.6, dt * 10);
             }
 
+            if (state.gameMode === 'bomber') updateBomberWorld(dt);
             player.root.position.copy(state.pos);
             player.root.rotation.y = state.rotationY;
             return horizontalSpeed;
         }
 
+        function updateBomberCamera() {
+            const tilt = THREE.MathUtils.degToRad(42);
+            const aspect = Math.max(0.1, window.innerWidth / Math.max(1, window.innerHeight));
+            const mapSize = 52;
+            const maxObjectHeight = 8;
+            const projectedDepth = mapSize * Math.cos(tilt) + maxObjectHeight * Math.sin(tilt);
+            const viewHeight = Math.max(projectedDepth, mapSize / aspect) * 1.12;
+
+            bomberCamera.left = -viewHeight * aspect * 0.5;
+            bomberCamera.right = viewHeight * aspect * 0.5;
+            bomberCamera.top = viewHeight * 0.5;
+            bomberCamera.bottom = -viewHeight * 0.5;
+            bomberCamera.position.set(0, 100 * Math.cos(tilt), 100 * Math.sin(tilt));
+            bomberCamera.up.set(0, 1, 0);
+            bomberCamera.lookAt(0, 0, 0);
+            bomberCamera.updateProjectionMatrix();
+        }
+
         function updateCamera() {
             if (state.screen === 'menu') {
+                camera = perspectiveCamera;
                 const targetFocus = new THREE.Vector3(0, 1.85, 0);
                 camera.position.lerp(new THREE.Vector3(0, 2.7, 6.2), 0.18);
                 camera.lookAt(targetFocus);
                 return;
             }
 
+            if (state.gameMode === 'bomber') {
+                camera = bomberCamera;
+                updateBomberCamera();
+                return;
+            }
+
+            camera = perspectiveCamera;
+            camera.up.set(0, 1, 0);
             const shoulderSide = (state.camDistance < 1.2 || state.gameMode === 'climb') ? 0 : Math.min(1.2, state.camDistance * 0.14);
             const rightVec = new THREE.Vector3(Math.cos(state.camYaw), 0, -Math.sin(state.camYaw));
             const headClearanceHeight = state.camDistance < 1.2 ? 2.85 : 3.55;
@@ -6154,8 +8709,9 @@
         // 10. MAIN ANIMATION LOOP & INITIALIZATION
         // ==========================================
         window.addEventListener('resize', () => {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
+            perspectiveCamera.aspect = window.innerWidth / window.innerHeight;
+            perspectiveCamera.updateProjectionMatrix();
+            if (camera === bomberCamera) updateBomberCamera();
             renderer.setSize(window.innerWidth, window.innerHeight);
         });
 
@@ -6176,6 +8732,7 @@
                 }
                 updateDynamicObstacles(dt, elapsedTime);
                 const speed = updatePhysics(dt);
+                updateBomberVisuals(dt);
                 player.animate(
                     dt,
                     speed,

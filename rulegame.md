@@ -8,7 +8,7 @@ Tài liệu mô tả toàn bộ cơ chế gameplay, cơ chế code, chi tiết t
 
 - **Tên game**: Roblox Bearbrick 3D World
 - **Tác giả**: thuc.hoang MACZT
-- **Loại**: Game web đơn tệp (single-file HTML), đồ họa 3D, kiểu obby / leo thang (climb) kết hợp bắn súng và bom champir
+- **Loại**: Game web đơn tệp (single-file HTML), đồ họa 3D, kiểu obby / leo thang (climb) kết hợp bắn súng và bom champir. Có 4 chế độ: climb, hunt, runner, bomber.
 - **Ngôn ngữ / công nghệ**: HTML5, CSS (Tailwind CSS qua CDN), JavaScript (ES6 modules), Three.js r160 (via unpkg CDN), Web Audio API
 - **Màn hình**: Chạy trực tiếp trên trình duyệt, hỗ trợ cả máy tính (PC) và thiết bị di động (touch)
 - **Ngôn ngữ giao diện**: Tiếng Việt
@@ -56,17 +56,23 @@ Chuyển màn hình qua hàm:
 - `enterMainMenu()` - quay về menu
 - `startGameMode(mode, mapId)` - bắt đầu chơi (mặc định mode = `'climb'`, mapId = `'map1'`)
 
+Mỗi lần vào màn chơi, chữ **START** xuất hiện giữa màn hình rồi mờ dần trong 0,5 giây.
+
 ### 3.2 Che do choi (Game Mode)
 
-Hiện có **2 chế độ chính**:
+Hiện có **4 chế độ chính**:
 - **`climb`** (Leo thang): Leo platform, tránh chướng ngại vật và thu thập gem trên hai map.
 - **`hunt`** (Săn bia): Bắn và ném bom vào bia trong mê cung.
+- **`runner`** (Chạy tự động): Nhân vật chạy tự động về phía trước, người chơi đổi làn (A/D hoặc joystick) và nhảy (Space) để tránh chướng ngại vật.
+- **`bomber`** (Đặt bom): Di chuyển theo tâm lối với tốc độ mặc định 9.6, bom ban đầu nổ dài 2 ô theo bốn hướng; phá thùng để tìm nâng cấp. Bot đuổi theo nhân vật, lùi lại 3 ô rồi tìm đường khác nếu bị kẹt.
 
 Bản đồ:
 - **Climb Map 1:** Tháp Không Gian, 18 tầng.
 - **Climb Map 2:** Pháo Đài Không Gian, 20 tầng.
 - **Hunt Map 1:** Mê Cung Cổ Điển; bia đứng yên.
 - **Hunt Map 2:** Mê Cung Chuyển Động; bố cục tường khác Map 1, có lối đi vào các khu vực và bia di chuyển chậm quanh vị trí spawn.
+- **Runner World:** Địa hình chạy tự động theo làn.
+- **Bomber Map 1:** Bản đồ đặt bom, phá thùng tìm nâng cấp; viền sông liền mạch có sóng chuyển động và không thể đi qua, tường đá bên trong được hạ thấp, thùng nước nhiều chi tiết và bụi cỏ dạng khối đung đưa.
 
 Mỗi climb map bắt đầu ở **độ khó 1⭐**. Thắng map sẽ lưu độ khó kế tiếp riêng cho map đó và thêm **4 tầng** vào đường leo, xen kẽ ray trượt và vòng xoay. Các tầng mở rộng được bố trí theo quy tắc vòng lục giác bán kính 9.5 đơn vị, mỗi bước lệch 60° (không random); ô vòng xoay rộng 7.5 đơn vị để có thêm chỗ đứng. Không có giới hạn level được đặt trong code. Ở Map 2, vòng xoay 1–2 có 2 cánh, vòng 3–4 có 3 cánh; ray trượt nghiêng 15° và đẩy Bearbrick trượt chậm xuống dốc.
 
@@ -98,7 +104,7 @@ Kho thành tích ở sảnh hiển thị tổng độ khó ⭐ của cả bốn 
 - **Regen máu**: Nếu đứng trong `healingPool` (hồ nước shampoo), hồi +5 HP/s
 - **Respawn**: Khi máu về 0 hoặc nhấn nút Reset, nhân vật quay lại vị trí spawn
 - **Giới hạn bản đồ**: `MAP_BOUNDS = { halfSize: 50 }` (vùng chơi vuông 100×100)
-- **Camera**: PerspectiveCamera 60° 따른 nhân vật, có cuộn chuột để zoom, kéo chuột để xoay trên menu
+- **Camera**: PerspectiveCamera 60° theo nhân vật, có cuộn chuột để zoom, kéo chuột để xoay trên menu. Bomber dùng camera orthographic nghiêng 42°, tự fit toàn bộ map 52×52 theo tỷ lệ viewport và giữ kích thước nhân vật ổn định theo chiều sâu.
 - **Pointer Lock**: Bấm `Shift` hoặc nút "Shift-Lock" để khóa chuột, nhìn tự do như FPS
 - Trong chế độ Săn Bia, độ nhạy camera theo trục dọc đã giảm khoảng 50%; tường chắn đường nhìn giữa camera và nhân vật sẽ mờ đi để vẫn nhìn thấy Bearbrick.
 
@@ -215,11 +221,20 @@ Tất cả texture được vẽ trên `<canvas>` 2D rồi chuyển thành `THRE
 
 Xây dựng nhân vật Bearbrick dạng nhóm `THREE.Group` với các bộ phận: head, body, eyes, chest plate, glasses, visor, headset...
 
-| Skin Key | Tên hiển thị | Mô tả |
-|----------|-------------|-------|
-| `chrome` | Chrome | Màu crom kim loại cơ bản |
-| `spiderman` | Spider-Man | Áo khoác lưới nhện, mắt trắng |
-| `maczt` | MACZT Staff | Kính tech visor màu xanh, headsetMic, áo đồng phục MACZT |
+| Skin Key | Tên hiển thị | Loại | Giá (💎 / 🎯) | Mô tả |
+|----------|-------------|------|--------------|-------|
+| `chrome` | Classic Chrome | Mặc định (mở khóa) | 0 / 0 | Màu crom kim loại cơ bản |
+| `cyber` | Neon Cyber | Mặc định (mở khóa) | 0 / 0 | Màu neon cyberpunk |
+| `gold` | Gold Edition | Standard | 10 / 15 | Màu vàng kim loại |
+| `pastel` | Pastel Panda | Standard | 15 / 20 | Màu pastel hồng trắng |
+| `lava` | Crimson Lava | Standard | 20 / 30 | Màu đỏ lava |
+| `samurai` | Emerald Samurai | Standard | 28 / 40 | Màu xanh ngọc samurai |
+| `galaxy` | Galaxy Void | Standard | 36 / 50 | Màu vũ trụ của không gian |
+| `batman` | VIP Batman | VIP 3D | 36 / 50 | Áo balo Batman, mặt nạ, khoá hiệu |
+| `thor` | VIP Thor | VIP 3D | 36 / 50 | Áo Thor, sấm sét |
+| `captain` | VIP Captain | VIP 3D | 36 / 50 | Áo Captain America |
+| `spiderman` | VIP Spider-Man | VIP 3D | 36 / 50 | Áo khoác lưới nhện, mắt trắng |
+| `maczt` | VIP Nhân Viên Maczt | VIP 3D | 0 / 0 | Kính tech visor màu xanh, headsetMic, áo đồng phục MACZT |
 
 Mỗi skin có:
 - `gemCost`: Giá mua bằng gem
@@ -260,12 +275,15 @@ Mở khóa skin: Hàm `applySkinSelection(skinKey)` thay đổi `state.skin`, re
 | Đổi loại đạn | `btn-switch-ammo` (PC: `G` hoặc `Q`) | Chuyển đổi giữa `plasma` ↔ `lightning` |
 | Nhảy (di động) | `touch-jump` | Lệnh nhảy trên thiết bị cảm ứng |
 | Reset nhân vật | `btn-reset` | `respawnPlayer()` - hồi sinh tại điểm xuất phát |
-| Khóa chuột (Pointer Lock) | `btn-pointer-lock` | Bật/tắt khóa con trỏ chuột (Shift-Lock) |
+| Khóa chuột (Pointer Lock) | `btn-pointer-lock` | Bật/tắt khóa con trỏ chuột (Shift-Lock); Bomber không tự khóa và ẩn nút này |
 | Developer Mode | Giữ `Ctrl` + `Shift`, nhấn `H` rồi `P` trong vòng 1,2 giây | Bật/tắt không mất máu và không bị vòng xoay đánh văng; trong climb, `ArrowUp` tới bậc kế tiếp; trong hunt, `ArrowUp` hạ bia sắp nổ nhất |
 | MởDrawer Avatar | `btn-avatar-toggle` | Mở/đóng bảng thông tin nhân vật và skin |
 | Lưu game (trong chơi) | `btn-save-local` | Lưu tiến trình ngay lập tức |
 | Xuất JSON (trong chơi) | `btn-export-json` | Tải file JSON |
 | Replay (màn hình kết quả) | `btn-result-replay` | Chơi lại chế độ/bản đồ hiện tại |
+| Đặt bom (bomber) | `btn-place-bomber-bomb` | Đặt bom trong chế độ bomber |
+
+Trong Bomber, bộ đếm giờ kèm thanh tiến trình và thanh máu Boss hiển thị trong bảng thông tin phía trên; nhân vật và bot có thanh máu phía trên đầu, đồng thời có ô vuông cam nhạt mờ 40% dưới chân nhân vật để chỉ vị trí. Vụ nổ hiển thị sát thương và trúng khi ít nhất 1/3 diện tích thân nhân vật hoặc bot giao với ô lửa. Nửa giây trước khi nổ, các ô trong vùng ảnh hưởng nhấp nháy; khói tỏa nhanh theo bốn hướng. Bot có vệt chém khi đánh thường và lắc lư khi bước; nếu không tìm được đường tới nhân vật, bot lùi khoảng 3 ô rồi tìm lại. Nhân vật chớp sáng khi trúng bom, còn bot, Boss và nhân vật lắc lư rồi mờ dần khi bị hạ. Ban đầu nhân vật và 4 bot mờ dần xuất hiện trong 0,5 giây; 4 bot còn lại xuất hiện tuần tự trong 0,5 giây tiếp theo.
 
 ### 5.3 Dieu khien di chuyen (Movement)
 
@@ -276,6 +294,9 @@ Mở khóa skin: Hàm `applySkinSelection(skinKey)` thay đổi `state.skin`, re
 | Nhảy | (Xử lý trong `updatePhysics`) | Nút `touch-jump` |
 | Nhìn xung quanh | Chuột (khi Pointer Lock bật; trục dọc giảm 50%) | Kéo khu vực ngoài joystick (camera touch) |
 | Bắn | `F` | Nút `btn-fire` (vùng bên phải màn hình) |
+| Đặt bom (bomber) | `E` / `Space` | Nút `btn-place-bomber-bomb` (chỉ ở chế độ bomber) |
+
+Tốc độ xoay theo hướng di chuyển tăng 4 lần. Trong Bomber, khi ít nhất 3/4 bề ngang nhân vật đã vào làn, hệ thống căn dần về tâm làn để tránh mắc ở góc tường.
 
 ### 5.4 Joystick ảo (Mobile)
 
@@ -326,6 +347,19 @@ Dưới đây là danh sách các hàm quan trọng trong `index.html` (theo th�
 | Collectible | `updateCollectibles(elapsedTime)` | ~4358 | Kiểm tra va chạm thu thập gem |
 | Minimap | `renderMiniMap(elapsedTime)` | ~4391 | Vẽ bản đồ nhỏ (minimap) 2D |
 | Loop | `animate()` | ~4554 | Vòng lặp render chính (requestAnimationFrame) |
+| Map | `buildClimbMap2()` | ~4712 | Xây dựng bản đồ Pháo Đài Không Gian (20 bậc) |
+| Map | `buildHuntArenaMap(mapId)` | ~4776 | Xây dựng mê cung săn bia |
+| World | `buildMenuShowcaseWorld()` | ~2156 | Xây dựng cảnh showcase menu |
+| Gameplay | `spawnRandomHuntTarget()` | — | Sinh bia mục tiêu ngẫu nhiên (hunt) |
+| Combat | `shootLaser()` | — | Bắn tia laser (plasma/lightning) |
+| Combat | `throwShampooBomb()` | — | Ném bom champir |
+| Combat | `updateProjectiles()` | — | Cập nhật dasan và hiệu ứng |
+| Runner | `buildRunnerWorld()` | — | Xây dựng.world chạy tự động |
+| Bomber | `startBomberGame()` | — | Khởi động trò chơi đặt bom |
+| Save | `LocalSaveManager` | ~6231 | Quản lý lưu/nạp/export/import JSON |
+| Save | `saveManager.resetAllData()` | — | Xóa toàn bộ tiến trình lưu |
+| Skin | `drawSkinAvatarIcon()` | — | Vẽ icon skin trên canvas HTML |
+| Dev | `updateDeveloperModeBadge()` | — | Cập nhật badge Dev Mode trên HUD |
 
 ---
 
@@ -334,7 +368,7 @@ Dưới đây là danh sách các hàm quan trọng trong `index.html` (theo th�
 ```javascript
 state = {
     screen: 'menu' | 'playing',
-    gameMode: 'climb' | 'hunt',
+    gameMode: 'climb' | 'hunt' | 'runner' | 'bomber',
     climbMapId: 'map1',
     climbLevel: 1,
     climbMapLevels: { map1: 1, map2: 1 },
@@ -342,20 +376,37 @@ state = {
     huntLevel: 1,
     huntMapLevels: { map1: 1, map2: 1 },
     matchEnded: false,
+    isPaused: false,          // Trạng thái tạm dừng (thoát xác nhận)
+    isDevMode: false,         // Chế độ lập trình viên (Ctrl+Shift+H+P)
+    backgroundTheme: 'galaxy' | 'noel',
     pos: {x, y, z},           // Vị trí người chơi
     hp: 100,                  // Máu tối đa 100
     maxHp: 100,
     score: 0,
     totalStarsAllTime: 0,     // Tổng gem tích lũy
     totalTargetsAllTime: 0,   // Tổng mục tiêu bắn trúng
+    huntGoal: 15,             // Số bia cần hạ trong hunt
+    huntDestroyed: 0,         // Số bia đã hạ
     weaponMode: 'plasma',     // 'plasma' | 'lightning'
     skin: 'chrome',           // Key skin hiện tại
-    unlockedSkins: ['chrome'], // Danh sách skin đã mở
-    keys: {w:false, a:false, s:false, d:false},
+    unlockedSkins: ['chrome', 'cyber', 'maczt'], // Danh sách skin đã mở
+    completedMaps: { climb_map1: false, climb_map2: false, hunt_mode: false, bomber_map1: false },
+    keys: {w:false, a:false, s:false, d:false, space: false},
     joyVec: {x:0, y:0},       // Vector joystick di động
     isDragging: false,        // Kéo chuột trên menu
     isAimingBomb: false,      // Đang định hướng ném bom
-    muted: false              // Tắt âm thanh
+    muted: false,             // Tắt âm thanh
+    // Chế độ runner
+    runnerLane: 1,
+    runnerDistance: 0,
+    runnerCoinsCollected: 0,
+    runnerSpeed: 17,
+    runnerLaneCooldown: 0,
+    // Tiến độ leo thang
+    currentStep: 0,
+    highestStep: 0,
+    highestGroundedY: 0,
+    matchStartTime: 0
 };
 ```
 
@@ -386,7 +437,7 @@ state = {
 - Đây là bản chạy trên trình duyệt (web), **không phải** game Roblox thực sự sử dụng Lua/Roblox Studio. Nó chỉ mô phỏng phong cách Roblox/Bearbrick bằng Three.js.
 - Âm thanh được tạo thủ tục qua Web Audio API, cần tương tác người dùng đầu tiên (click/chạm) để khởi tạo `AudioContext` (tránh bị chặn bởi trình duyệt).
 - Dữ liệu lưu trữ cục bộ qua `localStorage`, có thể bị xóa nếu người dùng xóa dữ liệu duyệt web.
-- Hiện chỉ có 1 bản đồ (Rainbow Sky Tower) và 1 chế độ (climb). Các bản đồ/chế độ khác có thể mở rộng bằng cách viết thêm hàm `buildClimbMapX()` và gọi trong `startGameMode()`.
+- Hiện có **2 bản đồ climb** (Tháp Không Gian 18 tầng, Pháo Đài Không Gian 20 tầng), **2 bản đồ hunt** (Mê Cung Cổ Điển, Mê Cung Chuyển Động), **1 world runner** và **1 bản đồ bomber**. Các bản đồ/chế độ khác có thể mở rộng bằng cách viết thêm hàm builder và gọi trong `startGameMode()`.
 
 ---
 

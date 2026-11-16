@@ -60,7 +60,7 @@ Roblox_bearbrick/
 - `worldGroup`: nhóm mesh của world hiện tại; `clearWorld()` dọn world và các registry trước khi dựng map khác.
 - `addPlatformBlock(...)`: tạo platform/tường, mesh và AABB collider. Với tường maze cần `recordMiniMapWall = true` để đăng ký radar và camera occlusion.
 - Registry chính: `colliders`, `platformMeshes`, `stars`, `targets`, `rollingRails`, `sweeperSpinners`, `miniMapWalls`, `cameraOccluders`, `huntSpawnPoints`, `healingPools`.
-- Builders: `buildMenuShowcaseWorld()`, `buildClimbMap1()`, `buildClimbMap2()`, `buildHuntArenaMap()`.
+- Builders: `buildMenuShowcaseWorld()`, `buildClimbMap1()`, `buildClimbMap2()`, `buildHuntArenaMap()`, `buildRunnerWorld()`.
 - `addClimbDifficultyExtension()` mở rộng tháp theo độ khó bằng platform trượt/vòng xoay xen kẽ; Map 2 giữ ray dẫn ngang, chỉ mặt trượt nghiêng 15° và collider tạo lực trượt xuống dốc.
 - `buildChristmasMapDecorations()` thêm cây thông, mảng tuyết và tuần lộc chuyển động cho hai map climb khi theme Noel được chọn.
 - `buildLobbyThemeDecorations()` thêm UFO/người ngoài hành tinh cho Galaxy hoặc cây thông, tuần lộc, quà, gậy kẹo và tất chân cho Noel.
@@ -68,13 +68,15 @@ Roblox_bearbrick/
 
 ### Gameplay và input
 
-- `state.gameMode`: `climb` hoặc `hunt`; `state.climbMapId`: `map1`/`map2`.
+- `state.gameMode`: `climb` | `hunt` | `runner` | `bomber`; `state.climbMapId`: `map1`/`map2`.
 - Climb: `updatePhysics()`, `updateDynamicObstacles()`, `updateCollectibles()`.
 - Hunt: `spawnRandomHuntTarget()`, `getCrosshairWorldTarget()`, `shootLaser()`, `throwShampooBomb()`, `updateProjectiles()`.
+- Runner: `buildRunnerWorld()`, điều khiển đổi làn (A/D/joystick) và nhảy (Space).
+- Bomber: `startBomberGame()`, đặt bom (E/Space), phá thùng tìm nâng cấp.
 - Hunt có `map1` (bia đứng yên) và `map2` (bia di chuyển chậm); `state.huntMapLevels` lưu cấp riêng từng map. Mỗi lần thắng tăng level map đó và thêm 5 bia mục tiêu.
 - Climb có `state.climbMapLevels` độc lập cho hai map; `addClimbDifficultyExtension()` thêm 4 bậc xen kẽ ray trượt/vòng xoay (ô vòng xoay rộng 7.5 đơn vị) và gem cho mỗi ⭐ tăng thêm theo đường vòng lục giác bán kính cố định, không có trần level trong code.
 - `menu-maps-cleared` hiển thị tổng ⭐ của cả bốn map; badge hoàn thành cũ đã được bỏ.
-- PC: WASD/arrows di chuyển, Space nhảy; hunt dùng F bắn, G/Q đổi đạn, chuột phải giữ-ngắm/thả-ném bom.
+- PC: WASD/arrows di chuyển, Space nhảy; hunt dùng F bắn, G/Q đổi đạn, chuột phải giữ-ngắm/thả-ném bom; bomber dùng E/Space đặt bom.
 - Trong trận, Ctrl+Shift rồi nhấn H và P bật/tắt `state.isDevMode`; damage/knockback bị chặn, còn ArrowUp nhảy sang bậc kế tiếp hoặc hạ bia sắp nổ nhất.
 - Touch input gồm virtual joystick, camera drag và các nút nhảy/bắn/bom.
 - Nút **Thoát** pause trận và hỏi xác nhận trước khi về sảnh.
@@ -83,7 +85,8 @@ Roblox_bearbrick/
 
 - `SKINS` là catalog; `drawSkinAvatarIcon()` vẽ icon skin trên HTML canvas.
 - `getSkinCostLabel()`, `canAffordSkin()`, `handleSkinClick()` quản lý giá/mở khóa; `renderSkinShopUI()` dựng danh sách icon ở sảnh và avatar drawer.
-- Skin mặc định: `chrome`, `cyber`, `maczt`. Các VIP khác cần đồng thời `36 💎 + 50 🎯`.
+- Có 12 skin: 7 standard (`chrome`, `cyber`, `gold`, `pastel`, `lava`, `samurai`, `galaxy`) và 5 VIP 3D (`batman`, `thor`, `captain`, `spiderman`, `maczt`).
+- Skin mặc định mở khóa: `chrome`, `cyber`, `maczt`. Các skin VIP khác cần đồng thời `36 💎 + 50 🎯` (trừ `maczt` miễn phí).
 - Cửa hàng sảnh có tab skin, phụ kiện và skin vũ khí; hai tab sau hiện là placeholder.
 - `spawnRandomHuntTarget()` dựng bia kẹo khi `state.backgroundTheme === 'noel'`.
 
@@ -96,8 +99,8 @@ Roblox_bearbrick/
 ## 5. Hướng dẫn mở rộng
 
 - **Thêm map climb:** tạo builder cạnh `buildClimbMap1/2()`, nối vào `startGameMode()`, nút sảnh, spawn/respawn và `completedMaps`.
-- **Thêm mode:** cập nhật menu button + binding, nhánh `startGameMode()`, HUD/objective, update loop, completion/result, minimap và save nếu có tiến trình mới.
-- **Thêm skin:** thêm catalog entry vào `SKINS`, xử lý chi tiết icon trong `drawSkinAvatarIcon()` nếu cần, rồi kiểm tra default unlock, giá và migration save.
+- **Thêm mode:** cập nhật menu button + binding, nhánh `startGameMode()` (thêm case `runner`, `bomber`), HUD/objective, update loop, completion/result, minimap và save nếu có tiến trình mới.
+- **Thêm skin:** thêm catalog entry vào `SKINS` (7 standard + 5 VIP), xử lý chi tiết icon trong `drawSkinAvatarIcon()` nếu cần, rồi kiểm tra default unlock, giá và migration save.
 - **Thêm phụ kiện/skin vũ khí:** bắt đầu từ các panel tab placeholder và thêm riêng state, catalog, equip UI, render/asset logic và persistence.
 - **Sửa platform/tường:** dùng builder chung để mesh/collider/radar/camera-occlusion được đăng ký nhất quán.
 
