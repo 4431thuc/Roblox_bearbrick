@@ -63,7 +63,7 @@ Mỗi lần vào màn chơi, chữ **START** xuất hiện giữa màn hình r�
 Hiện có **4 chế độ chính**:
 - **`climb`** (Leo thang): Leo platform, tránh chướng ngại vật và thu thập gem trên hai map.
 - **`hunt`** (Săn bia): Bắn và ném bom vào bia trong mê cung.
-- **`runner`** (Chạy tự động): Nhân vật chạy tự động về phía trước, người chơi đổi làn (A/D hoặc joystick) và nhảy (Space) để tránh chướng ngại vật.
+- **`runner`** (Chạy ngang 3 làn, kiểu Zombie Tsunami): Nhân vật tự chạy từ trái sang phải, camera nhìn nghiêng, 3 làn xếp từ trên (xa) xuống dưới (gần). Điều khiển bằng cả vùng nhìn 3D: **vuốt lên/xuống** (hoặc kéo chuột, W/S, mũi tên) để đổi làn, **chạm/click bất kỳ đâu** (hoặc Space) để nhảy; joystick và nút NHẢY được ẩn. Địa hình: hố gai ở cả 3 làn (rơi xuống là thua, có thể nhảy qua), khối `crate`, bục `tower`, bục có dốc `ramp` (đi xuống tự động), bậc thang `stairs` (nhảy từng bậc). Vật phẩm: 💥 **Tông phá** (7 giây, đâm vào bục/khối sẽ phá vỡ thay vì thua) và 🌉 **Ủi qua hố** (7 giây, hố tự lấp). 20 vòng tròn = 1 gem, phần dư lưu lại cho lần sau (`runnerCoinBank`).
 - **`bomber`** (Đặt bom): Di chuyển theo tâm lối với tốc độ mặc định 9.6, bắt đầu đặt được 2 bom đồng thời, nổ dài 2 ô theo bốn hướng; phá thùng để tìm nâng cấp, gồm vật phẩm hồi 20% HP tối đa và khiên dạng vành cầu xoay quanh thân. Level 1 có 20 bot (36 HP mỗi bot) và Boss 300 HP. Mỗi chiến thắng tăng 1⭐ riêng cho map; mỗi level thêm 2 bot và 18 HP/bot, tăng 100 HP/Boss. Mỗi màn có đồng hồ riêng: level 1 là 2 phút, mỗi level sau thêm 1 phút, và đồng hồ đặt lại khi vào màn Boss. Từ Level 4 trở đi có 2 Boss ở hai góc đối diện, ra chiêu lệch nhịp. Bot đuổi theo nhân vật và không coi bom là vật cản.
 
 Khi hoàn thành mục tiêu, Bearbrick nhảy mừng, chữ **VICTORY** bay lên cùng hiệu ứng pháo hoa trong 3 giây rồi mới hiện bảng kết quả. Khi thua ở Runner hoặc Bomber, chữ **LOSE** bay lên 2 giây trước bảng chơi lại/thoát; các thời điểm thắng/thua có âm báo riêng và Bomber có nhạc nền riêng.
@@ -411,6 +411,10 @@ state = {
     runnerCoinsCollected: 0,
     runnerSpeed: 17,
     runnerLaneCooldown: 0,
+    runnerGemsEarned: 0,      // Gem nhận trong lần chạy hiện tại
+    runnerCoinBank: 0,        // Vòng tròn dư (0-19), được lưu giữa các lần chạy
+    runnerRamTime: 0,         // Giây còn lại của 💥 Tông phá
+    runnerBridgeTime: 0,      // Giây còn lại của 🌉 Ủi qua hố
     // Tiến độ leo thang
     currentStep: 0,
     highestStep: 0,

@@ -22,7 +22,7 @@ Game có nhiều chế độ chơi, nhiều bản đồ, hệ thống skin sưu 
 | `climb` | Leo thang | Map 2: Pháo Đài Không Gian (20 bậc) | Tương tự Map 1, thêm ray trượt nghiêng 15° |
 | `hunt` | Săn bia | Map 1: Mê Cung Cổ Điển | Bia đứng yên, bắn hạ số lượng mục tiêu quy định |
 | `hunt` | Săn bia | Map 2: Mê Cung Chuyển Động | Bia di chuyển chậm, bố cục tường khác |
-| `runner` | Chạy tự động | — | Chạy theo làn, đổi làn bằng A/D hoặc joystick, Space nhảy |
+| `runner` | Chạy ngang 3 làn | — | Chạy ngang kiểu Zombie Tsunami: vuốt lên/xuống đổi làn, chạm bất kỳ đâu để nhảy; hố gai, bục, dốc, bậc thang; nhặt 💥 tông phá và 🌉 ủi qua hố; 20 vòng tròn = 1 gem |
 | `bomber` | Đặt bom | Map 1: Đảo Bomber; Map 2: Đảo Nước | Đặt bom, phá thùng, hạ quái và Boss; map 2 có nước chặn đường nhưng không chặn vụ nổ |
 
 Mỗi bản đồ climb bắt đầu ở **độ khó 1⭐**. Thắng map sẽ lưu độ khó kế tiếp riêng cho map đó và thêm **4 tầng** vào đường leo, xen kẽ ray trượt và vòng xoay.

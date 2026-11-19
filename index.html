@@ -2958,7 +2958,6 @@
         let bomberNextStageTimer = 0;
         let runnerNextSpawnX = 0;
         const runnerPits = [];
-        let runnerLaneLatch = false;
         let runnerTouch = null;
 
         const MAP_BOUNDS = { halfSize: 50 };
@@ -3752,74 +3751,292 @@
 
         // Mode 3: Side-scrolling 3-lane runner (Zombie Tsunami style).
         // The player runs along +X. Lanes are rows along Z (lane 0 = top of screen, lane 2 = bottom).
-        // Swipe up/down or W/S / arrows change lane; tap or Space jumps.
-        // Blocks are walls you must dodge or jump onto; pits drop out across all lanes.
+        // Swipe up/down anywhere on the 3D view (or W/S, arrows) changes lane; tap/click anywhere or Space jumps.
+        // Terrain: spike pits across all lanes, crates, towers, ramps (walk down by themselves) and stairs.
+        // Pickups: 💥 Ram smashes obstacles, 🌉 Bridge fills pits for a few seconds.
         const RUNNER_LANE_GAP = 3.8;
         const RUNNER_COINS_PER_GEM = 20;
         const RUNNER_CHUNK_LEN = 26;
-        const RUNNER_ROAD_START = -60;
-        const RUNNER_ROAD_LEN = 20000;
+        const RUNNER_START_X = -60;
+        const RUNNER_ROAD_HALF = 5.75;
+        const RUNNER_PIT_DEPTH = 3;
+        const RUNNER_SPIKE_DEATH_FEET = -1.05;
+        const RUNNER_POWER_SECONDS = 7;
         const runnerLaneZ = (lane) => (lane - 1) * RUNNER_LANE_GAP;
+        const runnerPieceHeight = (p, x) => p.h0 + (p.h1 - p.h0) * ((x - p.x0) / (p.x1 - p.x0));
+        const runnerChunks = [];
+        const runnerItems = [];
+        const runnerDebris = [];
+        let runnerGfx = null;
+        let runnerAura = null;
+        let runnerBridgePit = null;
+        let runnerMouse = null;
+
+        // Terrain pieces are [x0, x1, heightAtX0, heightAtX1] relative to the structure start.
+        const RUNNER_STRUCTURES = {
+            crate:  { depth: 2.3, pieces: (x) => [[x, x + 2.2, 1.65, 1.65]] },
+            tower:  { depth: 3.4, pieces: (x) => [[x, x + 6, 2.2, 2.2]] },
+            ramp:   { depth: 3.4, pieces: (x) => [[x, x + 5, 2.4, 2.4], [x + 5, x + 13, 2.4, 0]] },
+            stairs: { depth: 3.4, pieces: (x) => [[x, x + 4, 1.2, 1.2], [x + 4, x + 8, 2.4, 2.4], [x + 8, x + 16, 2.4, 0]] }
+        };
+
+        function createRunnerGfx() {
+            return {
+                roadMat: new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.72 }),
+                outerMat: new THREE.MeshStandardMaterial({ color: 0x0b1120, roughness: 0.9 }),
+                stripeMat: new THREE.MeshBasicMaterial({ color: 0x67e8f9 }),
+                railMat: new THREE.MeshStandardMaterial({ color: 0x0ea5e9, emissive: 0x0369a1, emissiveIntensity: 0.6 }),
+                pitFloorMat: new THREE.MeshStandardMaterial({ color: 0x2b0a0a, emissive: 0x7f1d1d, emissiveIntensity: 0.7, roughness: 1 }),
+                pitRimMat: new THREE.MeshStandardMaterial({ color: 0xf43f5e, emissive: 0xbe123c, emissiveIntensity: 1.0 }),
+                spikeGeo: new THREE.ConeGeometry(0.34, 1.7, 7),
+                spikeMat: new THREE.MeshStandardMaterial({ color: 0xcbd5e1, metalness: 0.75, roughness: 0.28, emissive: 0x991b1b, emissiveIntensity: 0.5 }),
+                bridgeMat: new THREE.MeshStandardMaterial({ color: 0x22d3ee, emissive: 0x06b6d4, emissiveIntensity: 1.0, transparent: true, opacity: 0.82 }),
+                coinGeo: new THREE.TorusGeometry(0.48, 0.16, 8, 18),
+                coinMat: new THREE.MeshStandardMaterial({ color: 0xfbbf24, emissive: 0xf59e0b, emissiveIntensity: 0.8, metalness: 0.65, roughness: 0.25 }),
+                poleGeo: new THREE.BoxGeometry(0.22, 4.2, 0.22),
+                poleMat: new THREE.MeshStandardMaterial({ color: 0x475569, metalness: 0.55, roughness: 0.4 }),
+                lampGeo: new THREE.BoxGeometry(0.35, 0.18, 1.2),
+                lampMats: [new THREE.MeshBasicMaterial({ color: 0x22d3ee }), new THREE.MeshBasicMaterial({ color: 0xf472b6 })]
+            };
+        }
+
+        function makeRunnerEmojiSprite(emoji, size) {
+            const canvas = document.createElement('canvas');
+            canvas.width = canvas.height = 128;
+            const ctx = canvas.getContext('2d');
+            ctx.font = '96px serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(emoji, 64, 70);
+            const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(canvas), transparent: true }));
+            sprite.scale.set(size, size, 1);
+            return sprite;
+        }
+
+        // Continuous strip beside the road (also forms the side walls of every pit) + rails + lamps.
+        function addRunnerShell(group, xa, xb) {
+            const g = runnerGfx;
+            const len = xb - xa;
+            const cx = xa + len / 2;
+            const outerW = 11 - RUNNER_ROAD_HALF;
+            for (const side of [-1, 1]) {
+                const outer = new THREE.Mesh(new THREE.BoxGeometry(len, RUNNER_PIT_DEPTH, outerW), g.outerMat);
+                outer.position.set(cx, -0.05 - RUNNER_PIT_DEPTH / 2, side * (RUNNER_ROAD_HALF + outerW / 2));
+                outer.receiveShadow = true;
+                group.add(outer);
+                const rail = new THREE.Mesh(new THREE.BoxGeometry(len, 0.18, 0.22), g.railMat);
+                rail.position.set(cx, 0.12, side * 5.9);
+                group.add(rail);
+            }
+            for (let x = Math.ceil(xa / 24) * 24; x < xb; x += 24) {
+                for (const side of [-1, 1]) {
+                    const post = new THREE.Group();
+                    const pole = new THREE.Mesh(g.poleGeo, g.poleMat);
+                    pole.position.y = 2.1;
+                    post.add(pole);
+                    const lamp = new THREE.Mesh(g.lampGeo, g.lampMats[side < 0 ? 0 : 1]);
+                    lamp.position.set(0, 4.1, -side * 0.5);
+                    post.add(lamp);
+                    post.position.set(x, 0, side * 7.4);
+                    group.add(post);
+                }
+            }
+        }
+
+        // Thick road slab: its ends become the pit's end walls.
+        function addRunnerRoad(group, xa, xb) {
+            const len = xb - xa;
+            if (len < 0.05) return;
+            const g = runnerGfx;
+            const h = RUNNER_PIT_DEPTH + 0.08;
+            const slab = new THREE.Mesh(new THREE.BoxGeometry(len, h, RUNNER_ROAD_HALF * 2), g.roadMat);
+            slab.position.set(xa + len / 2, 0.08 - h / 2, 0);
+            slab.receiveShadow = true;
+            group.add(slab);
+            for (const z of [-RUNNER_LANE_GAP / 2, RUNNER_LANE_GAP / 2]) {
+                const stripe = new THREE.Mesh(new THREE.BoxGeometry(len, 0.035, 0.075), g.stripeMat);
+                stripe.position.set(xa + len / 2, 0.105, z);
+                group.add(stripe);
+            }
+        }
+
+        // Spike pit: dark glowing floor, a field of spikes, glowing rims and a hidden bridge plate.
+        function buildRunnerPit(group, px0, px1) {
+            const g = runnerGfx;
+            const width = px1 - px0;
+            const cx = px0 + width / 2;
+            const floor = new THREE.Mesh(new THREE.BoxGeometry(width, 0.2, RUNNER_ROAD_HALF * 2), g.pitFloorMat);
+            floor.position.set(cx, -RUNNER_PIT_DEPTH, 0);
+            group.add(floor);
+
+            const cols = Math.max(3, Math.floor(width / 1.1));
+            const rows = 10;
+            const spikes = new THREE.InstancedMesh(g.spikeGeo, g.spikeMat, cols * rows);
+            spikes.frustumCulled = false;
+            const dummy = new THREE.Object3D();
+            let n = 0;
+            for (let c = 0; c < cols; c++) {
+                for (let r = 0; r < rows; r++) {
+                    const s = 0.9 + Math.random() * 0.2;
+                    dummy.position.set(
+                        px0 + (c + 0.5) * (width / cols) + (Math.random() - 0.5) * 0.25,
+                        -2.9 + 0.85 * s,
+                        -5.2 + (r + 0.5) * (10.4 / rows) + (Math.random() - 0.5) * 0.25
+                    );
+                    dummy.scale.set(1, s, 1);
+                    dummy.updateMatrix();
+                    spikes.setMatrixAt(n++, dummy.matrix);
+                }
+            }
+            spikes.instanceMatrix.needsUpdate = true;
+            group.add(spikes);
+
+            for (const x of [px0 + 0.1, px1 - 0.1]) {
+                const rim = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.05, RUNNER_ROAD_HALF * 2), g.pitRimMat);
+                rim.position.set(x, 0.11, 0);
+                group.add(rim);
+            }
+
+            const bridge = new THREE.Mesh(new THREE.BoxGeometry(width + 0.4, 0.14, RUNNER_ROAD_HALF * 2), g.bridgeMat);
+            bridge.position.set(cx, 0, 0);
+            bridge.visible = false;
+            group.add(bridge);
+            return bridge;
+        }
+
+        function addRunnerCoin(x, lane, y) {
+            const coin = new THREE.Mesh(runnerGfx.coinGeo, runnerGfx.coinMat);
+            coin.rotation.x = Math.PI / 2;
+            coin.position.set(x, y, runnerLaneZ(lane));
+            worldGroup.add(coin);
+            runnerCoins.push({ mesh: coin, baseY: y, collected: false });
+        }
+
+        function addRunnerItem(kind, x, lane) {
+            const ram = kind === 'ram';
+            const group = new THREE.Group();
+            const gem = new THREE.Mesh(
+                new THREE.OctahedronGeometry(0.6, 0),
+                new THREE.MeshStandardMaterial({
+                    color: ram ? 0xfb923c : 0x22d3ee,
+                    emissive: ram ? 0xea580c : 0x0891b2,
+                    emissiveIntensity: 1.0,
+                    metalness: 0.4,
+                    roughness: 0.25
+                })
+            );
+            group.add(gem);
+            const sprite = makeRunnerEmojiSprite(ram ? '💥' : '🌉', 1.7);
+            sprite.position.y = 1.5;
+            group.add(sprite);
+            group.position.set(x, 1.5, runnerLaneZ(lane));
+            worldGroup.add(group);
+            runnerItems.push({ group, gem, kind, baseY: 1.5, collected: false });
+        }
+
+        function addRunnerStructure(lane, kind, x0) {
+            const def = RUNNER_STRUCTURES[kind];
+            const depth = def.depth;
+            const crate = kind === 'crate';
+            const pieces = def.pieces(x0).map(([a, b, h0, h1]) => ({ x0: a, x1: b, h0, h1 }));
+            const bodyColor = crate ? (Math.random() > 0.5 ? 0xf97316 : 0xef4444) : 0x0c4a6e;
+            const bodyMat = new THREE.MeshStandardMaterial({ color: bodyColor, roughness: 0.55, metalness: 0.15 });
+            const neonMat = new THREE.MeshBasicMaterial({ color: crate ? 0xfacc15 : 0x67e8f9 });
+            const group = new THREE.Group();
+            group.position.set(0, 0, runnerLaneZ(lane));
+
+            for (const p of pieces) {
+                const len = p.x1 - p.x0;
+                const cx = p.x0 + len / 2;
+                if (p.h0 === p.h1) {
+                    const body = new THREE.Mesh(new THREE.BoxGeometry(len, p.h0, depth), bodyMat);
+                    body.position.set(cx, p.h0 / 2, 0);
+                    body.castShadow = true;
+                    group.add(body);
+                    const cap = new THREE.Mesh(new THREE.BoxGeometry(len + 0.04, 0.12, depth + 0.04), neonMat);
+                    cap.position.set(cx, p.h0 + 0.02, 0);
+                    group.add(cap);
+                    if (!crate) {
+                        for (const z of [-depth / 2, depth / 2]) {
+                            const glow = new THREE.Mesh(new THREE.BoxGeometry(len, 0.1, 0.1), neonMat);
+                            glow.position.set(cx, p.h0 * 0.5, z);
+                            group.add(glow);
+                        }
+                    }
+                } else {
+                    // Ramp that goes down: the player walks along it by himself.
+                    const shape = new THREE.Shape();
+                    shape.moveTo(0, 0);
+                    shape.lineTo(len, 0);
+                    shape.lineTo(0, p.h0);
+                    shape.lineTo(0, 0);
+                    const geo = new THREE.ExtrudeGeometry(shape, { depth, bevelEnabled: false });
+                    geo.translate(0, 0, -depth / 2);
+                    const wedge = new THREE.Mesh(geo, bodyMat);
+                    wedge.position.set(p.x0, 0, 0);
+                    wedge.castShadow = true;
+                    group.add(wedge);
+                    const slopeLen = Math.hypot(len, p.h0);
+                    const strip = new THREE.Mesh(new THREE.BoxGeometry(slopeLen, 0.1, depth + 0.04), neonMat);
+                    strip.position.set(cx, p.h0 / 2 + 0.02, 0);
+                    strip.rotation.z = -Math.atan2(p.h0, len);
+                    group.add(strip);
+                }
+            }
+
+            // Hazard panel on the front face so the wall to jump is easy to read.
+            const first = pieces[0];
+            const panelH = first.h0 * 0.95;
+            const panel = new THREE.Mesh(new THREE.BoxGeometry(0.1, panelH, depth * 0.96), new THREE.MeshBasicMaterial({ color: 0xfacc15 }));
+            panel.position.set(first.x0 - 0.03, panelH / 2, 0);
+            group.add(panel);
+            const barMat = new THREE.MeshBasicMaterial({ color: 0x111827 });
+            for (const k of [-0.3, 0, 0.3]) {
+                const bar = new THREE.Mesh(new THREE.BoxGeometry(0.12, panelH, depth * 0.12), barMat);
+                bar.position.set(first.x0 - 0.04, panelH / 2, k * depth);
+                group.add(bar);
+            }
+
+            worldGroup.add(group);
+            const block = { group, lane, kind, x0: pieces[0].x0, x1: pieces[pieces.length - 1].x1, pieces, color: bodyColor };
+            runnerObstacles.push(block);
+            return block;
+        }
+
+        function addRunnerStructureCoins(block) {
+            for (const p of block.pieces) {
+                const len = p.x1 - p.x0;
+                const count = Math.max(1, Math.floor(len / 1.6));
+                for (let i = 0; i < count; i++) {
+                    const x = p.x0 + (i + 0.5) * (len / count);
+                    addRunnerCoin(x, block.lane, runnerPieceHeight(p, x) + 1.25);
+                }
+            }
+        }
 
         function buildRunnerWorld() {
             clearWorld();
             MAP_BOUNDS.halfSize = 18;
-            const roadCenterX = RUNNER_ROAD_START + RUNNER_ROAD_LEN / 2;
+            runnerGfx = createRunnerGfx();
+            runnerChunks.length = 0;
+            runnerItems.length = 0;
+            runnerDebris.length = 0;
+            runnerBridgePit = null;
+            runnerTouch = null;
+            runnerMouse = null;
 
-            const floor = new THREE.Mesh(
-                new THREE.BoxGeometry(RUNNER_ROAD_LEN, 1, 22),
-                new THREE.MeshStandardMaterial({ color: 0x0b1120, roughness: 0.9 })
+            runnerAura = new THREE.Mesh(
+                new THREE.SphereGeometry(1.5, 16, 12),
+                new THREE.MeshBasicMaterial({ color: 0xfb923c, transparent: true, opacity: 0.28, depthWrite: false })
             );
-            floor.position.set(roadCenterX, -0.55, 0);
-            floor.receiveShadow = true;
-            worldGroup.add(floor);
+            runnerAura.visible = false;
+            worldGroup.add(runnerAura);
 
-            const road = new THREE.Mesh(
-                new THREE.BoxGeometry(RUNNER_ROAD_LEN, 0.12, 11.5),
-                new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.72 })
-            );
-            road.position.set(roadCenterX, 0.02, 0);
-            road.receiveShadow = true;
-            worldGroup.add(road);
-
-            // Lane dividers and road edges
-            for (const z of [-RUNNER_LANE_GAP / 2, RUNNER_LANE_GAP / 2]) {
-                const stripe = new THREE.Mesh(
-                    new THREE.BoxGeometry(RUNNER_ROAD_LEN, 0.035, 0.075),
-                    new THREE.MeshBasicMaterial({ color: 0x67e8f9 })
-                );
-                stripe.position.set(roadCenterX, 0.105, z);
-                worldGroup.add(stripe);
-            }
-            for (const z of [-5.9, 5.9]) {
-                const edge = new THREE.Mesh(
-                    new THREE.BoxGeometry(RUNNER_ROAD_LEN, 0.18, 0.22),
-                    new THREE.MeshStandardMaterial({ color: 0x0ea5e9, emissive: 0x0369a1, emissiveIntensity: 0.6 })
-                );
-                edge.position.set(roadCenterX, 0.12, z);
-                worldGroup.add(edge);
-            }
-
-            // Repeating side lights along both edges
-            for (let x = RUNNER_ROAD_START; x < RUNNER_ROAD_START + RUNNER_ROAD_LEN; x += 24) {
-                for (const side of [-1, 1]) {
-                    const post = new THREE.Group();
-                    const pole = new THREE.Mesh(
-                        new THREE.BoxGeometry(0.22, 4.2, 0.22),
-                        new THREE.MeshStandardMaterial({ color: 0x475569, metalness: 0.55, roughness: 0.4 })
-                    );
-                    pole.position.y = 2.1;
-                    post.add(pole);
-                    const lamp = new THREE.Mesh(
-                        new THREE.BoxGeometry(0.35, 0.18, 1.2),
-                        new THREE.MeshBasicMaterial({ color: side < 0 ? 0x22d3ee : 0xf472b6 })
-                    );
-                    lamp.position.set(0, 4.1, -side * 0.5);
-                    post.add(lamp);
-                    post.position.set(x, 0, side * 7.4);
-                    worldGroup.add(post);
-                }
-            }
+            const startGroup = new THREE.Group();
+            worldGroup.add(startGroup);
+            addRunnerShell(startGroup, RUNNER_START_X, 36);
+            addRunnerRoad(startGroup, RUNNER_START_X, 36);
+            runnerChunks.push({ x1: 36, group: startGroup });
 
             state.runnerLane = 1;
             state.runnerDistance = 0;
@@ -3827,113 +4044,69 @@
             state.runnerGemsEarned = 0;
             state.runnerSpeed = 17;
             state.runnerLaneCooldown = 0;
+            state.runnerRamTime = 0;
+            state.runnerBridgeTime = 0;
+            state.runnerHudTimer = 0;
             state.pos.set(0, 0.5, runnerLaneZ(1));
             state.vel.set(0, 0, 0);
-            runnerLaneLatch = false;
-            runnerTouch = null;
+            state.isGrounded = true;
             runnerNextSpawnX = 36; // short safe run-up before the first hazard
             while (runnerNextSpawnX < 260) spawnRunnerChunk();
         }
 
-        function addRunnerCoin(x, lane, y) {
-            const coin = new THREE.Mesh(
-                new THREE.TorusGeometry(0.48, 0.16, 8, 18),
-                new THREE.MeshStandardMaterial({
-                    color: 0xfbbf24,
-                    emissive: 0xf59e0b,
-                    emissiveIntensity: 0.8,
-                    metalness: 0.65,
-                    roughness: 0.25
-                })
-            );
-            coin.rotation.x = Math.PI / 2;
-            coin.position.set(x, y, runnerLaneZ(lane));
-            worldGroup.add(coin);
-            runnerCoins.push({ mesh: coin, baseY: y, collected: false });
-        }
-
-        function addRunnerBlock(lane, x0, x1, top, platform) {
-            const width = x1 - x0;
-            const depth = platform ? 4.6 : 2.3;
-            const group = new THREE.Group();
-            const body = new THREE.Mesh(
-                new THREE.BoxGeometry(width, top, depth),
-                new THREE.MeshStandardMaterial({
-                    color: platform ? 0x0ea5e9 : (Math.random() > 0.5 ? 0xf97316 : 0xef4444),
-                    roughness: 0.55,
-                    metalness: 0.12
-                })
-            );
-            body.position.set(width / 2, top / 2, 0);
-            body.castShadow = true;
-            group.add(body);
-            const cap = new THREE.Mesh(
-                new THREE.BoxGeometry(width + 0.04, 0.12, depth + 0.04),
-                new THREE.MeshBasicMaterial({ color: platform ? 0x67e8f9 : 0xfacc15 })
-            );
-            cap.position.set(width / 2, top + 0.02, 0);
-            group.add(cap);
-            group.position.set(x0, 0, runnerLaneZ(lane));
-            worldGroup.add(group);
-            runnerObstacles.push({ group, lane, x0, x1, top, hit: false });
-        }
-
-        function addRunnerPit(x0, x1) {
-            const width = x1 - x0;
-            const group = new THREE.Group();
-            const hole = new THREE.Mesh(
-                new THREE.BoxGeometry(width, 0.1, 12),
-                new THREE.MeshStandardMaterial({ color: 0x020617, roughness: 1 })
-            );
-            hole.position.set(width / 2, 0.2, 0);
-            group.add(hole);
-            for (const z of [-6.05, 6.05]) {
-                const rim = new THREE.Mesh(
-                    new THREE.BoxGeometry(width, 0.14, 0.18),
-                    new THREE.MeshStandardMaterial({ color: 0xf43f5e, emissive: 0xbe123c, emissiveIntensity: 0.9 })
-                );
-                rim.position.set(width / 2, 0.22, z);
-                group.add(rim);
-            }
-            group.position.x = x0;
-            worldGroup.add(group);
-            runnerPits.push({ x0, x1, group });
+        function pickRunnerStructureKind() {
+            const r = Math.random();
+            if (r < 0.3) return 'crate';
+            if (r < 0.5) return 'tower';
+            if (r < 0.8) return 'ramp';
+            return 'stairs';
         }
 
         function spawnRunnerChunk() {
             const x0 = runnerNextSpawnX;
             runnerNextSpawnX += RUNNER_CHUNK_LEN;
+            const x1 = runnerNextSpawnX;
             const difficulty = Math.min(1, state.runnerDistance / 1200);
             const roll = Math.random();
+            const chunk = new THREE.Group();
+            worldGroup.add(chunk);
+            runnerChunks.push({ x1, group: chunk });
+            addRunnerShell(chunk, x0, x1);
 
-            if (roll < 0.22) {
-                // Pit across all lanes: jump the gap. Coins hang over it as a hint.
+            if (roll < 0.24) {
+                // Spike pit across all lanes: jump it. Coins arc over the gap; sometimes a bridge pickup before it.
                 const width = 4.5 + Math.random() * (3 + 3 * difficulty);
                 const px0 = x0 + 8;
-                addRunnerPit(px0, px0 + width);
+                const px1 = px0 + width;
+                addRunnerRoad(chunk, x0, px0);
+                addRunnerRoad(chunk, px1, x1);
+                const bridge = buildRunnerPit(chunk, px0, px1);
+                runnerPits.push({ x0: px0, x1: px1, bridge });
                 const count = Math.max(3, Math.round(width / 1.7));
                 for (let i = 0; i < count; i++) {
-                    addRunnerCoin(px0 + 0.6 + i * (width / count), 1, 2.4);
+                    const t = count > 1 ? i / (count - 1) : 0.5;
+                    addRunnerCoin(px0 + 0.6 + t * (width - 1.2), 1, 1.9 + Math.sin(t * Math.PI) * 1.3);
                 }
-            } else if (roll < 0.5) {
-                // Raised block in one lane: dodge it by changing lane, or jump onto a platform.
-                const lane = Math.floor(Math.random() * 3);
-                const platform = Math.random() < 0.4;
-                const bx0 = x0 + 10;
-                const bx1 = bx0 + (platform ? 6 : 2.2);
-                const top = platform ? 2.2 : 1.65;
-                addRunnerBlock(lane, bx0, bx1, top, platform);
-                if (platform) {
-                    for (let i = 0; i < 4; i++) addRunnerCoin(bx0 + 1 + i * 1.3, lane, top + 1.25);
-                }
-                for (let other = 0; other < 3; other++) {
-                    if (other === lane) continue;
-                    for (let i = 0; i < 6; i++) addRunnerCoin(x0 + 3 + i * 3.2, other, 1.25);
-                }
+                if (Math.random() < 0.5) addRunnerItem('bridge', x0 + 3, Math.floor(Math.random() * 3));
             } else {
-                // Open run with a coin trail.
-                const lane = Math.floor(Math.random() * 3);
-                for (let i = 0; i < 8; i++) addRunnerCoin(x0 + 2 + i * 2.6, lane, 1.25);
+                addRunnerRoad(chunk, x0, x1);
+                if (roll < 0.6) {
+                    // Structure in one lane: dodge it, jump over/onto it, or smash it with the ram pickup.
+                    const lane = Math.floor(Math.random() * 3);
+                    const kind = pickRunnerStructureKind();
+                    const offset = kind === 'ramp' ? 7 : kind === 'stairs' ? 6 : 10;
+                    const block = addRunnerStructure(lane, kind, x0 + offset);
+                    if (kind !== 'crate') addRunnerStructureCoins(block);
+                    for (let other = 0; other < 3; other++) {
+                        if (other === lane) continue;
+                        for (let i = 0; i < 6; i++) addRunnerCoin(x0 + 3 + i * 3.2, other, 1.25);
+                    }
+                    if (Math.random() < 0.4) addRunnerItem('ram', x0 + 3, lane);
+                } else {
+                    // Open run with a coin trail.
+                    const lane = Math.floor(Math.random() * 3);
+                    for (let i = 0; i < 8; i++) addRunnerCoin(x0 + 2 + i * 2.6, lane, 1.25);
+                }
             }
         }
 
@@ -3951,6 +4124,33 @@
             saveManager.scheduleSave();
         }
 
+        function collectRunnerItem(item) {
+            if (item.kind === 'ram') {
+                state.runnerRamTime = RUNNER_POWER_SECONDS;
+                showToast(`💥 Tông phá ${RUNNER_POWER_SECONDS}s! Lao thẳng vào bục và khối để phá vỡ`);
+            } else {
+                state.runnerBridgeTime = RUNNER_POWER_SECONDS;
+                showToast(`🌉 Ủi qua hố ${RUNNER_POWER_SECONDS}s! Hố tự lấp lại, cứ chạy thẳng`);
+            }
+            sound.playStarCollect();
+            updateObjectiveHUD();
+        }
+
+        function smashRunnerStructure(block) {
+            const mat = new THREE.MeshStandardMaterial({ color: block.color, roughness: 0.6 });
+            const geo = new THREE.BoxGeometry(0.45, 0.45, 0.45);
+            for (let i = 0; i < 16; i++) {
+                const mesh = new THREE.Mesh(geo, mat);
+                mesh.position.set(state.pos.x + 1 + Math.random() * 1.2, 0.4 + Math.random() * 2.2, state.pos.z + (Math.random() - 0.5) * 2.4);
+                worldGroup.add(mesh);
+                runnerDebris.push({ mesh, vx: 5 + Math.random() * 12, vy: 3 + Math.random() * 9, vz: (Math.random() - 0.5) * 9, life: 1.2 });
+            }
+            worldGroup.remove(block.group);
+            const idx = runnerObstacles.indexOf(block);
+            if (idx >= 0) runnerObstacles.splice(idx, 1);
+            sound.playStarCollect();
+        }
+
         function changeRunnerLane(dir) {
             if (state.gameMode !== 'runner' || state.matchEnded || state.isPaused) return;
             state.runnerLane = THREE.MathUtils.clamp(state.runnerLane + dir, 0, 2);
@@ -3965,23 +4165,31 @@
             }
         }
 
-        // Height of the standable surface (0 = road) in this lane at x; -Infinity over a pit.
+        function runnerPitBridged(pit) {
+            return state.runnerBridgeTime > 0 || pit === runnerBridgePit;
+        }
+
+        // Height of the standable surface (0 = road) in this lane at x; -Infinity over an open pit.
         function runnerSurfaceAt(lane, x) {
             for (const pit of runnerPits) {
-                if (x >= pit.x0 && x <= pit.x1) return -Infinity;
+                if (x >= pit.x0 && x <= pit.x1 && !runnerPitBridged(pit)) return -Infinity;
             }
             let top = 0;
             for (const block of runnerObstacles) {
-                if (block.lane === lane && x >= block.x0 && x <= block.x1 && block.top > top) top = block.top;
+                if (block.lane !== lane || x < block.x0 || x > block.x1) continue;
+                for (const p of block.pieces) {
+                    if (x >= p.x0 && x <= p.x1) top = Math.max(top, runnerPieceHeight(p, x));
+                }
             }
             return top;
         }
 
-        // A block's front face: feet below its top while inside it means a crash.
+        // A piece's front face: feet clearly below its top while inside it means a crash.
         function runnerWallAt(lane, x, feet) {
             for (const block of runnerObstacles) {
-                if (block.lane === lane && x >= block.x0 + 0.2 && x <= block.x1 - 0.2 && feet < block.top - 0.35) {
-                    return block;
+                if (block.lane !== lane || x < block.x0 || x > block.x1) continue;
+                for (const p of block.pieces) {
+                    if (x >= p.x0 + 0.2 && x <= p.x1 - 0.2 && feet < runnerPieceHeight(p, x) - 0.35) return block;
                 }
             }
             return null;
@@ -4007,37 +4215,51 @@
         function updateRunnerPhysics(dt) {
             state.runnerSpeed = Math.min(34, 17 + state.runnerDistance * 0.018);
             state.runnerLaneCooldown = 0;
-
-            // Joystick: one push = one lane change.
-            const stickY = state.joyVec.y;
-            if (Math.abs(stickY) < 0.35) {
-                runnerLaneLatch = false;
-            } else if (!runnerLaneLatch) {
-                runnerLaneLatch = true;
-                changeRunnerLane(stickY < 0 ? -1 : 1);
-            }
+            if (state.runnerRamTime > 0) state.runnerRamTime = Math.max(0, state.runnerRamTime - dt);
+            if (state.runnerBridgeTime > 0) state.runnerBridgeTime = Math.max(0, state.runnerBridgeTime - dt);
+            const ram = state.runnerRamTime > 0;
 
             // Auto-run along +X; lanes slide smoothly along Z.
+            const wasGrounded = state.isGrounded;
             state.pos.x += state.runnerSpeed * dt;
             state.runnerDistance = state.pos.x;
             state.pos.z = THREE.MathUtils.lerp(state.pos.z, runnerLaneZ(state.runnerLane), Math.min(1, dt * 14));
-
             state.vel.y -= GRAVITY * dt;
             state.pos.y += state.vel.y * dt;
 
-            if (state.pos.y < -3) {
-                finishRunnerGame('Bạn rơi xuống vực!');
+            // Keep a bridged pit solid until the player has crossed it, even if the power ends midway.
+            const inPit = runnerPits.find(p => state.pos.x >= p.x0 && state.pos.x <= p.x1) || null;
+            if (state.runnerBridgeTime > 0 && inPit) runnerBridgePit = inPit;
+            else if (runnerBridgePit && state.runnerBridgeTime <= 0 && state.pos.x > runnerBridgePit.x1) runnerBridgePit = null;
+            for (const pit of runnerPits) pit.bridge.visible = runnerPitBridged(pit);
+
+            const feet = state.pos.y - 0.5;
+            if (feet < RUNNER_SPIKE_DEATH_FEET) {
+                finishRunnerGame('Bạn rơi vào bãi chông!');
                 return state.runnerSpeed;
             }
 
-            const feet = state.pos.y - 0.5;
-            const surface = runnerSurfaceAt(state.runnerLane, state.pos.x);
+            let surface = runnerSurfaceAt(state.runnerLane, state.pos.x);
+            if (surface !== -Infinity) {
+                const wall = runnerWallAt(state.runnerLane, state.pos.x + (ram ? 0.8 : 0), feet);
+                if (wall) {
+                    if (!ram) {
+                        finishRunnerGame('Bạn đã đâm vào chướng ngại vật!');
+                        return state.runnerSpeed;
+                    }
+                    smashRunnerStructure(wall);
+                    surface = runnerSurfaceAt(state.runnerLane, state.pos.x);
+                }
+            }
+            const gap = feet - surface; // +Infinity over an open pit
             if (surface === -Infinity) {
                 state.isGrounded = false;
-            } else if (runnerWallAt(state.runnerLane, state.pos.x, feet)) {
-                finishRunnerGame('Bạn đã đâm vào chướng ngại vật!');
-                return state.runnerSpeed;
-            } else if (state.vel.y <= 0 && feet <= surface + 0.1 && feet >= surface - 0.8) {
+            } else if (state.vel.y <= 0 && gap <= 0.1 && gap >= -0.8) {
+                state.pos.y = surface + 0.5;
+                state.vel.y = 0;
+                state.isGrounded = true;
+            } else if (wasGrounded && state.vel.y <= 0 && gap > 0.1 && gap <= 0.5) {
+                // Walking down a ramp: stay glued to the surface instead of hopping.
                 state.pos.y = surface + 0.5;
                 state.vel.y = 0;
                 state.isGrounded = true;
@@ -4047,6 +4269,12 @@
 
             // Endless: spawn ahead, recycle what is behind.
             while (runnerNextSpawnX < state.pos.x + 260) spawnRunnerChunk();
+            for (let i = runnerChunks.length - 1; i >= 0; i--) {
+                if (runnerChunks[i].x1 < state.pos.x - 40) {
+                    worldGroup.remove(runnerChunks[i].group);
+                    runnerChunks.splice(i, 1);
+                }
+            }
             for (let i = runnerObstacles.length - 1; i >= 0; i--) {
                 const block = runnerObstacles[i];
                 if (block.x1 < state.pos.x - 30) {
@@ -4055,11 +4283,7 @@
                 }
             }
             for (let i = runnerPits.length - 1; i >= 0; i--) {
-                const pit = runnerPits[i];
-                if (pit.x1 < state.pos.x - 30) {
-                    worldGroup.remove(pit.group);
-                    runnerPits.splice(i, 1);
-                }
+                if (runnerPits[i].x1 < state.pos.x - 30) runnerPits.splice(i, 1);
             }
 
             for (let i = runnerCoins.length - 1; i >= 0; i--) {
@@ -4079,7 +4303,52 @@
                 }
             }
 
-            if (Math.floor(state.runnerDistance) % 10 === 0) updateObjectiveHUD();
+            for (let i = runnerItems.length - 1; i >= 0; i--) {
+                const item = runnerItems[i];
+                item.gem.rotation.y += dt * 3;
+                item.group.position.y = item.baseY + Math.sin(performance.now() * 0.005 + i) * 0.2;
+                if (!item.collected &&
+                    Math.abs(item.group.position.x - state.pos.x) < 1.6 &&
+                    Math.abs(item.group.position.z - state.pos.z) < 1.8) {
+                    item.collected = true;
+                    item.group.visible = false;
+                    collectRunnerItem(item);
+                }
+                if (item.group.position.x < state.pos.x - 14) {
+                    worldGroup.remove(item.group);
+                    runnerItems.splice(i, 1);
+                }
+            }
+
+            for (let i = runnerDebris.length - 1; i >= 0; i--) {
+                const d = runnerDebris[i];
+                d.life -= dt;
+                d.vy -= 28 * dt;
+                d.mesh.position.x += d.vx * dt;
+                d.mesh.position.y += d.vy * dt;
+                d.mesh.position.z += d.vz * dt;
+                d.mesh.rotation.x += dt * 8;
+                d.mesh.rotation.z += dt * 6;
+                d.mesh.scale.setScalar(Math.max(0.05, d.life / 1.2));
+                if (d.life <= 0 || d.mesh.position.y < -0.5) {
+                    worldGroup.remove(d.mesh);
+                    runnerDebris.splice(i, 1);
+                }
+            }
+
+            if (runnerAura) {
+                const active = ram || state.runnerBridgeTime > 0;
+                const ending = (ram && state.runnerRamTime < 1.5) || (!ram && state.runnerBridgeTime > 0 && state.runnerBridgeTime < 1.5);
+                runnerAura.visible = active && (!ending || Math.floor(performance.now() / 120) % 2 === 0);
+                runnerAura.position.set(state.pos.x, state.pos.y + 0.6, state.pos.z);
+                runnerAura.material.color.setHex(ram ? 0xfb923c : 0x22d3ee);
+            }
+
+            state.runnerHudTimer -= dt;
+            if (state.runnerHudTimer <= 0) {
+                state.runnerHudTimer = 0.2;
+                updateObjectiveHUD();
+            }
             player.root.position.copy(state.pos);
             player.root.rotation.y = THREE.MathUtils.lerp(player.root.rotation.y, -Math.PI / 2, dt * 8);
             return state.runnerSpeed;
@@ -7197,6 +7466,9 @@
             runnerCoinsCollected: 0,
             runnerGemsEarned: 0,
             runnerCoinBank: 0,
+            runnerRamTime: 0,
+            runnerBridgeTime: 0,
+            runnerHudTimer: 0,
             runnerSpeed: 17,
             runnerLaneCooldown: 0,
             bomberMapId: 'map1',
@@ -7460,7 +7732,10 @@
             } else if (state.gameMode === 'runner') {
                 prim.textContent = `💎 ${state.runnerGemsEarned}`;
                 sec.textContent = `🏃 ${Math.floor(state.runnerDistance)} m`;
-                sub.innerHTML = `<span>Làn ${state.runnerLane + 1}/3</span><span>🪙 ${state.runnerCoinBank}/${RUNNER_COINS_PER_GEM}</span><span>Tốc độ ${state.runnerSpeed.toFixed(0)}</span>`;
+                const runnerPowers = [];
+                if (state.runnerRamTime > 0) runnerPowers.push(`<span class="text-orange-300 font-bold">💥 Tông ${state.runnerRamTime.toFixed(1)}s</span>`);
+                if (state.runnerBridgeTime > 0) runnerPowers.push(`<span class="text-cyan-300 font-bold">🌉 Ủi hố ${state.runnerBridgeTime.toFixed(1)}s</span>`);
+                sub.innerHTML = `<span>Làn ${state.runnerLane + 1}/3</span><span>🪙 ${state.runnerCoinBank}/${RUNNER_COINS_PER_GEM}</span><span>Tốc độ ${state.runnerSpeed.toFixed(0)}</span>${runnerPowers.join('')}`;
             } else if (state.gameMode === 'bomber') {
                 updateBomberStageHUD();
                 if (state.bomberStage === 1) {
@@ -8333,7 +8608,9 @@
             const bomberHint = document.getElementById('bomber-controls-hint');
             if (bomberHint) bomberHint.classList.toggle('hidden', state.gameMode !== 'bomber');
             const jumpButton = document.getElementById('touch-jump');
-            if (jumpButton) jumpButton.classList.toggle('hidden', state.gameMode === 'bomber');
+            if (jumpButton) jumpButton.classList.toggle('hidden', state.gameMode === 'bomber' || state.gameMode === 'runner');
+            const joystickEl = document.getElementById('joystick-zone');
+            if (joystickEl) joystickEl.classList.toggle('hidden', state.gameMode === 'runner');
             const jumpHint = document.getElementById('jump-controls-hint');
             if (jumpHint) jumpHint.classList.toggle('hidden', state.gameMode === 'bomber');
         }
@@ -8342,7 +8619,7 @@
             clearResultPresentation();
             sound.syncBackgroundMusic(state.backgroundTheme, mode === 'bomber' ? 'bomber' : 'playing');
             sound.init();
-            if (mode === 'bomber') {
+            if (mode === 'bomber' || mode === 'runner') {
                 if (document.pointerLockElement) document.exitPointerLock?.();
             } else {
                 domElem.requestPointerLock?.();
@@ -8352,7 +8629,7 @@
             camera = mode === 'bomber' ? bomberCamera : perspectiveCamera;
             const pointerLockButton = document.getElementById('btn-pointer-lock');
             pointerLockButton.classList.add('hidden');
-            pointerLockButton.classList.toggle('md:flex', mode !== 'bomber');
+            pointerLockButton.classList.toggle('md:flex', mode !== 'bomber' && mode !== 'runner');
             if (mode !== 'bomber') {
                 player.root.scale.setScalar(1);
                 if (bomberShieldAura) {
@@ -8435,7 +8712,7 @@
                 state.camPitch = 0.12;
                 state.rotationY = 0;
                 document.getElementById('minimap-wrapper').classList.add('hidden');
-                showToast('🏃 Vuốt lên/xuống hoặc W/S đổi làn • Chạm / Space để nhảy • 20 🪙 = 1 💎');
+                showToast('🏃 Vuốt ↑↓ đổi làn • Chạm bất kỳ đâu để nhảy • 💥 tông phá • 🌉 ủi qua hố • 20 🪙 = 1 💎');
             } else if (mode === 'bomber') {
                 player.setWeaponsEquipped(false);
                 setCombatUIVisible(false);
@@ -8734,10 +9011,14 @@
         window.addEventListener('touchend', releaseCameraTouch);
         window.addEventListener('touchcancel', releaseCameraTouch);
 
-        // Runner gestures: swipe up/down = change lane, tap = jump.
+        // Runner controls on the whole 3D view: swipe up/down = change lane, tap / click anywhere = jump.
+        const RUNNER_SWIPE_PX = 30;
+        let runnerLastTouchAt = 0;
+        const runnerGestureAllowed = (target) => state.gameMode === 'runner' && state.screen === 'playing' &&
+            !state.isPaused && !state.matchEnded && !isInteractiveUIElement(target);
         window.addEventListener('touchstart', (e) => {
-            if (state.gameMode !== 'runner' || state.screen !== 'playing' || runnerTouch) return;
-            if (isInteractiveUIElement(e.target)) return;
+            runnerLastTouchAt = performance.now();
+            if (runnerTouch || !runnerGestureAllowed(e.target)) return;
             const t = e.changedTouches[0];
             if (t) runnerTouch = { id: t.identifier, x: t.clientX, y: t.clientY, moved: false };
         }, { passive: true });
@@ -8748,15 +9029,18 @@
                 if (t.identifier !== runnerTouch.id) continue;
                 const dx = t.clientX - runnerTouch.x;
                 const dy = t.clientY - runnerTouch.y;
-                if (Math.abs(dy) >= 36 && Math.abs(dy) > Math.abs(dx)) {
+                if (Math.abs(dy) >= RUNNER_SWIPE_PX && Math.abs(dy) > Math.abs(dx)) {
                     changeRunnerLane(dy < 0 ? -1 : 1);
                     runnerTouch.x = t.clientX;
                     runnerTouch.y = t.clientY;
+                    runnerTouch.moved = true;
+                } else if (Math.hypot(dx, dy) > 24) {
                     runnerTouch.moved = true;
                 }
             }
         }, { passive: true });
         const endRunnerTouch = (e) => {
+            runnerLastTouchAt = performance.now();
             if (!runnerTouch) return;
             for (let i = 0; i < e.changedTouches.length; i++) {
                 const t = e.changedTouches[i];
@@ -8770,6 +9054,31 @@
         };
         window.addEventListener('touchend', endRunnerTouch, { passive: true });
         window.addEventListener('touchcancel', endRunnerTouch, { passive: true });
+        // Desktop mouse: click = jump, drag up/down = change lane (ignored right after a touch to avoid double input).
+        window.addEventListener('mousedown', (e) => {
+            if (e.button !== 0 || performance.now() - runnerLastTouchAt < 700 || !runnerGestureAllowed(e.target)) return;
+            runnerMouse = { x: e.clientX, y: e.clientY, moved: false };
+        });
+        window.addEventListener('mousemove', (e) => {
+            if (!runnerMouse) return;
+            if ((e.buttons & 1) === 0) { runnerMouse = null; return; }
+            const dx = e.clientX - runnerMouse.x;
+            const dy = e.clientY - runnerMouse.y;
+            if (Math.abs(dy) >= RUNNER_SWIPE_PX && Math.abs(dy) > Math.abs(dx)) {
+                changeRunnerLane(dy < 0 ? -1 : 1);
+                runnerMouse.x = e.clientX;
+                runnerMouse.y = e.clientY;
+                runnerMouse.moved = true;
+            } else if (Math.hypot(dx, dy) > 24) {
+                runnerMouse.moved = true;
+            }
+        });
+        window.addEventListener('mouseup', (e) => {
+            if (!runnerMouse) return;
+            const moved = runnerMouse.moved || Math.hypot(e.clientX - runnerMouse.x, e.clientY - runnerMouse.y) > 24;
+            runnerMouse = null;
+            if (!moved && e.button === 0) runnerJump();
+        });
 
         // Mobile Virtual Joystick
         const joystickZone = document.getElementById('joystick-zone');
@@ -8893,12 +9202,21 @@
                 ctx.fillStyle = '#e11d48';
                 ctx.beginPath(); ctx.arc(455, 78, 11, 0, Math.PI * 2); ctx.fill();
             } else if (mode === 'runner') {
-                ctx.fillStyle = '#1e293b';
-                ctx.beginPath(); ctx.moveTo(235, 35); ctx.lineTo(365, 35); ctx.lineTo(560, 180); ctx.lineTo(40, 180); ctx.fill();
-                ctx.strokeStyle = '#67e8f9'; ctx.lineWidth = 3;
-                ctx.beginPath(); ctx.moveTo(275, 40); ctx.lineTo(205, 180); ctx.moveTo(325, 40); ctx.lineTo(395, 180); ctx.stroke();
-                ctx.fillStyle = '#fb7185'; ctx.fillRect(328, 102, 55, 20);
-                ctx.fillStyle = '#fbbf24'; ctx.beginPath(); ctx.arc(250, 98, 10, 0, Math.PI * 2); ctx.fill();
+                // Side view: three lanes, a spike pit, a platform with a ramp and coins.
+                ctx.fillStyle = '#1e293b'; ctx.fillRect(0, 70, 600, 110);
+                ctx.strokeStyle = '#67e8f9'; ctx.lineWidth = 2;
+                for (const y of [106, 142]) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(600, y); ctx.stroke(); }
+                ctx.fillStyle = '#12060a'; ctx.fillRect(215, 70, 110, 110);
+                ctx.fillStyle = '#e5e7eb';
+                for (let x = 219; x < 321; x += 14) { ctx.beginPath(); ctx.moveTo(x, 180); ctx.lineTo(x + 7, 138); ctx.lineTo(x + 14, 180); ctx.fill(); }
+                ctx.fillStyle = '#f43f5e'; ctx.fillRect(213, 70, 4, 110); ctx.fillRect(323, 70, 4, 110);
+                ctx.fillStyle = '#0ea5e9'; ctx.fillRect(390, 98, 70, 34);
+                ctx.fillStyle = '#38bdf8'; ctx.beginPath(); ctx.moveTo(460, 98); ctx.lineTo(540, 132); ctx.lineTo(460, 132); ctx.fill();
+                ctx.fillStyle = '#fbbf24';
+                for (const [cx, cy] of [[60, 124], [95, 124], [130, 124], [240, 56], [270, 46], [300, 56], [405, 84], [430, 84]]) {
+                    ctx.beginPath(); ctx.arc(cx, cy, 9, 0, Math.PI * 2); ctx.fill();
+                }
+                ctx.fillStyle = '#fb7185'; ctx.fillRect(150, 100, 22, 30);
             } else {
                 for (let row = 0; row < 3; row++) {
                     for (let col = 0; col < 7; col++) {
@@ -8922,7 +9240,7 @@
             { button: 'btn-start-climb-2', mode: 'climb', map: 'map2', modeName: 'Leo map', title: 'Map 2: Pháo Đài Không Gian', progress: 'climb-map2-progress', description: 'Leo qua pháo đài với ray trượt và vòng xoay, thu thập gem để chiến thắng.' },
             { button: 'btn-start-hunt-map1', mode: 'hunt', map: 'map1', modeName: 'Săn bia', title: 'Map 1: Mê Cung Cổ Điển', progress: 'hunt-map1-progress', description: 'Tìm và bắn các bia đứng yên trước khi chúng phát nổ. Chiến thắng tăng độ khó và số bia.' },
             { button: 'btn-start-hunt-map2', mode: 'hunt', map: 'map2', modeName: 'Săn bia', title: 'Map 2: Mê Cung Chuyển Động', progress: 'hunt-map2-progress', description: 'Săn các bia di chuyển chậm trong mê cung. Hạ đủ bia trước khi chúng phát nổ.' },
-            { button: 'btn-start-runner', mode: 'runner', map: 'map1', modeName: 'Chạy vô tận', title: 'Đường Chạy Vô Tận', description: 'Chạy ngang 3 làn, vuốt đổi làn, chạm để nhảy qua hố và leo bục. 20 vòng tròn = 1 Gem.', details: 'Vuốt lên/xuống hoặc W/S đổi làn • Chạm / Space để nhảy' },
+            { button: 'btn-start-runner', mode: 'runner', map: 'map1', modeName: 'Chạy vô tận', title: 'Đường Chạy Vô Tận', description: 'Chạy ngang 3 làn, vuốt đổi làn, chạm để nhảy qua hố chông và leo bục, dốc. 20 vòng tròn = 1 Gem.', details: 'Vuốt lên/xuống đổi làn • Chạm bất kỳ đâu để nhảy • Nhặt 💥 để tông phá, 🌉 để ủi qua hố' },
             { button: 'btn-start-bomber-map1', mode: 'bomber', map: 'map1', modeName: 'Bomber Adventure', title: 'Map 1: Đảo Bomber', progress: 'bomber-map1-progress', description: 'Đặt bom hạ quái, tìm nâng cấp và đối đầu Boss. Bom nổ theo bốn hướng: hãy chạy khỏi vùng nổ!' },
             { button: 'btn-start-bomber-map2', mode: 'bomber', map: 'map2', modeName: 'Bomber Adventure', title: 'Map 2: Đảo Nước', progress: 'bomber-map2-progress', description: 'Vũng nước chặn đường đi nhưng bom và tia điện có thể nổ xuyên qua.' }
         ];
@@ -9528,7 +9846,8 @@
                 camera = perspectiveCamera;
                 camera.up.set(0, 1, 0);
                 const zoom = Math.max(1, 1.15 / Math.max(0.3, camera.aspect));
-                const camX = state.pos.x + 4.5 * zoom;
+                // Keep the runner about a quarter of the way in from the left on any screen shape.
+                const camX = state.pos.x + 2.6 * zoom * Math.min(camera.aspect, 1.9);
                 camera.position.set(camX, 12 * zoom, 13.5 * zoom);
                 camera.lookAt(camX, 0.8, 0);
                 return;
